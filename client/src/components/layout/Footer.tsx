@@ -1,7 +1,9 @@
 import { Github, Linkedin, Mail, Send } from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { profile, socialUrls, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { cn } from "@/lib/utils";
 
 const footerNav = [
   { name: "Home", href: "#hero" },
@@ -12,6 +14,7 @@ const footerNav = [
 
 export function Footer() {
   const reducedMotion = usePrefersReducedMotion();
+  const [planeSending, setPlaneSending] = useState(false);
 
   const handleNav = (href: string) => {
     const id = href.replace("#", "");
@@ -24,14 +27,24 @@ export function Footer() {
     return <Github size={14} aria-hidden="true" />;
   };
 
+  const handleContactClick = () => {
+    if (reducedMotion || planeSending) return;
+    setPlaneSending(true);
+    window.setTimeout(() => setPlaneSending(false), 380);
+  };
+
   return (
     <footer className="site-footer" id="contact">
       <div className="footer-cta">
         <h2 className="footer-hello">
           Say <span className="hero-script hero-script--inline">hello</span>.
         </h2>
-        <a className="footer-contact" href={`mailto:${socialUrls.email}`}>
-          <Send size={16} aria-hidden="true" />
+        <a
+          className={cn("footer-contact", planeSending && "footer-contact--sending")}
+          href={`mailto:${socialUrls.email}`}
+          onClick={handleContactClick}
+        >
+          <Send className="footer-contact-plane" size={16} aria-hidden="true" />
           Contact Me
         </a>
         <a className="footer-opensource" href={profile.repoHref} target="_blank" rel="noopener noreferrer">

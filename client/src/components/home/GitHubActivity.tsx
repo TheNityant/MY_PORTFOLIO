@@ -1,9 +1,11 @@
-import { GitHubCalendar } from "react-github-calendar";
+import { GitHubCalendar, type Activity } from "react-github-calendar";
 import { ArrowUpRight } from "lucide-react";
 import { Component, useState, type ReactNode } from "react";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
 const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+
+const last49Days = (data: Activity[]) => data.slice(-49);
 
 class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
   state = { failed: false };
@@ -38,12 +40,14 @@ export function GitHubActivity() {
             <GitHubCalendar
               username={profile.githubHandle}
               colorScheme="dark"
-              blockSize={8}
+              blockSize={10}
               blockMargin={2}
               fontSize={10}
               showWeekdayLabels={false}
               showMonthLabels={false}
               showTotalCount={false}
+              showColorLegend={false}
+              transformData={last49Days}
               theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
             />
           </div>

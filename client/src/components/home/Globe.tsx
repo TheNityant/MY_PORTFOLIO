@@ -54,20 +54,25 @@ function drawMumbaiGlow(
   depth: number,
 ) {
   if (!visible) return;
-  const alpha = Math.min(1, Math.max(0.15, depth * 1.4));
-  const r = 10 * DPR;
-  const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 2.8);
-  glow.addColorStop(0, `rgba(255, 255, 255, ${0.95 * alpha})`);
-  glow.addColorStop(0.25, `rgba(190, 220, 255, ${0.55 * alpha})`);
-  glow.addColorStop(0.55, `rgba(120, 170, 255, ${0.18 * alpha})`);
-  glow.addColorStop(1, "rgba(120, 170, 255, 0)");
+  const alpha = Math.min(1, Math.max(0.2, depth * 1.35));
+  const glowRadius = 10 * DPR;
+  const coreRadius = 2.75 * DPR;
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
+  glow.addColorStop(0, `rgba(255, 228, 190, ${0.9 * alpha})`);
+  glow.addColorStop(0.28, `rgba(255, 176, 96, ${0.5 * alpha})`);
+  glow.addColorStop(0.62, `rgba(255, 140, 70, ${0.16 * alpha})`);
+  glow.addColorStop(1, "rgba(255, 140, 70, 0)");
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(x, y, r * 2.8, 0, Math.PI * 2);
+  ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = `rgba(255, 255, 255, ${0.92 * alpha})`;
+  ctx.fillStyle = `rgba(255, 252, 244, ${0.98 * alpha})`;
   ctx.beginPath();
-  ctx.arc(x, y, 2.2 * DPR, 0, Math.PI * 2);
+  ctx.arc(x, y, coreRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(255, 168, 72, ${0.85 * alpha})`;
+  ctx.beginPath();
+  ctx.arc(x, y, coreRadius * 0.55, 0, Math.PI * 2);
   ctx.fill();
 }
 
