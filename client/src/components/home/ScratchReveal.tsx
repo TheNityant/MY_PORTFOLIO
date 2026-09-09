@@ -148,12 +148,14 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
           <canvas
             ref={canvasRef}
             className={cn("scratch-reveal-canvas", complete && "scratch-reveal-canvas--done")}
+            style={{ cursor: "none" }}
             aria-hidden="true"
           />
         ) : null}
         <button
           type="button"
-          className="scratch-reveal-reset scratch-reveal-reset--overlay"
+          className="scratch-reveal-reset"
+          style={{ position: "absolute", top: "0.3rem", right: "0.3rem", zIndex: 4, padding: "0.25rem" }}
           onClick={(event) => {
             event.stopPropagation();
             reset();
