@@ -5,10 +5,25 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 export function ToolMarkView({ tool, large }: { tool: ToolMark; large?: boolean }) {
+  const style = {
+    ...(tool.accent ? { "--tool-accent": tool.accent } : {}),
+    ...(tool.iconColor || tool.accent ? { "--tool-icon-color": tool.iconColor ?? tool.accent } : {}),
+    ...(tool.icon ? { "--tool-icon-url": `url(${tool.icon})` } : {}),
+  } as CSSProperties;
+
   return (
-    <span className={cn("tool-mark", large && "tool-mark--large")} style={tool.accent ? ({ "--tool-accent": tool.accent } as CSSProperties) : undefined}>
+    <span
+      className={cn(
+        "tool-mark",
+        large && "tool-mark--large",
+        tool.icon ? "tool-mark--has-icon" : "tool-mark--text-only",
+        tool.needsDarkVariant && "tool-mark--needs-dark-variant",
+      )}
+      style={style}
+      title={tool.needsDarkVariant ? `${tool.name} — dark icon variant recommended` : undefined}
+    >
       {tool.icon ? (
-        <img src={tool.icon} alt="" width={large ? 28 : 16} height={large ? 28 : 16} />
+        <span className="tool-mark-icon" aria-hidden="true" />
       ) : (
         <Sparkles size={large ? 22 : 14} aria-hidden="true" />
       )}

@@ -14,9 +14,10 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useRef, type PointerEvent, type ReactNode } from "react";
 import type { DashboardCursorKind } from "@/data/portfolio";
 import { useFinePointer } from "@/hooks/useFinePointer";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 const CURSOR_ICONS: Record<DashboardCursorKind, LucideIcon> = {
@@ -50,62 +51,36 @@ export function DashboardCard({
   className,
 }: DashboardCardProps) {
   const finePointer = useFinePointer();
+  const reducedMotion = usePrefersReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
-  const [hovering, setHovering] = useState(false);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [angle, setAngle] = useState(0);
-  const lastPoint = useRef({ x: 0, y: 0, t: 0 });
-  const heading = useRef(0);
+  const surfaceEnabled = finePointer && !reducedMotion;
 
-  const onMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!finePointer || !frameRef.current) return;
-      const rect = frameRef.current.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      setPos({ x, y });
+  const onMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!surfaceEnabled || !frameRef.current) return;
+    const rect = frameRef.current.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    frameRef.current.style.setProperty("--pointer-x", `${x}%`);
+    frameRef.current.style.setProperty("--pointer-y", `${y}%`);
+  };
 
-      if (cursorKind === "plane") {
-        const now = performance.now();
-        const dt = Math.max(1, now - lastPoint.current.t);
-        const vx = (event.clientX - lastPoint.current.x) / dt;
-        const vy = (event.clientY - lastPoint.current.y) / dt;
-        const speed = Math.hypot(vx, vy);
-        if (speed > 0.02) {
-          const target = Math.atan2(vy, vx);
-          heading.current += (target - heading.current) * 0.18;
-          setAngle(heading.current);
-        } else {
-          setAngle(heading.current);
-        }
-        lastPoint.current = { x: event.clientX, y: event.clientY, t: now };
-      }
-    },
-    [cursorKind, finePointer],
-  );
-
-  const FollowerIcon = CURSOR_ICONS[cursorKind];
+  const onLeave = () => {
+    frameRef.current?.style.removeProperty("--pointer-x");
+    frameRef.current?.style.removeProperty("--pointer-y");
+  };
 
   return (
     <li className={cn("dashboard-item", `dashboard-area-${area}`, className)}>
       <div
         ref={frameRef}
-        className="dashboard-item-frame dashboard-item-frame--interactive"
-        onPointerEnter={() => finePointer && setHovering(true)}
-        onPointerLeave={() => setHovering(false)}
+        className={cn(
+          "dashboard-item-frame",
+          surfaceEnabled && "dashboard-item-frame--interactive",
+        )}
+        data-cursor-kind={cursorKind}
         onPointerMove={onMove}
+        onPointerLeave={onLeave}
       >
-        {finePointer && hovering ? (
-          <span
-            className={cn("dashboard-cursor", cursorKind === "plane" && "dashboard-cursor--plane")}
-            style={{
-              transform: `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) rotate(${cursorKind === "plane" ? angle : 0}rad)`,
-            }}
-            aria-hidden="true"
-          >
-            <FollowerIcon size={cursorKind === "plane" ? 16 : 14} strokeWidth={1.8} />
-          </span>
-        ) : null}
         <article className="dashboard-tile">
           <div className="tile-header">
             <span className="tile-icon" aria-hidden="true">{headerIcon}</span>

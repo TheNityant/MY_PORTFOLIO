@@ -4,6 +4,9 @@ import { dashboardCopy, type ScratchRevealContent } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
+const BRUSH_RADIUS = 30;
+const COMPLETE_THRESHOLD = 0.22;
+
 type ScratchRevealProps = {
   content: ScratchRevealContent;
   className?: string;
@@ -24,6 +27,7 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const scratching = useRef(false);
   const [complete, setComplete] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
   const labelId = useId();
@@ -42,58 +46,27 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
-    const g = ctx.createLinearGradient(0, 0, rect.width * 0.85, rect.height);
-    g.addColorStop(0, "#171a20");
-    g.addColorStop(0.42, "#14171d");
-    g.addColorStop(0.78, "#12151a");
-    g.addColorStop(1, "#0f1116");
-    ctx.fillStyle = g;
+
+    const foil = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+    foil.addColorStop(0, "rgba(168, 196, 255, 0.72)");
+    foil.addColorStop(0.28, "rgba(196, 168, 255, 0.68)");
+    foil.addColorStop(0.55, "rgba(255, 196, 214, 0.64)");
+    foil.addColorStop(0.78, "rgba(255, 220, 168, 0.66)");
+    foil.addColorStop(1, "rgba(168, 232, 220, 0.7)");
+    ctx.fillStyle = foil;
     ctx.fillRect(0, 0, rect.width, rect.height);
-    const hatch = ctx.createPattern(
-      (() => {
-        const p = document.createElement("canvas");
-        p.width = 6;
-        p.height = 6;
-        const px = p.getContext("2d");
-        if (px) {
-          px.strokeStyle = "rgba(255,255,255,0.04)";
-          px.lineWidth = 1;
-          px.beginPath();
-          px.moveTo(0, 6);
-          px.lineTo(6, 0);
-          px.stroke();
-        }
-        return p;
-      })(),
-      "repeat",
-    );
-    if (hatch) {
-      ctx.globalAlpha = 0.55;
-      ctx.fillStyle = hatch;
-      ctx.fillRect(0, 0, rect.width, rect.height);
-      ctx.globalAlpha = 1;
-    }
-    const sheen = ctx.createLinearGradient(0, 0, rect.width, rect.height * 0.5);
-    sheen.addColorStop(0, "rgba(255,255,255,0.07)");
-    sheen.addColorStop(0.5, "rgba(255,255,255,0.015)");
-    sheen.addColorStop(1, "rgba(255,255,255,0)");
+
+    const sheen = ctx.createLinearGradient(0, 0, rect.width * 0.7, rect.height);
+    sheen.addColorStop(0, "rgba(255, 255, 255, 0.28)");
+    sheen.addColorStop(0.45, "rgba(255, 255, 255, 0.06)");
+    sheen.addColorStop(1, "rgba(255, 255, 255, 0)");
     ctx.fillStyle = sheen;
     ctx.fillRect(0, 0, rect.width, rect.height);
-    for (let i = 0; i < 180; i += 1) {
-      const n = Math.random();
-      ctx.fillStyle = `rgba(255,255,255,${n * 0.035})`;
-      ctx.fillRect(Math.random() * rect.width, Math.random() * rect.height, 1, 1);
-    }
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0.5, 0.5, rect.width - 1, rect.height - 1);
-    ctx.fillStyle = "rgba(235,236,240,0.88)";
-    ctx.font = "600 12px Inter, system-ui, sans-serif";
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+    ctx.font = "600 11px Inter, system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.shadowColor = "rgba(0,0,0,0.45)";
-    ctx.shadowBlur = 4;
     ctx.fillText(dashboardCopy.scratchPrompt, rect.width / 2, rect.height / 2 + 4);
-    ctx.shadowBlur = 0;
   }, []);
 
   useEffect(() => {
@@ -115,7 +88,7 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
     const rect = canvas.getBoundingClientRect();
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(clientX - rect.left, clientY - rect.top, 18, 0, Math.PI * 2);
+    ctx.arc(clientX - rect.left, clientY - rect.top, BRUSH_RADIUS, 0, Math.PI * 2);
     ctx.fill();
   };
 
@@ -128,9 +101,11 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
     for (let i = 3; i < data.length; i += 4) {
       if (data[i] < 24) cleared += 1;
     }
-    if (cleared / (data.length / 4) > 0.42) {
+    if (cleared / (data.length / 4) > COMPLETE_THRESHOLD) {
       setComplete(true);
+      setCelebrate(true);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      window.setTimeout(() => setCelebrate(false), 420);
     }
   };
 
@@ -155,6 +130,7 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
 
   const reset = () => {
     setComplete(false);
+    setCelebrate(false);
     setResetKey((key) => key + 1);
   };
 
@@ -163,13 +139,15 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
     const ctx = canvas?.getContext("2d");
     ctx?.clearRect(0, 0, canvas?.width ?? 0, canvas?.height ?? 0);
     setComplete(true);
+    setCelebrate(true);
+    window.setTimeout(() => setCelebrate(false), 420);
   };
 
   return (
     <div className={cn("scratch-reveal", className)}>
       <div
         ref={wrapRef}
-        className="scratch-reveal-stage"
+        className={cn("scratch-reveal-stage", celebrate && "scratch-reveal-stage--celebrate")}
         aria-labelledby={labelId}
         onPointerDown={(event) => {
           if (reducedMotion || complete) return;

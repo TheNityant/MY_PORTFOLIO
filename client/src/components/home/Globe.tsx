@@ -6,95 +6,190 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 const MUMBAI = { lat: profile.locationLat, lng: profile.locationLng };
-const DRAG_DAMPING = 900;
+const DRAG_DAMPING = 1400;
+const PHI_IDLE = 0.005;
+const THETA_TARGET = 0.4;
 const THETA_MIN = 0.12;
 const THETA_MAX = 0.55;
+const INERTIA_DECAY = 0.92;
+const SPRING = 0.14;
+const DPR = 2;
 
-type GlobeState = {
-  phi?: number;
-  theta?: number;
-  width?: number;
-  height?: number;
-};
+function latLngToVec(lat: number, lng: number) {
+  const latRad = (lat * Math.PI) / 180;
+  const lngRad = (lng * Math.PI) / 180;
+  return {
+    x: Math.cos(latRad) * Math.sin(lngRad),
+    y: Math.sin(latRad),
+    z: Math.cos(latRad) * Math.cos(lngRad),
+  };
+}
+
+function projectMumbai(phi: number, theta: number, size: number) {
+  const { x, y, z } = latLngToVec(MUMBAI.lat, MUMBAI.lng);
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const x1 = x * cosPhi + z * sinPhi;
+  const z1 = -x * sinPhi + z * cosPhi;
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+  const y1 = y * cosTheta - z1 * sinTheta;
+  const z2 = y * sinTheta + z1 * cosTheta;
+  const scale = size * 0.44;
+  const cx = size / 2;
+  const cy = size / 2;
+  return {
+    x: cx + x1 * scale,
+    y: cy - y1 * scale,
+    visible: z2 > 0.02,
+    depth: z2,
+  };
+}
+
+function drawMumbaiGlow(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  visible: boolean,
+  depth: number,
+) {
+  if (!visible) return;
+  const alpha = Math.min(1, Math.max(0.15, depth * 1.4));
+  const r = 10 * DPR;
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 2.8);
+  glow.addColorStop(0, `rgba(255, 255, 255, ${0.95 * alpha})`);
+  glow.addColorStop(0.25, `rgba(190, 220, 255, ${0.55 * alpha})`);
+  glow.addColorStop(0.55, `rgba(120, 170, 255, ${0.18 * alpha})`);
+  glow.addColorStop(1, "rgba(120, 170, 255, 0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 2.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(255, 255, 255, ${0.92 * alpha})`;
+  ctx.beginPath();
+  ctx.arc(x, y, 2.2 * DPR, 0, Math.PI * 2);
+  ctx.fill();
+}
 
 export function Globe({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
   const pointerId = useRef<number | null>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
+  const phiRef = useRef(2.45);
+  const thetaRef = useRef(THETA_TARGET);
   const dragPhi = useRef(0);
   const dragTheta = useRef(0);
+  const dragVelPhi = useRef(0);
+  const dragVelTheta = useRef(0);
   const { theme } = useTheme();
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const overlay = overlayRef.current;
+    if (!canvas || !overlay) return;
 
-    let width = 0;
-    let phi = 2.45;
-    let theta = 0.28;
-    let globe: { destroy: () => void } | null = null;
+    let width = canvas.offsetWidth;
+    let frameId = 0;
     const isDark = theme === "dark";
-    const samples = window.matchMedia("(max-width: 899px)").matches ? 12000 : 16000;
+
+    const globe = createGlobe(canvas, {
+      devicePixelRatio: DPR,
+      width: Math.max(1, width * 2),
+      height: Math.max(1, width * 2),
+      phi: phiRef.current,
+      theta: thetaRef.current,
+      dark: isDark ? 1 : 0,
+      diffuse: isDark ? 0.5 : 0.62,
+      mapSamples: 22000,
+      mapBrightness: isDark ? 1.2 : 1.35,
+      baseColor: (isDark ? [0.8, 0.9, 1.2] : [0.96, 0.97, 0.99]) as [number, number, number],
+      markerColor: [0.98, 0.99, 1],
+      glowColor: isDark ? [1, 1, 1] : [0.9, 0.92, 0.95],
+      markers: [],
+      scale: 1,
+    });
+
+    const paintOverlay = () => {
+      const octx = overlay.getContext("2d");
+      if (!octx || width <= 0) return;
+      const renderSize = width * 2;
+      overlay.width = renderSize;
+      overlay.height = renderSize;
+      overlay.style.width = `${width}px`;
+      overlay.style.height = `${width}px`;
+      octx.clearRect(0, 0, renderSize, renderSize);
+      const projected = projectMumbai(
+        phiRef.current + dragPhi.current,
+        thetaRef.current,
+        renderSize,
+      );
+      drawMumbaiGlow(octx, projected.x, projected.y, projected.visible, projected.depth);
+    };
 
     const onResize = () => {
       width = canvas.offsetWidth;
     };
     window.addEventListener("resize", onResize);
-    onResize();
 
-    globe = createGlobe(canvas, {
-      devicePixelRatio: Math.min(2, window.devicePixelRatio || 1),
-      width: width * 2,
-      height: width * 2,
-      phi,
-      theta,
-      dark: isDark ? 1 : 0,
-      diffuse: isDark ? 3 : 0.62,
-      mapSamples: samples,
-      mapBrightness: isDark ? 2.6 : 1.35,
-      baseColor: (isDark ? [0.75, 0.8, 0.9] : [0.96, 0.97, 0.99]) as [number, number, number],
-      markerColor: [0.98, 0.99, 1],
-      glowColor: isDark ? [0.06, 0.07, 0.1] : [0.9, 0.92, 0.95],
-      markers: [{ location: [MUMBAI.lat, MUMBAI.lng], size: 0.08 }],
-      scale: 1,
-      onRender: (state: GlobeState) => {
-        if (!pointerId.current && !reducedMotion) phi += 0.0032;
-        dragPhi.current *= pointerId.current ? 1 : 0.94;
-        dragTheta.current *= pointerId.current ? 1 : 0.94;
-        state.phi = phi + dragPhi.current;
-        theta = Math.min(THETA_MAX, Math.max(THETA_MIN, theta + dragTheta.current));
-        state.theta = theta;
-        state.width = width * 2;
-        state.height = width * 2;
-      },
-    } as Parameters<typeof createGlobe>[1]);
+    const tick = () => {
+      if (!pointerId.current && !reducedMotion) {
+        phiRef.current += PHI_IDLE;
+      }
+
+      if (!pointerId.current) {
+        dragVelPhi.current *= INERTIA_DECAY;
+        dragVelTheta.current *= INERTIA_DECAY;
+      }
+
+      dragPhi.current += (dragVelPhi.current - dragPhi.current) * SPRING;
+      dragTheta.current += (dragVelTheta.current - dragTheta.current) * SPRING;
+
+      thetaRef.current = Math.min(
+        THETA_MAX,
+        Math.max(THETA_MIN, thetaRef.current + dragTheta.current),
+      );
+      dragTheta.current *= 0.82;
+
+      const renderWidth = Math.max(1, width * 2);
+      globe.update({
+        phi: phiRef.current + dragPhi.current,
+        theta: thetaRef.current,
+        width: renderWidth,
+        height: renderWidth,
+      });
+      paintOverlay();
+      frameId = requestAnimationFrame(tick);
+    };
 
     canvas.style.opacity = "1";
+    frameId = requestAnimationFrame(tick);
 
     return () => {
-      globe?.destroy();
+      cancelAnimationFrame(frameId);
+      globe.destroy();
       window.removeEventListener("resize", onResize);
     };
   }, [reducedMotion, theme]);
 
-  const onPointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     pointerId.current = event.pointerId;
     lastPointer.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
     event.currentTarget.style.cursor = "grabbing";
   };
 
-  const onPointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (pointerId.current === null) return;
     const dx = event.clientX - lastPointer.current.x;
     const dy = event.clientY - lastPointer.current.y;
-    dragPhi.current -= dx / DRAG_DAMPING;
-    dragTheta.current -= dy / DRAG_DAMPING;
+    dragVelPhi.current -= dx / DRAG_DAMPING;
+    dragVelTheta.current -= dy / DRAG_DAMPING;
     lastPointer.current = { x: event.clientX, y: event.clientY };
   };
 
-  const endDrag = (event: PointerEvent<HTMLCanvasElement>) => {
+  const endDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (pointerId.current === null) return;
     event.currentTarget.releasePointerCapture(pointerId.current);
     pointerId.current = null;
@@ -102,16 +197,15 @@ export function Globe({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("globe-stage", className)}>
-      <canvas
-        ref={canvasRef}
-        className="globe-canvas"
-        aria-hidden="true"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      />
+    <div
+      className={cn("globe-stage", className)}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+    >
+      <canvas ref={canvasRef} className="globe-canvas" aria-hidden="true" />
+      <canvas ref={overlayRef} className="globe-overlay" aria-hidden="true" />
     </div>
   );
 }
