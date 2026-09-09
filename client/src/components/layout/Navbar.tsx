@@ -1,4 +1,4 @@
-import { Briefcase, Brush, Github, Home, Moon, Pencil, Search, Sun } from "lucide-react";
+import { Briefcase, Brush, Github, Home, Moon, Search, Sun } from "lucide-react";
 import { useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { nav, profile } from "@/data/portfolio";
@@ -15,6 +15,7 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
   const { theme, toggleTheme } = useTheme();
   const visible = useHideOnScroll();
   const reducedMotion = usePrefersReducedMotion();
+  const visibleNav = nav.filter((item) => !item.deferred);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -48,33 +49,15 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
       </a>
 
       <nav className="main-nav" aria-label="Primary">
-        {nav.map((item) => {
+        {visibleNav.map((item) => {
           const icon =
             item.icon === "home" ? (
               <Home size={20} />
             ) : item.icon === "projects" ? (
               <Brush size={20} />
-            ) : item.icon === "experience" ? (
-              <Briefcase size={20} />
             ) : (
-              <Pencil size={20} />
+              <Briefcase size={20} />
             );
-
-          if (item.deferred) {
-            return (
-              <span
-                key={item.name}
-                className="nav-link nav-link--disabled"
-                aria-disabled="true"
-                title={`${item.name} is not in this baseline yet.`}
-              >
-                <span className="nav-link-icon" aria-hidden="true">
-                  {icon}
-                </span>
-                <span className="nav-link-label">{item.name}</span>
-              </span>
-            );
-          }
 
           return (
             <button
