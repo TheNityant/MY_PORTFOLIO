@@ -22,11 +22,9 @@ export function Hero() {
       <TooltipProvider>
         <div className="hero-content">
           <div className="portrait-wrap">
-            <div className="portrait-placeholder" role="img" aria-label={profile.portraitAlt}>
+            <div className="portrait-placeholder portrait-mark" role="img" aria-label={profile.portraitAlt}>
               <span>{profile.initials}</span>
             </div>
-            {/* Empty slot matching the reference availability pill. No status copy. */}
-            <div className="hero-status-slot" aria-hidden="true" />
           </div>
 
           <div className="hero-copy">
