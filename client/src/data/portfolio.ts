@@ -129,7 +129,7 @@ export const profile = {
 export const socialUrls = {
   email: profile.email,
   github: profile.githubHref,
-  linkedin: null as string | null,
+  linkedin: "https://www.linkedin.com/in/nityant-tiwari-88b97533b/",
 } as const;
 
 export const socials: SocialLink[] = [
@@ -139,17 +139,13 @@ export const socials: SocialLink[] = [
     icon: "mail",
     aria: `Email ${profile.name}`,
   },
-  ...(socialUrls.linkedin
-    ? [
-        {
-          label: "LinkedIn",
-          href: socialUrls.linkedin,
-          icon: "linkedin" as const,
-          aria: `${profile.name} on LinkedIn`,
-          external: true,
-        },
-      ]
-    : []),
+  {
+    label: "LinkedIn",
+    href: socialUrls.linkedin,
+    icon: "linkedin",
+    aria: `${profile.name} on LinkedIn`,
+    external: true,
+  },
   {
     label: "GitHub",
     href: socialUrls.github,
@@ -421,7 +417,7 @@ export const experience: ExperienceItem[] = [
     org: "IIT Bombay",
     label: "Participant",
     dates: "",
-    location: "Mumbai",
+    location: "Delhi",
     description: "Attended a two-day hackathon at IIT Bombay.",
     skills: ["Hackathon"],
     mark: { fallback: "IITB", alt: "IIT Bombay" },
