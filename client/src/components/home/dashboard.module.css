@@ -1,0 +1,32 @@
+.dashboardGrid {
+  display: grid;
+  width: 100%;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  grid-template-areas:
+    "location location"
+    "location location"
+    "tools tools"
+    "favorite music"
+    "contact music"
+    "contact scratch"
+    "coffees github"
+    "hours github";
+}
+
+.dashboardGrid > * {
+  min-width: 0;
+}
+
+@media (min-width: 700px) {
+  .dashboardGrid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: 7.875rem 7.875rem 9.0625rem 6.0625rem;
+    grid-template-areas:
+      "location location location location scratch scratch github github coffees coffees"
+      "location location location location scratch scratch github github hours hours"
+      "music music music music music favorite favorite favorite contact contact"
+      "tools tools tools tools tools tools tools tools contact contact";
+  }
+}
