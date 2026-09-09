@@ -78,6 +78,7 @@ export function DashboardCard({
           surfaceEnabled && "dashboard-item-frame--interactive",
         )}
         data-cursor-kind={cursorKind}
+        style={surfaceEnabled ? { cursor: "none" } : undefined}
         onPointerMove={onMove}
         onPointerLeave={onLeave}
       >
