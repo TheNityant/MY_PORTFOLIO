@@ -1,0 +1,59 @@
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(8rem, 0.75fr) minmax(8rem, 0.8fr);
+  gap: clamp(1.5rem, 5vw, 3rem);
+  margin-bottom: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  max-width: 20rem;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.name {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.role {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.linkColumn {
+  min-width: 0;
+}
+
+@media (max-width: 639px) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem 1.25rem;
+  }
+
+  .identity {
+    grid-column: 1 / -1;
+  }
+}
