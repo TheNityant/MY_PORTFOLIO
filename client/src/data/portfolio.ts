@@ -172,22 +172,24 @@ export type ToolMark = {
   name: string;
   icon?: string;
   accent?: string;
+  iconColor?: string;
+  needsDarkVariant?: boolean;
 };
 
 export const tools: ToolMark[] = [
-  { name: "Java", icon: "/tools/java.svg", accent: "#f89820" },
-  { name: "Spring Boot", icon: "/tools/spring.svg", accent: "#6db33f" },
-  { name: "PostgreSQL", icon: "/tools/postgresql.svg", accent: "#336791" },
-  { name: "Python", icon: "/tools/python.svg", accent: "#3776ab" },
-  { name: "TypeScript", icon: "/tools/typescript.svg", accent: "#3178c6" },
-  { name: "React", icon: "/tools/react.svg", accent: "#61dafb" },
-  { name: "Node.js", icon: "/tools/nodedotjs.svg", accent: "#339933" },
-  { name: "AI / LLMs" },
+  { name: "Java", icon: "/tools/java.svg", accent: "#f89820", iconColor: "#f89820" },
+  { name: "Spring Boot", icon: "/tools/spring.svg", accent: "#6db33f", iconColor: "#6db33f" },
+  { name: "PostgreSQL", icon: "/tools/postgresql.svg", accent: "#336791", iconColor: "#5b9bd5" },
+  { name: "Python", icon: "/tools/python.svg", accent: "#3776ab", iconColor: "#4b8bbe" },
+  { name: "TypeScript", icon: "/tools/typescript.svg", accent: "#3178c6", iconColor: "#5b9cf5" },
+  { name: "React", icon: "/tools/react.svg", accent: "#61dafb", iconColor: "#61dafb" },
+  { name: "Node.js", icon: "/tools/nodedotjs.svg", accent: "#339933", iconColor: "#68a063" },
+  { name: "AI / LLMs", accent: "#a78bfa", iconColor: "#c4b5fd" },
 ];
 
 export const coreStackTools: ToolMark[] = [
-  { name: "Java", icon: "/tools/java.svg" },
-  { name: "Spring Boot", icon: "/tools/spring.svg" },
+  { name: "Java", icon: "/tools/java.svg", accent: "#f89820", iconColor: "#f89820" },
+  { name: "Spring Boot", icon: "/tools/spring.svg", accent: "#6db33f", iconColor: "#6db33f" },
 ];
 
 export const metrics = {

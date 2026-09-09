@@ -1,5 +1,6 @@
 import { Github, Linkedin, Mail } from "lucide-react";
 import { DashboardCard, dashboardHeaderIcon } from "@/components/home/DashboardCard";
+import { DashboardCursorProvider } from "@/components/home/DashboardCursor";
 import { FeatureCard, featureCardTitle } from "@/components/home/FeatureCard";
 import { GitHubActivity } from "@/components/home/GitHubActivity";
 import { Globe } from "@/components/home/Globe";
@@ -16,6 +17,7 @@ import {
 
 export function Dashboard() {
   return (
+    <DashboardCursorProvider>
     <section className="dashboard-section dashboard-section--cascade" id="dashboard" aria-labelledby="dashboard-heading">
       <h2 id="dashboard-heading" className="sr-only">Personal dashboard</h2>
       <ul className="dashboard-grid">
@@ -121,5 +123,6 @@ export function Dashboard() {
         </DashboardCard>
       </ul>
     </section>
+    </DashboardCursorProvider>
   );
 }
