@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { profile, socialUrls, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
+import styles from "./footer.module.css";
 
 const footerNav = [
   { name: "Home", href: "#hero" },
@@ -50,14 +51,17 @@ export function Footer() {
         <a className="footer-opensource" href={profile.repoHref} target="_blank" rel="noopener noreferrer">
           This site is open source
         </a>
-        <p className="footer-identity">
-          <strong>{profile.name}</strong>
-          <span>{profile.summary}</span>
-        </p>
       </div>
 
-      <div className="footer-columns">
-        <div>
+      <div className={cn("footer-columns", styles.columns)}>
+        <div className={styles.identity}>
+          <span className={styles.mark} aria-hidden="true">{profile.initials}</span>
+          <p className={styles.name}>{profile.name}</p>
+          <p className={styles.role}>{profile.role}</p>
+          <p className={styles.role}>{profile.summary}</p>
+        </div>
+
+        <div className={styles.linkColumn}>
           <p className="footer-kicker">Navigate</p>
           <ul>
             {footerNav.map((item) => (
@@ -71,7 +75,8 @@ export function Footer() {
             ))}
           </ul>
         </div>
-        <div>
+
+        <div className={styles.linkColumn}>
           <p className="footer-kicker">Connect</p>
           <ul>
             {visibleSocials.map((social) => (
