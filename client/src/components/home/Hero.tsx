@@ -1,6 +1,6 @@
 import { ArrowRight, Github, Mail } from "lucide-react";
 import type { SocialIconName } from "@/data/portfolio";
-import { profile, socials } from "@/data/portfolio";
+import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   Tooltip,
@@ -43,7 +43,7 @@ export function Hero() {
 
           <div className="hero-actions">
             <div className="social-actions" aria-label="Contact links">
-              {socials.map((social) => (
+              {visibleSocials.map((social) => (
                 <Tooltip key={social.label}>
                   <TooltipTrigger asChild>
                     <a

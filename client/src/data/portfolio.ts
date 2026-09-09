@@ -1,8 +1,8 @@
-export type SocialIconName = "mail" | "github";
+export type SocialIconName = "mail" | "github" | "linkedin" | "instagram";
 
 export type SocialLink = {
   label: string;
-  href: string;
+  href?: string;
   icon: SocialIconName;
   aria: string;
   external?: boolean;
@@ -96,7 +96,12 @@ export const profile = {
   portraitAlt: "Nityant Tiwari",
   email: "nityant.tiwari2404@gmail.com",
   githubHref: "https://github.com/TheNityant",
+  githubHandle: "TheNityant",
   repoHref: "https://github.com/TheNityant/MY_PORTFOLIO",
+  location: "Mumbai, India",
+  locationLat: 19.076,
+  locationLng: 72.8777,
+  summary: "Backend / Software Engineer building APIs and systems, with AI/ML as a specialization.",
 } as const;
 
 export const socials: SocialLink[] = [
@@ -113,7 +118,21 @@ export const socials: SocialLink[] = [
     aria: `${profile.name} on GitHub`,
     external: true,
   },
+  {
+    label: "LinkedIn",
+    icon: "linkedin",
+    aria: `${profile.name} on LinkedIn`,
+    external: true,
+  },
+  {
+    label: "Instagram",
+    icon: "instagram",
+    aria: `${profile.name} on Instagram`,
+    external: true,
+  },
 ];
+
+export const visibleSocials = socials.filter((social): social is SocialLink & { href: string } => Boolean(social.href));
 
 export const nav: NavItem[] = [
   { name: "Home", href: "#hero", icon: "home" },
@@ -122,38 +141,39 @@ export const nav: NavItem[] = [
   { name: "Blog", href: "#writing", icon: "blog", deferred: true },
 ];
 
-export const tools = [
-  "Java",
-  "Spring Boot",
-  "SQL",
-  "Python",
-  "TypeScript",
-  "React",
-  "Node.js",
-  "AI / LLMs",
+export type ToolMark = {
+  name: string;
+  icon?: string;
+};
+
+export const tools: ToolMark[] = [
+  { name: "Java", icon: "/tools/java.svg" },
+  { name: "Spring Boot", icon: "/tools/spring.svg" },
+  { name: "PostgreSQL", icon: "/tools/postgresql.svg" },
+  { name: "Python", icon: "/tools/python.svg" },
+  { name: "TypeScript", icon: "/tools/typescript.svg" },
+  { name: "React", icon: "/tools/react.svg" },
+  { name: "Node.js", icon: "/tools/nodedotjs.svg" },
+  { name: "AI / LLMs" },
 ];
 
-export const backendFocus = ["Java", "Spring Boot", "APIs", "SQL"];
-
-export const aiFocus = ["RAG", "Transformers", "Embeddings", "Evaluation"];
+export const favoriteTools: ToolMark[] = [
+  { name: "Java", icon: "/tools/java.svg" },
+  { name: "Spring Boot", icon: "/tools/spring.svg" },
+];
 
 export const dashboardCopy = {
-  aboutTitle: "Engineering focus",
-  aboutLead: profile.role,
-  aboutBody: "AI/ML engineering as a specialization. REST APIs, databases, and production-quality backends.",
+  locationTitle: profile.location,
   scratchTitle: "Scratch me",
-  scratchPrompt: "Reveal a line",
-  scratchReveal: `${profile.role}, with AI/ML engineering as a specialization.`,
+  scratchPrompt: "Scratch to reveal",
+  scratchReveal: "Backend systems · AI/ML · Embedded",
   githubTitle: "Activity",
-  githubHandle: "TheNityant",
+  githubHandle: profile.githubHandle,
   githubCta: "Open GitHub",
-  backendTitle: "Backend",
-  aiTitle: "AI systems",
   nowBuildingTitle: "Now building",
   nowBuildingName: "Statistical analysis platform",
   nowBuildingBody: "Frontend plus Python analytics. In development.",
-  stackTitle: "Primary stack",
-  stackBody: "Java · Spring Boot",
+  favoriteTitle: "Favorite tool",
   connectTitle: "Connect",
   toolsTitle: "Tools",
 } as const;
@@ -163,6 +183,7 @@ export const searchItems = [
   { label: "Dashboard", href: "#dashboard", type: "Section" },
   { label: "Projects", href: "#projects", type: "Section" },
   { label: "Experience", href: "#experience", type: "Section" },
+  { label: "Contact", href: "#contact", type: "Section" },
 ];
 
 export const projectsCopy = {
@@ -197,23 +218,23 @@ export const contentGaps: ContentGap[] = [
   },
   {
     referenceSlot: "Location / globe card",
-    reason: "No verified location is stored.",
-    resolution: "Tall left cell reframed as Engineering focus with verified positioning. No inferred city.",
+    reason: "Mumbai is already public on Education/Experience.",
+    resolution: "Interactive Location globe centered on Mumbai, India.",
   },
   {
     referenceSlot: "Scratch-to-reveal GIFs",
-    reason: "Reference GIFs are personal content; none of mine are in the repo.",
-    resolution: "Keyboard-accessible reveal of the existing tagline.",
+    reason: "No personal reveal GIFs are committed.",
+    resolution: "Canvas scratch reveals a data-driven line; image/GIF slot is ready for later assets.",
   },
   {
     referenceSlot: "GitHub contribution heatmap",
-    reason: "No backend or verified contribution dataset in this phase.",
-    resolution: "Activity card shows the verified GitHub handle and link. No fabricated heatmap.",
+    reason: "GitHub contribution calendars require authenticated GraphQL. No token is committed.",
+    resolution: "Activity uses the public REST user profile (no heatmap, no fabricated cells).",
   },
   {
     referenceSlot: "Hours coding / coffees drank",
-    reason: "No WakaTime or similar metrics exist in source content.",
-    resolution: "Compact Backend and AI systems cards with verified topic chips. No metrics.",
+    reason: "No WakaTime or similar metrics exist.",
+    resolution: "Metric cards removed. Duplicate Backend / AI chip cards removed.",
   },
   {
     referenceSlot: "Last played / Spotify",
@@ -222,13 +243,13 @@ export const contentGaps: ContentGap[] = [
   },
   {
     referenceSlot: "Favorite tool (Next.js)",
-    reason: "No favorite-tool claim exists.",
-    resolution: "Primary stack card shows Java · Spring Boot. No favorite-tool claim.",
+    reason: "User approved Java + Spring Boot as favorite tool.",
+    resolution: "Favorite tool card shows Java and Spring Boot marks.",
   },
   {
     referenceSlot: "LinkedIn and Instagram",
     reason: "No verified LinkedIn or Instagram URLs in the repository.",
-    resolution: "Contact actions are mailto and GitHub only.",
+    resolution: "Email and GitHub render. LinkedIn and Instagram are typed slots without URLs.",
   },
   {
     referenceSlot: "Writing / blog and earth gallery",

@@ -1,6 +1,10 @@
-import { ArrowUpRight, Brain, Code2, Github, Layers, Link2, Mail, Server, Sparkles, Wrench } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { aiFocus, backendFocus, dashboardCopy, profile, socials, tools } from "@/data/portfolio";
+import { Github, Heart, Layers, Link2, Mail, MapPin, Sparkles, Wrench } from "lucide-react";
+import type { ReactNode } from "react";
+import { FavoriteTools, ToolsMarquee } from "@/components/home/ToolsMarquee";
+import { GitHubActivity } from "@/components/home/GitHubActivity";
+import { Globe } from "@/components/home/Globe";
+import { ScratchReveal } from "@/components/home/ScratchReveal";
+import { dashboardCopy, visibleSocials } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import styles from "./dashboard.module.css";
 
@@ -34,32 +38,6 @@ function Tile({
   );
 }
 
-function ChipList({ items }: { items: readonly string[] }) {
-  return (
-    <ul className="tile-chips">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-
-function ScratchCard() {
-  const [revealed, setRevealed] = useState(false);
-
-  return (
-    <button
-      type="button"
-      className={cn("scratch-card", revealed && "scratch-card--revealed")}
-      onClick={() => setRevealed(true)}
-      aria-pressed={revealed}
-    >
-      <Sparkles size={18} aria-hidden="true" />
-      <strong>{revealed ? dashboardCopy.scratchReveal : dashboardCopy.scratchPrompt}</strong>
-    </button>
-  );
-}
-
 export function Dashboard() {
   return (
     <section className="dashboard-section" id="dashboard" aria-labelledby="dashboard-heading">
@@ -67,30 +45,23 @@ export function Dashboard() {
         Personal dashboard
       </h2>
       <ul className={cn("dashboard-grid", styles.dashboardGrid)}>
-        <Tile area="location" icon={<Code2 size={20} />} title={dashboardCopy.aboutTitle} className="dashboard-item--tall">
-          <div className="about-copy">
-            <p className="tile-prose tile-prose--large">{dashboardCopy.aboutLead}</p>
-            <p className="tile-prose">{dashboardCopy.aboutBody}</p>
-          </div>
+        <Tile
+          area="location"
+          icon={<MapPin size={20} />}
+          title={dashboardCopy.locationTitle}
+          className="dashboard-item--tall dashboard-item--location"
+        >
+          <Globe />
         </Tile>
 
         <Tile area="scratch" icon={<Sparkles size={20} />} title={dashboardCopy.scratchTitle}>
-          <ScratchCard />
+          <ScratchReveal>
+            <p className="scratch-reveal-line">{dashboardCopy.scratchReveal}</p>
+          </ScratchReveal>
         </Tile>
 
         <Tile area="github" icon={<Github size={20} />} title={dashboardCopy.githubTitle} className="dashboard-item--stack">
-          <p className="github-handle">{dashboardCopy.githubHandle}</p>
-          <a className="tile-link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
-            {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-        </Tile>
-
-        <Tile area="coffees" icon={<Server size={20} />} title={dashboardCopy.backendTitle} className="dashboard-item--metric">
-          <ChipList items={backendFocus} />
-        </Tile>
-
-        <Tile area="hours" icon={<Brain size={20} />} title={dashboardCopy.aiTitle} className="dashboard-item--metric">
-          <ChipList items={aiFocus} />
+          <GitHubActivity />
         </Tile>
 
         <Tile area="music" icon={<Layers size={20} />} title={dashboardCopy.nowBuildingTitle}>
@@ -98,13 +69,13 @@ export function Dashboard() {
           <p className="tile-prose">{dashboardCopy.nowBuildingBody}</p>
         </Tile>
 
-        <Tile area="favorite" icon={<Wrench size={20} />} title={dashboardCopy.stackTitle}>
-          <p className="tile-prose tile-prose--large">{dashboardCopy.stackBody}</p>
+        <Tile area="favorite" icon={<Heart size={20} />} title={dashboardCopy.favoriteTitle}>
+          <FavoriteTools />
         </Tile>
 
         <Tile area="contact" icon={<Link2 size={20} />} title={dashboardCopy.connectTitle}>
           <ul className="connect-list">
-            {socials.map((social) => (
+            {visibleSocials.map((social) => (
               <li key={social.label}>
                 <a
                   href={social.href}
@@ -121,13 +92,7 @@ export function Dashboard() {
         </Tile>
 
         <Tile area="tools" icon={<Wrench size={20} />} title={dashboardCopy.toolsTitle}>
-          <div className="tools-marquee" aria-label="Tools">
-            <div className="tools-track">
-              {[...tools, ...tools].map((tool, index) => (
-                <span key={`${tool}-${index}`}>{tool}</span>
-              ))}
-            </div>
-          </div>
+          <ToolsMarquee />
         </Tile>
       </ul>
     </section>

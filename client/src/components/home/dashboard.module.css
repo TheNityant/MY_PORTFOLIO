@@ -11,8 +11,7 @@
     "favorite music"
     "contact music"
     "contact scratch"
-    "coffees github"
-    "hours github";
+    "github github";
 }
 
 .dashboardGrid > * {
@@ -24,8 +23,8 @@
     grid-template-columns: repeat(10, minmax(0, 1fr));
     grid-template-rows: 7.875rem 7.875rem 9.0625rem 6.0625rem;
     grid-template-areas:
-      "location location location location scratch scratch github github coffees coffees"
-      "location location location location scratch scratch github github hours hours"
+      "location location location location scratch scratch github github github github"
+      "location location location location scratch scratch github github github github"
       "music music music music music favorite favorite favorite contact contact"
       "tools tools tools tools tools tools tools tools contact contact";
   }
