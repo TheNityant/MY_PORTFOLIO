@@ -1,11 +1,12 @@
 import { Sparkles } from "lucide-react";
-import { favoriteTools, tools, type ToolMark } from "@/data/portfolio";
+import type { CSSProperties } from "react";
+import { coreStackTools, tools, type ToolMark } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 export function ToolMarkView({ tool, large }: { tool: ToolMark; large?: boolean }) {
   return (
-    <span className={cn("tool-mark", large && "tool-mark--large")}>
+    <span className={cn("tool-mark", large && "tool-mark--large")} style={tool.accent ? ({ "--tool-accent": tool.accent } as CSSProperties) : undefined}>
       {tool.icon ? (
         <img src={tool.icon} alt="" width={large ? 28 : 16} height={large ? 28 : 16} />
       ) : (
@@ -16,10 +17,10 @@ export function ToolMarkView({ tool, large }: { tool: ToolMark; large?: boolean 
   );
 }
 
-export function FavoriteTools() {
+export function CoreStackTools() {
   return (
     <ul className="favorite-tools">
-      {favoriteTools.map((tool) => (
+      {coreStackTools.map((tool) => (
         <li key={tool.name}>
           <ToolMarkView large tool={tool} />
         </li>

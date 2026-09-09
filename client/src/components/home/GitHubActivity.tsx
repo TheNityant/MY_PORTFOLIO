@@ -1,44 +1,46 @@
+import { GitHubCalendar } from "react-github-calendar";
 import { ArrowUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Component, type ReactNode } from "react";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
-type GithubProfile = {
-  publicRepos: number;
-};
+class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onFail();
+  }
+
+  render() {
+    if (this.state.failed) return null;
+    return this.props.children;
+  }
+}
 
 export function GitHubActivity() {
-  const [stats, setStats] = useState<GithubProfile | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`https://api.github.com/users/${profile.githubHandle}`, {
-      signal: controller.signal,
-      headers: { Accept: "application/vnd.github+json" },
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { public_repos?: number } | null) => {
-        if (!data) return;
-        setStats({ publicRepos: data.public_repos ?? 0 });
-      })
-      .catch(() => {
-        setStats(null);
-      });
-    return () => controller.abort();
-  }, []);
-
   return (
-    <div className="github-activity">
-      <p className="github-handle">{dashboardCopy.githubHandle}</p>
-      {stats ? (
-        <p className="tile-prose">
-          {stats.publicRepos} public {stats.publicRepos === 1 ? "repository" : "repositories"}
-        </p>
-      ) : (
-        <p className="tile-prose">Public GitHub profile</p>
-      )}
-      <a className="tile-link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
+    <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
+      <CalendarBoundary onFail={() => undefined}>
+        <div className="github-calendar-wrap">
+          <GitHubCalendar
+            username={profile.githubHandle}
+            colorScheme="dark"
+            blockSize={9}
+            blockMargin={2}
+            fontSize={10}
+            showWeekdayLabels={false}
+            theme={{
+              dark: ["#1a1a1e", "#2d333b", "#3d444d", "#4f5b66", "#6e7681", "#8b949e"],
+            }}
+          />
+        </div>
+      </CalendarBoundary>
+      <span className="tile-link github-cta">
         {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
-      </a>
-    </div>
+      </span>
+    </a>
   );
 }

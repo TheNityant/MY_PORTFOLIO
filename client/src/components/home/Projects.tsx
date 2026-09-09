@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import {
   PROJECT_PAGE_SIZE,
   defaultProjectDomain,
-  projectsCopy,
   projectsForDomain,
   visibleProjectDomains,
   type Project,
@@ -24,39 +23,72 @@ function TechList({ items }: { items: readonly string[] }) {
 
 function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
   const { media } = project;
-  const motif = project.technologies.slice(0, 2).join(" · ");
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  if (media.kind === "video" && !reducedMotion) {
+  useEffect(() => {
+    if (media.kind !== "video" || reducedMotion) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) video.play().catch(() => undefined);
+        else video.pause();
+      },
+      { threshold: 0.45 },
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [media, reducedMotion]);
+
+  if (media.kind === "video") {
+    if (reducedMotion) {
+      const poster = media.poster;
+      return (
+        <div className="project-media project-media--frame">
+          {poster ? <img className="project-media-asset" src={poster} alt={media.alt} /> : null}
+        </div>
+      );
+    }
     return (
-      <div className="project-media">
+      <div className="project-media project-media--frame">
         <video
+          ref={videoRef}
           className="project-media-asset"
           src={media.src}
           poster={media.poster}
           muted
           loop
           playsInline
-          autoPlay
           aria-label={media.alt}
         />
       </div>
     );
   }
 
-  if (media.kind === "image" || (media.kind === "video" && media.poster)) {
-    const src = media.kind === "image" ? media.src : media.poster;
+  if (media.kind === "image") {
     return (
-      <div className="project-media">
-        <img className="project-media-asset" src={src} alt={media.alt} />
+      <div className="project-media project-media--frame">
+        <img className="project-media-asset" src={media.src} alt={media.alt} />
       </div>
     );
   }
 
+  return <div className="project-media project-media--frame project-media--empty" role="img" aria-label={media.alt} />;
+}
+
+function ProjectContent({ project }: { project: Project }) {
   return (
-    <div className="project-media project-media--placeholder" role="img" aria-label={media.alt}>
-      {project.status ? <span className="project-media-kicker">{project.status}</span> : null}
-      <strong>{project.title}</strong>
-      <span className="project-media-motif">{motif}</span>
+    <div className="project-body">
+      <div className="project-card-top">
+        <span>{project.status ?? "\u00a0"}</span>
+        {project.href ? <ArrowUpRight size={16} aria-hidden="true" /> : null}
+      </div>
+      <div className="project-copy">
+        <h3>{project.title}</h3>
+        <p>{project.description}</p>
+      </div>
+      <TechList items={project.technologies} />
+      {project.href ? <span className="project-action">{project.hrefLabel ?? "Repository"}</span> : null}
     </div>
   );
 }
@@ -65,18 +97,7 @@ function ProjectCard({ project, reducedMotion }: { project: Project; reducedMoti
   const inner = (
     <>
       <ProjectMedia project={project} reducedMotion={reducedMotion} />
-      <div className="project-body">
-        <div className="project-card-top">
-          <span>{project.status ?? "\u00a0"}</span>
-          {project.href ? <ArrowUpRight size={16} aria-hidden="true" /> : null}
-        </div>
-        <div className="project-copy">
-          <h3>{project.title}</h3>
-          <p>{project.description}</p>
-        </div>
-        <TechList items={project.technologies} />
-        {project.href ? <span className="project-action">{project.hrefLabel ?? "Repository"}</span> : null}
-      </div>
+      <ProjectContent project={project} />
     </>
   );
 
@@ -98,6 +119,11 @@ export function Projects() {
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const domains = useMemo(() => visibleProjectDomains(), []);
+  const domainProjects = projectsForDomain(domain);
+  const pageCount = Math.max(1, Math.ceil(domainProjects.length / PROJECT_PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
+  const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 700px)");
@@ -106,11 +132,6 @@ export function Projects() {
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const domainProjects = projectsForDomain(domain);
-  const pageCount = Math.max(1, Math.ceil(domainProjects.length / PROJECT_PAGE_SIZE));
-  const safePage = Math.min(page, pageCount - 1);
-  const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
-  const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
 
   const selectDomain = (id: ProjectDomainId, index?: number) => {
     setDomain(id);
@@ -132,13 +153,17 @@ export function Projects() {
 
   return (
     <section className="content-section projects-section" id="projects" aria-labelledby="projects-heading">
-      <header className="section-heading">
-        <h2 id="projects-heading">{projectsCopy.heading}</h2>
-        <p>{projectsCopy.intro}</p>
+      <header className="section-heading section-heading--domain">
+        <h2 id="projects-heading">{activeDomain.label}</h2>
       </header>
 
       <div className="projects-stage">
-        <div className="project-story-rail" role="tablist" aria-labelledby="projects-heading" aria-orientation={vertical ? "vertical" : "horizontal"}>
+        <div
+          className="project-story-rail"
+          role="tablist"
+          aria-labelledby="projects-heading"
+          aria-orientation={vertical ? "vertical" : "horizontal"}
+        >
           {domains.map((item, index) => {
             const selected = item.id === domain;
             return (
@@ -163,10 +188,6 @@ export function Projects() {
             );
           })}
         </div>
-
-        <p className="project-story-current" aria-live="polite">
-          {activeDomain.label}
-        </p>
 
         {pageCount > 1 ? (
           <div className="projects-pager">

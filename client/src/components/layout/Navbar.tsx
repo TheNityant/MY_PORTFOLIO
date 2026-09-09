@@ -35,6 +35,13 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
     }
   };
 
+  const navIcon = (icon: string) => {
+    if (icon === "home") return <Home size={20} />;
+    if (icon === "projects") return <Brush size={20} />;
+    if (icon === "experience") return <Briefcase size={20} />;
+    return <Pencil size={20} />;
+  };
+
   return (
     <header
       className={cn(
@@ -48,49 +55,18 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
       </a>
 
       <nav className="main-nav" aria-label="Primary">
-        {nav.map((item) => {
-          const icon =
-            item.icon === "home" ? (
-              <Home size={20} />
-            ) : item.icon === "projects" ? (
-              <Brush size={20} />
-            ) : item.icon === "experience" ? (
-              <Briefcase size={20} />
-            ) : (
-              <Pencil size={20} />
-            );
-
-          if (item.deferred) {
-            return (
-              <span
-                key={item.name}
-                className="nav-link nav-link--disabled"
-                aria-disabled="true"
-                title={`${item.name} is not in this baseline yet.`}
-              >
-                <span className="nav-link-icon" aria-hidden="true">
-                  {icon}
-                </span>
-                <span className="nav-link-label">{item.name}</span>
-              </span>
-            );
-          }
-
-          return (
-            <button
-              key={item.name}
-              type="button"
-              className="nav-link"
-              onClick={() => handleNav(item.href)}
-              aria-label={item.name}
-            >
-              <span className="nav-link-icon" aria-hidden="true">
-                {icon}
-              </span>
-              <span className="nav-link-label">{item.name}</span>
-            </button>
-          );
-        })}
+        {nav.map((item) => (
+          <button
+            key={item.name}
+            type="button"
+            className="nav-link"
+            onClick={() => handleNav(item.href)}
+            aria-label={item.name}
+          >
+            <span className="nav-link-icon" aria-hidden="true">{navIcon(item.icon)}</span>
+            <span className="nav-link-label">{item.name}</span>
+          </button>
+        ))}
       </nav>
 
       <div className="header-tools">
@@ -105,13 +81,7 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
           <Github size={14} />
           <span>Code</span>
         </a>
-        <button
-          className="header-tool"
-          type="button"
-          onClick={onToggleSearch}
-          aria-label="Open search"
-          aria-expanded={searchOpen}
-        >
+        <button className="header-tool" type="button" onClick={onToggleSearch} aria-label="Open search" aria-expanded={searchOpen}>
           <Search size={15} />
           <kbd>⌘K</kbd>
         </button>

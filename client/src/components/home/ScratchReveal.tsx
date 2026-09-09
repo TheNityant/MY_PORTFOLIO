@@ -1,15 +1,25 @@
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { dashboardCopy } from "@/data/portfolio";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { dashboardCopy, type ScratchRevealContent } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 type ScratchRevealProps = {
-  children: ReactNode;
+  content: ScratchRevealContent;
   className?: string;
 };
 
-export function ScratchReveal({ children, className }: ScratchRevealProps) {
+function RevealLayer({ content }: { content: ScratchRevealContent }) {
+  if (content.kind === "text") {
+    return <p className="scratch-reveal-line">{content.text}</p>;
+  }
+  if (content.kind === "gif") {
+    return <img className="scratch-reveal-media" src={content.src} alt={content.alt} />;
+  }
+  return <img className="scratch-reveal-media" src={content.src} alt={content.alt} />;
+}
+
+export function ScratchReveal({ content, className }: ScratchRevealProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const scratching = useRef(false);
@@ -32,17 +42,58 @@ export function ScratchReveal({ children, className }: ScratchRevealProps) {
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
-    const dark = document.documentElement.classList.contains("dark");
-    const g = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-    g.addColorStop(0, dark ? "#3f3f46" : "#d4d4d8");
-    g.addColorStop(0.5, dark ? "#52525b" : "#e4e4e7");
-    g.addColorStop(1, dark ? "#27272a" : "#a1a1aa");
+    const g = ctx.createLinearGradient(0, 0, rect.width * 0.85, rect.height);
+    g.addColorStop(0, "#171a20");
+    g.addColorStop(0.42, "#14171d");
+    g.addColorStop(0.78, "#12151a");
+    g.addColorStop(1, "#0f1116");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, rect.width, rect.height);
-    ctx.fillStyle = dark ? "rgba(250,250,250,0.55)" : "rgba(24,24,27,0.55)";
-    ctx.font = "600 13px Inter, system-ui, sans-serif";
+    const hatch = ctx.createPattern(
+      (() => {
+        const p = document.createElement("canvas");
+        p.width = 6;
+        p.height = 6;
+        const px = p.getContext("2d");
+        if (px) {
+          px.strokeStyle = "rgba(255,255,255,0.04)";
+          px.lineWidth = 1;
+          px.beginPath();
+          px.moveTo(0, 6);
+          px.lineTo(6, 0);
+          px.stroke();
+        }
+        return p;
+      })(),
+      "repeat",
+    );
+    if (hatch) {
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = hatch;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.globalAlpha = 1;
+    }
+    const sheen = ctx.createLinearGradient(0, 0, rect.width, rect.height * 0.5);
+    sheen.addColorStop(0, "rgba(255,255,255,0.07)");
+    sheen.addColorStop(0.5, "rgba(255,255,255,0.015)");
+    sheen.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = sheen;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    for (let i = 0; i < 180; i += 1) {
+      const n = Math.random();
+      ctx.fillStyle = `rgba(255,255,255,${n * 0.035})`;
+      ctx.fillRect(Math.random() * rect.width, Math.random() * rect.height, 1, 1);
+    }
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, rect.width - 1, rect.height - 1);
+    ctx.fillStyle = "rgba(235,236,240,0.88)";
+    ctx.font = "600 12px Inter, system-ui, sans-serif";
     ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 4;
     ctx.fillText(dashboardCopy.scratchPrompt, rect.width / 2, rect.height / 2 + 4);
+    ctx.shadowBlur = 0;
   }, []);
 
   useEffect(() => {
@@ -127,7 +178,7 @@ export function ScratchReveal({ children, className }: ScratchRevealProps) {
         }}
       >
         <div className="scratch-reveal-content" id={labelId}>
-          {children}
+          <RevealLayer content={content} />
         </div>
         {!reducedMotion ? (
           <canvas

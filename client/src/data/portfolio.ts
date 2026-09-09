@@ -1,8 +1,8 @@
-export type SocialIconName = "mail" | "github" | "linkedin" | "instagram";
+export type SocialIconName = "mail" | "github" | "linkedin";
 
 export type SocialLink = {
   label: string;
-  href?: string;
+  href: string;
   icon: SocialIconName;
   aria: string;
   external?: boolean;
@@ -11,8 +11,7 @@ export type SocialLink = {
 export type NavItem = {
   name: string;
   href: string;
-  icon: "home" | "projects" | "experience" | "blog";
-  /** Destination section is not rendered yet (kept in the nav for structural parity). */
+  icon: "home" | "projects" | "experience" | "writing";
   deferred?: boolean;
 };
 
@@ -22,7 +21,7 @@ export type ContentGap = {
   resolution: string;
 };
 
-export type ProjectDomainId = "backend" | "ai" | "ml" | "robotics";
+export type ProjectDomainId = "backend" | "fullstack" | "ai-ml" | "robotics";
 
 export type ProjectDomain = {
   id: ProjectDomainId;
@@ -30,21 +29,9 @@ export type ProjectDomain = {
 };
 
 export type ProjectMedia =
-  | {
-      kind: "none";
-      alt: string;
-    }
-  | {
-      kind: "image";
-      src: string;
-      alt: string;
-    }
-  | {
-      kind: "video";
-      src: string;
-      poster?: string;
-      alt: string;
-    };
+  | { kind: "none"; alt: string }
+  | { kind: "image"; src: string; alt: string }
+  | { kind: "video"; src: string; poster?: string; alt: string };
 
 export type Project = {
   id: string;
@@ -52,37 +39,72 @@ export type Project = {
   title: string;
   description: string;
   technologies: string[];
-  /** Repository or demo URL. Omit when no verified public link exists. */
   href?: string;
   hrefLabel?: string;
   status?: string;
   media: ProjectMedia;
-  placeholder?: boolean;
 };
 
 export const PROJECT_PAGE_SIZE = 2;
 
-export type WritingItem = {
+export type ScratchRevealContent =
+  | { kind: "text"; text: string }
+  | { kind: "image"; src: string; alt: string }
+  | { kind: "gif"; src: string; alt: string };
+
+export type DashboardFeature =
+  | { kind: "building"; title: string; description: string; href?: string }
+  | {
+      kind: "music";
+      title: string;
+      artist: string;
+      album?: string;
+      artwork?: string;
+      spotifyUrl?: string;
+      accent?: string;
+    };
+
+export type DashboardCursorKind =
+  | "plane"
+  | "hand"
+  | "laptop"
+  | "dumbbell"
+  | "clock"
+  | "hammer"
+  | "music"
+  | "heart"
+  | "link"
+  | "wrench";
+
+export type WritingSection = {
   id: string;
   title: string;
-  date: string;
-  excerpt: string;
-  href: string;
-  placeholder?: boolean;
+  topics: string[];
 };
+
+export type WritingEntry = {
+  slug: string;
+  title: string;
+  type: "learning-journey";
+  status: "ongoing" | "complete";
+  summary: string;
+  tags: string[];
+  sourceUrl?: string;
+  sections: WritingSection[];
+};
+
+export type ExperienceMark = { src?: string; alt?: string; fallback: string };
 
 export type ExperienceItem = {
   id: string;
-  /** Organization, program, or institution. */
   org: string;
-  /** Transparent involvement label — not a fabricated job title. */
   label: string;
   dates: string;
   location: string;
   description: string;
   skills: string[];
   href?: string;
-  placeholder?: boolean;
+  mark: ExperienceMark;
 };
 
 export const profile = {
@@ -101,100 +123,123 @@ export const profile = {
   location: "Mumbai, India",
   locationLat: 19.076,
   locationLng: 72.8777,
-  summary: "Backend / Software Engineer building APIs and systems, with AI/ML as a specialization.",
+  summary: "Backend / Software Engineer with AI/ML engineering as a specialization.",
+} as const;
+
+export const socialUrls = {
+  email: profile.email,
+  github: profile.githubHref,
+  linkedin: null as string | null,
 } as const;
 
 export const socials: SocialLink[] = [
   {
     label: "Email",
-    href: `mailto:${profile.email}`,
+    href: `mailto:${socialUrls.email}`,
     icon: "mail",
     aria: `Email ${profile.name}`,
   },
+  ...(socialUrls.linkedin
+    ? [
+        {
+          label: "LinkedIn",
+          href: socialUrls.linkedin,
+          icon: "linkedin" as const,
+          aria: `${profile.name} on LinkedIn`,
+          external: true,
+        },
+      ]
+    : []),
   {
     label: "GitHub",
-    href: profile.githubHref,
+    href: socialUrls.github,
     icon: "github",
     aria: `${profile.name} on GitHub`,
     external: true,
   },
-  {
-    label: "LinkedIn",
-    icon: "linkedin",
-    aria: `${profile.name} on LinkedIn`,
-    external: true,
-  },
-  {
-    label: "Instagram",
-    icon: "instagram",
-    aria: `${profile.name} on Instagram`,
-    external: true,
-  },
 ];
 
-export const visibleSocials = socials.filter((social): social is SocialLink & { href: string } => Boolean(social.href));
+export const visibleSocials = socials;
 
 export const nav: NavItem[] = [
   { name: "Home", href: "#hero", icon: "home" },
   { name: "Projects", href: "#projects", icon: "projects" },
+  { name: "Writing", href: "#writing", icon: "writing" },
   { name: "Experience", href: "#experience", icon: "experience" },
-  { name: "Blog", href: "#writing", icon: "blog", deferred: true },
 ];
 
 export type ToolMark = {
   name: string;
   icon?: string;
+  accent?: string;
 };
 
 export const tools: ToolMark[] = [
-  { name: "Java", icon: "/tools/java.svg" },
-  { name: "Spring Boot", icon: "/tools/spring.svg" },
-  { name: "PostgreSQL", icon: "/tools/postgresql.svg" },
-  { name: "Python", icon: "/tools/python.svg" },
-  { name: "TypeScript", icon: "/tools/typescript.svg" },
-  { name: "React", icon: "/tools/react.svg" },
-  { name: "Node.js", icon: "/tools/nodedotjs.svg" },
+  { name: "Java", icon: "/tools/java.svg", accent: "#f89820" },
+  { name: "Spring Boot", icon: "/tools/spring.svg", accent: "#6db33f" },
+  { name: "PostgreSQL", icon: "/tools/postgresql.svg", accent: "#336791" },
+  { name: "Python", icon: "/tools/python.svg", accent: "#3776ab" },
+  { name: "TypeScript", icon: "/tools/typescript.svg", accent: "#3178c6" },
+  { name: "React", icon: "/tools/react.svg", accent: "#61dafb" },
+  { name: "Node.js", icon: "/tools/nodedotjs.svg", accent: "#339933" },
   { name: "AI / LLMs" },
 ];
 
-export const favoriteTools: ToolMark[] = [
+export const coreStackTools: ToolMark[] = [
   { name: "Java", icon: "/tools/java.svg" },
   { name: "Spring Boot", icon: "/tools/spring.svg" },
 ];
+
+export const metrics = {
+  workouts: null as number | null,
+  codingHours: null as number | null,
+  wakaTimeEmbedUrl: null as string | null,
+};
+
+export const dashboardFeature: DashboardFeature = {
+  kind: "building",
+  title: "Statistical analysis platform",
+  description: "Frontend plus Python analytics. In development.",
+};
+
+export const scratchRevealContent: ScratchRevealContent = {
+  kind: "text",
+  text: "Backend systems · AI/ML · Embedded",
+};
 
 export const dashboardCopy = {
   locationTitle: profile.location,
   scratchTitle: "Scratch me",
   scratchPrompt: "Scratch to reveal",
-  scratchReveal: "Backend systems · AI/ML · Embedded",
-  githubTitle: "Activity",
-  githubHandle: profile.githubHandle,
-  githubCta: "Open GitHub",
-  nowBuildingTitle: "Now building",
-  nowBuildingName: "Statistical analysis platform",
-  nowBuildingBody: "Frontend plus Python analytics. In development.",
-  favoriteTitle: "Favorite tool",
+  activityTitle: "Activity",
+  workoutsTitle: "Workouts",
+  hoursTitle: "Hours coding",
+  coreStackTitle: "Core stack",
   connectTitle: "Connect",
   toolsTitle: "Tools",
+  githubCta: "Open GitHub",
+  featureBuildingTitle: "Now building",
+  featureMusicTitle: "Last played",
 } as const;
 
 export const searchItems = [
-  { label: "Home", href: "#hero", type: "Navigation" },
-  { label: "Dashboard", href: "#dashboard", type: "Section" },
-  { label: "Projects", href: "#projects", type: "Section" },
-  { label: "Experience", href: "#experience", type: "Section" },
-  { label: "Contact", href: "#contact", type: "Section" },
+  { label: "Home", href: "#hero", type: "Navigate" },
+  { label: "Projects", href: "#projects", type: "Navigate" },
+  { label: "Writing", href: "#writing", type: "Navigate" },
+  { label: "Experience", href: "#experience", type: "Navigate" },
+  { label: "Statistical Analysis Platform", href: "#projects", type: "Projects" },
+  { label: "Habit Tracker", href: "#projects", type: "Projects" },
+  { label: "LLM Visualizer", href: "#projects", type: "Projects" },
+  { label: "GeneZap", href: "#projects", type: "Projects" },
+  { label: "Robotic Hand S100", href: "#projects", type: "Projects" },
+  { label: "Robocon 2026 Bot", href: "#projects", type: "Projects" },
+  { label: "LLM Engineering Notebook", href: "/writing/llm-engineering-notebook", type: "Writing" },
 ];
 
-export const projectsCopy = {
-  heading: "Selected work",
-  intro: "Selected work by engineering domain.",
-} as const;
-
 export const projectDomains: ProjectDomain[] = [
-  { id: "backend", label: "Backend / Full Stack" },
-  { id: "ai", label: "AI / LLM" },
-  { id: "ml", label: "ML / Data" },
+  { id: "backend", label: "Backend" },
+  { id: "fullstack", label: "Full Stack / App Development" },
+  { id: "ai-ml", label: "AI / ML" },
   { id: "robotics", label: "Robotics / Embedded" },
 ];
 
@@ -205,84 +250,31 @@ export const experienceCopy = {
   intro: "Applied engineering, technical programs, and education.",
 } as const;
 
-export const contentGaps: ContentGap[] = [
-  {
-    referenceSlot: "Availability badge (Available / Away)",
-    reason: "No timezone or availability status is stored in this repository.",
-    resolution: "Equivalent empty status slot preserves vertical rhythm. No invented Available/Away label.",
-  },
-  {
-    referenceSlot: "Portrait photograph",
-    reason: "No likeness or photo is committed in this repository.",
-    resolution: "NT monogram in the portrait footprint, without a visible engineering caption.",
-  },
-  {
-    referenceSlot: "Location / globe card",
-    reason: "Mumbai is already public on Education/Experience.",
-    resolution: "Interactive Location globe centered on Mumbai, India.",
-  },
-  {
-    referenceSlot: "Scratch-to-reveal GIFs",
-    reason: "No personal reveal GIFs are committed.",
-    resolution: "Canvas scratch reveals a data-driven line; image/GIF slot is ready for later assets.",
-  },
-  {
-    referenceSlot: "GitHub contribution heatmap",
-    reason: "GitHub contribution calendars require authenticated GraphQL. No token is committed.",
-    resolution: "Activity uses the public REST user profile (no heatmap, no fabricated cells).",
-  },
-  {
-    referenceSlot: "Hours coding / coffees drank",
-    reason: "No WakaTime or similar metrics exist.",
-    resolution: "Metric cards removed. Duplicate Backend / AI chip cards removed.",
-  },
-  {
-    referenceSlot: "Last played / Spotify",
-    reason: "No music data in this repository.",
-    resolution: "Wide cell is Now building: statistical analysis platform, in development, no inflated claims.",
-  },
-  {
-    referenceSlot: "Favorite tool (Next.js)",
-    reason: "User approved Java + Spring Boot as favorite tool.",
-    resolution: "Favorite tool card shows Java and Spring Boot marks.",
-  },
-  {
-    referenceSlot: "LinkedIn and Instagram",
-    reason: "No verified LinkedIn or Instagram URLs in the repository.",
-    resolution: "Email and GitHub render. LinkedIn and Instagram are typed slots without URLs.",
-  },
-  {
-    referenceSlot: "Writing / blog and earth gallery",
-    reason: "No published posts or gallery assets in this repository.",
-    resolution: "Writing markup remains deferred. Blog nav stays disabled. Education sits inside Experience.",
-  },
-];
-
 export const projects: Project[] = [
   {
     id: "stat-platform",
     domain: "backend",
-    title: "Statistical analysis platform",
+    title: "Statistical Analysis Platform",
     description:
       "Statistical analysis platform in development, combining a modern frontend with a Python analytics stack.",
     technologies: ["Frontend", "Python", "Statistics"],
     status: "In development",
-    media: { kind: "none", alt: "Placeholder frame for the statistical analysis platform." },
+    media: { kind: "none", alt: "Media frame for the Statistical Analysis Platform." },
   },
   {
     id: "habit-tracker",
-    domain: "backend",
+    domain: "fullstack",
     title: "Habit Tracker",
     description:
       "Flutter client with a Spring Boot REST API and PostgreSQL — auth, habit and task tracking with streaks, analytics, calendar, file uploads, and Gemini-assisted journaling.",
     technologies: ["Flutter", "Spring Boot", "PostgreSQL", "Gemini"],
     href: "https://github.com/TheNityant/HABIT_TRACKER-Full-Stack-app",
     hrefLabel: "Repository",
-    media: { kind: "none", alt: "Placeholder frame for Habit Tracker." },
+    media: { kind: "none", alt: "Media frame for Habit Tracker." },
   },
   {
     id: "llm-visualizer",
-    domain: "ai",
+    domain: "ai-ml",
     title: "LLM Visualizer",
     description:
       "A visual exploration tool for understanding LLM internals, including layers, tensors, and token-level computation.",
@@ -290,17 +282,17 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/LLM_Visualizer",
     hrefLabel: "Repository",
     status: "In progress",
-    media: { kind: "none", alt: "Placeholder frame for LLM Visualizer." },
+    media: { kind: "none", alt: "Media frame for LLM Visualizer." },
   },
   {
     id: "genezap",
-    domain: "ml",
+    domain: "ai-ml",
     title: "GeneZap",
     description:
       "Experimental offline genomic-analysis pipeline combining species profiling, ML resistance prediction, CGR/CNN-style analysis, and CARD-based validation.",
     technologies: ["Python", "TensorFlow", "scikit-learn", "OpenCV"],
     status: "Experimental",
-    media: { kind: "none", alt: "Placeholder frame for GeneZap." },
+    media: { kind: "none", alt: "Media frame for GeneZap." },
   },
   {
     id: "robotic-hand",
@@ -312,19 +304,19 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/ROBTOTIC_HAND_S100",
     hrefLabel: "Repository",
     status: "Earlier work",
-    media: { kind: "none", alt: "Placeholder frame for Robotic Hand S100." },
+    media: { kind: "none", alt: "Media frame for Robotic Hand S100." },
   },
   {
     id: "robocon-2026",
     domain: "robotics",
-    title: "Robocon 2026 bot",
+    title: "Robocon 2026 Bot",
     description:
       "STM32 and ESP-class control for a competition robot, integrating locomotion, sensors, motors, servos, and mechanism actuation.",
     technologies: ["STM32", "ESP32", "Embedded C"],
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
     hrefLabel: "Repository",
     status: "Applied work",
-    media: { kind: "none", alt: "Placeholder frame for the Robocon 2026 bot." },
+    media: { kind: "none", alt: "Media frame for the Robocon 2026 bot." },
   },
 ];
 
@@ -336,30 +328,65 @@ export function visibleProjectDomains(list: readonly Project[] = projects) {
   return projectDomains.filter((domain) => projectsForDomain(domain.id, list).length > 0);
 }
 
-export const writing: WritingItem[] = [
+export const writingEntries: WritingEntry[] = [
   {
-    id: "note-01",
-    title: "Add a technical note",
-    date: "DATE",
-    excerpt: "Replace this row with a short description of an idea, lesson, or system you want to share.",
-    href: "#contact",
-    placeholder: true,
-  },
-  {
-    id: "note-02",
-    title: "Add a build log",
-    date: "DATE",
-    excerpt: "Use this space for a practical reflection on engineering, product, or design decisions.",
-    href: "#contact",
-    placeholder: true,
-  },
-  {
-    id: "note-03",
-    title: "Add a research note",
-    date: "DATE",
-    excerpt: "A future Markdown post can plug into this same list without changing the visual component.",
-    href: "#contact",
-    placeholder: true,
+    slug: "llm-engineering-notebook",
+    title: "LLM Engineering Notebook",
+    type: "learning-journey",
+    status: "ongoing",
+    summary:
+      "An engineering handbook and learning journey that develops a deep understanding of large language models from mathematical foundations through transformers and production LLM systems.",
+    tags: ["LLMs", "Transformers", "LLM Systems", "Engineering"],
+    sections: [
+      {
+        id: "01",
+        title: "Mathematical Foundations for Language Modeling",
+        topics: [
+          "probability theory",
+          "conditional probability and chain rule",
+          "information theory",
+          "entropy and cross-entropy",
+          "sequence probability",
+          "perplexity",
+          "maximum likelihood estimation",
+          "executable verification",
+        ],
+      },
+      {
+        id: "05",
+        title: "Attention Mechanisms and Transformers",
+        topics: [
+          "queries, keys and values",
+          "scaled dot-product attention",
+          "self-attention",
+          "causal masking",
+          "multi-head attention",
+          "positional information",
+          "transformer block construction",
+          "attention-weight visualization",
+          "transparent attention experiments",
+        ],
+      },
+      {
+        id: "09",
+        title: "LLM Systems and Deployment",
+        topics: [
+          "model serving and API contracts",
+          "prefill and decode",
+          "KV caching",
+          "context-window engineering",
+          "batching",
+          "quantization/compression",
+          "inference parallelism",
+          "latency, throughput, memory and cost",
+          "deployment architecture",
+          "autoscaling/backpressure",
+          "streaming/cancellation",
+          "observability and reliability",
+          "deployment acceptance",
+        ],
+      },
+    ],
   },
 ];
 
@@ -373,6 +400,7 @@ export const experience: ExperienceItem[] = [
     description:
       "Worked through Google Cloud / GenAI codelabs covering a Coffee Barista Agent and a BigQuery MCP agent.",
     skills: ["Google Cloud", "GenAI", "Agents"],
+    mark: { fallback: "G", alt: "Google GenAI Academy" },
   },
   {
     id: "robocon-applied",
@@ -384,6 +412,7 @@ export const experience: ExperienceItem[] = [
       "STM32 and ESP-class control, sensors, motors, servos, and mechanism integration for a competition robot.",
     skills: ["STM32", "ESP32", "Embedded C"],
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
+    mark: { fallback: "R", alt: "Robocon 2026" },
   },
   {
     id: "iitb-hackathon",
@@ -393,6 +422,7 @@ export const experience: ExperienceItem[] = [
     location: "Mumbai",
     description: "Attended a two-day hackathon at IIT Bombay.",
     skills: ["Hackathon"],
+    mark: { fallback: "IITB", alt: "IIT Bombay" },
   },
 ];
 
@@ -401,6 +431,9 @@ export const education = {
   degree: "B.Tech",
   dates: "Second year as of 2026",
   location: "Mumbai",
-  skills: [] as string[],
-  placeholder: false,
+  mark: { fallback: "SFIT", alt: "St. Francis Institute of Technology" } as ExperienceMark,
 };
+
+export function formatMetric(value: number | null) {
+  return value === null ? "—" : String(value);
+}

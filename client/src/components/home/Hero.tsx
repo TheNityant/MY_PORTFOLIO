@@ -1,16 +1,12 @@
-import { ArrowRight, Github, Mail } from "lucide-react";
+import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SocialIcon({ name }: { name: SocialIconName }) {
   if (name === "mail") return <Mail size={20} strokeWidth={1.7} />;
+  if (name === "linkedin") return <Linkedin size={20} strokeWidth={1.7} />;
   return <Github size={20} strokeWidth={1.7} />;
 }
 
@@ -25,10 +21,8 @@ export function Hero() {
             <div className="portrait-placeholder" role="img" aria-label={profile.portraitAlt}>
               <span>{profile.initials}</span>
             </div>
-            {/* Empty slot matching the reference availability pill. No status copy. */}
             <div className="hero-status-slot" aria-hidden="true" />
           </div>
-
           <div className="hero-copy">
             <h1 id="hero-title" className="hero-title">
               <span className="hero-title-fade">Hi. I&apos;m </span>
@@ -40,7 +34,6 @@ export function Hero() {
               {profile.taglineTail}
             </p>
           </div>
-
           <div className="hero-actions">
             <div className="social-actions" aria-label="Contact links">
               {visibleSocials.map((social) => (
