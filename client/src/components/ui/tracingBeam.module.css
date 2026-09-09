@@ -1,0 +1,60 @@
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.beam {
+  position: absolute;
+  top: 2rem;
+  left: -2.85rem;
+  pointer-events: none;
+}
+
+.origin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: 1.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.origin span {
+  width: 0.22rem;
+  height: 0.22rem;
+  border-radius: 999px;
+  border: 1px solid #059669;
+  background: #10b981;
+  animation: beamPulse 1.8s ease-in-out infinite;
+}
+
+.svg {
+  display: block;
+  margin-left: 1rem;
+  overflow: visible;
+}
+
+@keyframes beamPulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@media (max-width: 760px) {
+  .beam {
+    left: -1.85rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .beam {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .origin span { animation: none; }
+}
