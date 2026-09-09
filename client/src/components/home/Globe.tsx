@@ -14,29 +14,34 @@ const THETA_MAX = 0.55;
 const INERTIA_DECAY = 0.92;
 const SPRING = 0.14;
 const DPR = 2;
+const COBE_SCREEN_RADIUS = 0.8;
 
-/** Match cobe v2 internal lat/lng → unit sphere conversion. */
+/** Match cobe's coordinate convention: lng=0 sits on +X. */
 function cobeLocationToVec(lat: number, lng: number): [number, number, number] {
   const latRad = (lat * Math.PI) / 180;
-  const lngRad = (lng * Math.PI) / 180 - Math.PI;
+  const lngRad = (lng * Math.PI) / 180;
   const cosLat = Math.cos(latRad);
-  return [-cosLat * Math.cos(lngRad), Math.sin(latRad), cosLat * Math.sin(lngRad)];
+  return [cosLat * Math.cos(lngRad), Math.sin(latRad), -cosLat * Math.sin(lngRad)];
 }
 
-/** Match cobe v2 marker screen projection (normalized → render pixels). */
+/** Match cobe's M_theta * M_phi rotation and its 0.8 screen-space globe radius. */
 function projectMumbai(phi: number, theta: number, size: number) {
-  const [tx, ty, tz] = cobeLocationToVec(MUMBAI.lat, MUMBAI.lng);
+  const [x, y, z] = cobeLocationToVec(MUMBAI.lat, MUMBAI.lng);
   const cosPhi = Math.cos(phi);
   const sinPhi = Math.sin(phi);
   const cosTheta = Math.cos(theta);
   const sinTheta = Math.sin(theta);
-  const c = cosPhi * tx + sinPhi * tz;
-  const s = sinPhi * sinTheta * tx + cosTheta * ty - cosPhi * sinTheta * tz;
-  const depth = -sinPhi * cosTheta * tx + sinTheta * ty + cosPhi * cosTheta * tz;
+  const x1 = cosPhi * x + sinPhi * z;
+  const z1 = -sinPhi * x + cosPhi * z;
+  const y1 = cosTheta * y - sinTheta * z1;
+  const depth = sinTheta * y + cosTheta * z1;
+  const center = size / 2;
+  const radius = center * COBE_SCREEN_RADIUS;
+
   return {
-    x: ((c + 1) / 2) * size,
-    y: ((-s + 1) / 2) * size,
-    visible: depth >= 0,
+    x: center + x1 * radius,
+    y: center - y1 * radius,
+    visible: depth >= -0.02,
     depth,
   };
 }
@@ -49,25 +54,21 @@ function drawMumbaiGlow(
   depth: number,
 ) {
   if (!visible) return;
-  const alpha = Math.min(1, Math.max(0.2, depth * 1.35));
+  const alpha = Math.min(1, Math.max(0.25, depth + 0.4));
   const glowRadius = 10 * DPR;
-  const coreRadius = 2.75 * DPR;
+  const coreRadius = 3 * DPR;
   const glow = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
-  glow.addColorStop(0, `rgba(255, 228, 190, ${0.9 * alpha})`);
-  glow.addColorStop(0.28, `rgba(255, 176, 96, ${0.5 * alpha})`);
-  glow.addColorStop(0.62, `rgba(255, 140, 70, ${0.16 * alpha})`);
-  glow.addColorStop(1, "rgba(255, 140, 70, 0)");
+  glow.addColorStop(0, `rgba(245, 158, 11, ${0.9 * alpha})`);
+  glow.addColorStop(0.42, `rgba(245, 158, 11, ${0.38 * alpha})`);
+  glow.addColorStop(1, "rgba(245, 158, 11, 0)");
   ctx.fillStyle = glow;
   ctx.beginPath();
   ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = `rgba(255, 252, 244, ${0.98 * alpha})`;
+
+  ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
   ctx.beginPath();
   ctx.arc(x, y, coreRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(255, 168, 72, ${0.85 * alpha})`;
-  ctx.beginPath();
-  ctx.arc(x, y, coreRadius * 0.55, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -96,8 +97,8 @@ export function Globe({ className }: { className?: string }) {
 
     const globe = createGlobe(canvas, {
       devicePixelRatio: DPR,
-      width: Math.max(1, width * 2),
-      height: Math.max(1, width * 2),
+      width: Math.max(1, width * DPR),
+      height: Math.max(1, width * DPR),
       phi: phiRef.current,
       theta: thetaRef.current,
       dark: isDark ? 1 : 0,
@@ -114,11 +115,13 @@ export function Globe({ className }: { className?: string }) {
     const paintOverlay = () => {
       const octx = overlay.getContext("2d");
       if (!octx || width <= 0) return;
-      const renderSize = width * 2;
-      overlay.width = renderSize;
-      overlay.height = renderSize;
-      overlay.style.width = `${width}px`;
-      overlay.style.height = `${width}px`;
+      const renderSize = width * DPR;
+      if (overlay.width !== renderSize || overlay.height !== renderSize) {
+        overlay.width = renderSize;
+        overlay.height = renderSize;
+        overlay.style.width = `${width}px`;
+        overlay.style.height = `${width}px`;
+      }
       octx.clearRect(0, 0, renderSize, renderSize);
       const projected = projectMumbai(
         phiRef.current + dragPhi.current,
@@ -134,11 +137,11 @@ export function Globe({ className }: { className?: string }) {
     window.addEventListener("resize", onResize);
 
     const tick = () => {
-      if (!pointerId.current && !reducedMotion) {
+      if (pointerId.current === null && !reducedMotion) {
         phiRef.current += PHI_IDLE;
       }
 
-      if (!pointerId.current) {
+      if (pointerId.current === null) {
         dragVelPhi.current *= INERTIA_DECAY;
         dragVelTheta.current *= INERTIA_DECAY;
       }
@@ -152,7 +155,7 @@ export function Globe({ className }: { className?: string }) {
       );
       dragTheta.current *= 0.82;
 
-      const renderWidth = Math.max(1, width * 2);
+      const renderWidth = Math.max(1, width * DPR);
       globe.update({
         phi: phiRef.current + dragPhi.current,
         theta: thetaRef.current,
@@ -177,7 +180,6 @@ export function Globe({ className }: { className?: string }) {
     pointerId.current = event.pointerId;
     lastPointer.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
-    event.currentTarget.style.cursor = "grabbing";
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -191,9 +193,10 @@ export function Globe({ className }: { className?: string }) {
 
   const endDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (pointerId.current === null) return;
-    event.currentTarget.releasePointerCapture(pointerId.current);
+    if (event.currentTarget.hasPointerCapture(pointerId.current)) {
+      event.currentTarget.releasePointerCapture(pointerId.current);
+    }
     pointerId.current = null;
-    event.currentTarget.style.cursor = "grab";
   };
 
   return (
