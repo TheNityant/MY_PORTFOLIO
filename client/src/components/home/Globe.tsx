@@ -15,34 +15,29 @@ const INERTIA_DECAY = 0.92;
 const SPRING = 0.14;
 const DPR = 2;
 
-function latLngToVec(lat: number, lng: number) {
+/** Match cobe v2 internal lat/lng → unit sphere conversion. */
+function cobeLocationToVec(lat: number, lng: number): [number, number, number] {
   const latRad = (lat * Math.PI) / 180;
-  const lngRad = (lng * Math.PI) / 180;
-  return {
-    x: Math.cos(latRad) * Math.sin(lngRad),
-    y: Math.sin(latRad),
-    z: Math.cos(latRad) * Math.cos(lngRad),
-  };
+  const lngRad = (lng * Math.PI) / 180 - Math.PI;
+  const cosLat = Math.cos(latRad);
+  return [-cosLat * Math.cos(lngRad), Math.sin(latRad), cosLat * Math.sin(lngRad)];
 }
 
+/** Match cobe v2 marker screen projection (normalized → render pixels). */
 function projectMumbai(phi: number, theta: number, size: number) {
-  const { x, y, z } = latLngToVec(MUMBAI.lat, MUMBAI.lng);
+  const [tx, ty, tz] = cobeLocationToVec(MUMBAI.lat, MUMBAI.lng);
   const cosPhi = Math.cos(phi);
   const sinPhi = Math.sin(phi);
-  const x1 = x * cosPhi + z * sinPhi;
-  const z1 = -x * sinPhi + z * cosPhi;
   const cosTheta = Math.cos(theta);
   const sinTheta = Math.sin(theta);
-  const y1 = y * cosTheta - z1 * sinTheta;
-  const z2 = y * sinTheta + z1 * cosTheta;
-  const scale = size * 0.44;
-  const cx = size / 2;
-  const cy = size / 2;
+  const c = cosPhi * tx + sinPhi * tz;
+  const s = sinPhi * sinTheta * tx + cosTheta * ty - cosPhi * sinTheta * tz;
+  const depth = -sinPhi * cosTheta * tx + sinTheta * ty + cosPhi * cosTheta * tz;
   return {
-    x: cx + x1 * scale,
-    y: cy - y1 * scale,
-    visible: z2 > 0.02,
-    depth: z2,
+    x: ((c + 1) / 2) * size,
+    y: ((-s + 1) / 2) * size,
+    visible: depth >= 0,
+    depth,
   };
 }
 
