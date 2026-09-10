@@ -1,413 +1,315 @@
-/* Technical Noir hero composition. The ShaderGradient is atmospheric, not a card. */
+/*
+ * Technical Noir hero, using the original baseline's centered composition.
+ * The site-level ShaderGradient now owns the atmosphere; this file only
+ * controls identity, typography and the lightweight fluid cursor reveal.
+ */
 
 .hero.hero--technical {
-  min-height: 42rem;
-  padding: 8.5rem 0 4.5rem;
-  overflow: clip;
-  justify-content: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 8rem 0 4rem;
+  overflow: visible;
 }
 
-.hero-technical-grid {
+.hero-content.hero-content--technical {
   position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   width: 100%;
-  min-height: 31rem;
+  text-align: center;
+  gap: 0.25rem;
+}
+
+.portrait-wrap.portrait-wrap--fluid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .hero-copy.hero-copy--technical {
-  position: relative;
-  z-index: 4;
-  width: min(100%, 33rem);
-  margin: 0;
-  text-align: left;
-}
-
-.hero-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0 0 1.15rem;
-  color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.hero-kicker::before {
-  content: "";
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: var(--tn-teal);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--tn-teal) 10%, transparent);
+  width: 100%;
+  max-width: none;
+  margin: 1.5rem 0 0;
+  text-align: center;
 }
 
 .hero-title.hero-title--technical {
-  display: flex;
-  flex-direction: column;
+  display: block;
   margin: 0;
   color: var(--foreground);
-  font-size: clamp(4.2rem, 7.3vw, 6.65rem);
+  font-size: 3rem;
   font-weight: 650;
-  line-height: 0.89;
-  letter-spacing: -0.072em;
-  white-space: normal;
+  line-height: 1.15;
+  letter-spacing: -0.055em;
+  white-space: nowrap;
 }
 
-.hero-title--technical .hero-title-line:last-child {
-  color: color-mix(in srgb, var(--foreground) 72%, var(--muted-foreground));
+.hero-title--technical .hero-title-fade {
+  color: color-mix(in srgb, var(--foreground) 68%, var(--muted-foreground));
+}
+
+.dark .hero-title--technical .hero-title-fade {
+  color: #aab0b8;
+}
+
+.hero-title--technical .hero-name {
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 720;
+  letter-spacing: -0.06em;
 }
 
 .hero-description.hero-description--technical {
-  max-width: 29rem;
-  margin: 1.55rem 0 0;
+  width: min(100%, 42rem);
+  margin: 0.35rem auto 0;
   color: var(--muted-foreground);
-  font-size: clamp(1rem, 1.6vw, 1.22rem);
+  font-size: 1rem;
   font-weight: 470;
-  line-height: 1.55;
+  line-height: 1.4;
   letter-spacing: -0.025em;
 }
 
-.hero-description--technical strong {
+.hero-description-emphasis {
   color: var(--foreground);
-  font-weight: 560;
+  font-weight: 600;
 }
 
 .hero-actions.hero-actions--technical {
-  justify-content: flex-start;
-  margin-top: 1.8rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .hero-actions--technical .social-actions {
-  gap: 0.95rem;
+  gap: 1.5rem;
 }
 
 .hero-actions--technical .social-actions a {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 1px solid var(--tn-hairline);
-  border-radius: 0.48rem;
-  background: color-mix(in srgb, var(--tn-surface-raised) 42%, transparent);
-  color: var(--muted-foreground);
-  transition: color 160ms ease, border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--secondary-foreground);
+  transition: color 160ms ease, transform 180ms ease;
 }
 
 .hero-actions--technical .social-actions a:hover,
 .hero-actions--technical .social-actions a:focus-visible {
   color: var(--foreground);
-  border-color: color-mix(in srgb, var(--tn-teal) 42%, var(--tn-hairline));
-  background: color-mix(in srgb, var(--tn-teal) 8%, var(--tn-surface-raised));
-  transform: translateY(-1px);
+  background: transparent;
+  transform: translateY(-1px) scale(1.08);
 }
 
 .hero-actions--technical .hero-divider {
   background: var(--tn-hairline-strong);
 }
 
-.hero-visual {
+/* --------------------------------------------------------------------------
+   Fluid identity reveal
+   --------------------------------------------------------------------------
+   The interaction is deliberately bounded to the original portrait slot's
+   vertical footprint. A wider invisible interaction field gives the fluid
+   trail room to breathe without moving the headline away from its baseline
+   position. The real portrait can later be supplied through profile.portraitSrc.
+ */
+
+.hero-identity-reveal.hero-fluid-reveal {
   position: relative;
-  z-index: 1;
-  min-height: 35rem;
-  margin-right: -7.5rem;
-  isolation: isolate;
-}
-
-.hero-atmosphere {
-  position: absolute;
-  z-index: 0;
-  inset: -8% -3% -7% -10%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.hero-atmosphere__fallback,
-.hero-atmosphere__shader,
-.hero-atmosphere__vignette,
-.hero-atmosphere__grain {
-  position: absolute;
-  inset: 0;
-}
-
-.hero-atmosphere__fallback {
-  opacity: 1;
-  transform: translateX(8%) scale(1.06);
-  background:
-    radial-gradient(circle at 59% 50%, rgba(255, 129, 10, 0.72) 0%, rgba(255, 129, 10, 0.22) 15%, transparent 34%),
-    radial-gradient(circle at 47% 42%, rgba(115, 191, 196, 0.68) 0%, rgba(115, 191, 196, 0.19) 20%, transparent 40%),
-    radial-gradient(circle at 68% 58%, rgba(141, 160, 206, 0.55) 0%, rgba(141, 160, 206, 0.15) 25%, transparent 45%);
-  filter: blur(24px) saturate(0.88);
-}
-
-.dark .hero-atmosphere__fallback {
-  background:
-    radial-gradient(circle at 59% 50%, rgba(255, 129, 10, 0.62) 0%, rgba(255, 129, 10, 0.15) 16%, transparent 35%),
-    radial-gradient(circle at 46% 42%, rgba(115, 191, 196, 0.62) 0%, rgba(115, 191, 196, 0.14) 20%, transparent 42%),
-    radial-gradient(circle at 67% 59%, rgba(141, 160, 206, 0.48) 0%, rgba(141, 160, 206, 0.12) 26%, transparent 46%);
-  filter: blur(30px) saturate(0.92);
-}
-
-.hero-atmosphere__shader {
-  inset: -9% -10% -9% -5%;
-  opacity: 0.96;
-  animation: hero-shader-arrive 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.hero-atmosphere__shader canvas {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-@keyframes hero-shader-arrive {
-  from { opacity: 0; transform: scale(0.985); }
-  to { opacity: 0.96; transform: scale(1); }
-}
-
-.hero-atmosphere__vignette {
-  z-index: 3;
-  background:
-    linear-gradient(90deg, var(--tn-canvas) 0%, color-mix(in srgb, var(--tn-canvas) 76%, transparent) 16%, transparent 42%),
-    radial-gradient(ellipse at center, transparent 46%, color-mix(in srgb, var(--tn-canvas) 84%, transparent) 100%);
-}
-
-.hero-atmosphere__grain {
+  inset: auto;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
   z-index: 4;
-  opacity: 0.12;
-  mix-blend-mode: soft-light;
-  background-image: radial-gradient(currentColor 0.45px, transparent 0.55px);
-  background-size: 3px 3px;
-  color: var(--foreground);
+  width: min(12rem, 72vw);
+  height: 5rem;
+  margin: 0 auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(15, 19, 24, 0.88);
+  transform: none;
+  backdrop-filter: none;
+  user-select: none;
+  touch-action: pan-y;
 }
 
-/* Cursor-driven identity reveal. It is intentionally a small supporting layer.
-   When a real portrait asset is added later, this mask architecture can reveal
-   the image without changing the interaction model. */
-.hero-identity-reveal {
-  --identity-x: 52%;
-  --identity-y: 48%;
-  position: absolute;
-  z-index: 5;
-  left: 7%;
-  bottom: 9%;
-  width: clamp(8.75rem, 14vw, 11rem);
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tn-surface) 62%, transparent);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.12);
-  cursor: crosshair;
-  backdrop-filter: blur(7px);
+.dark .hero-identity-reveal.hero-fluid-reveal {
+  background: transparent;
+  box-shadow: none;
+  color: rgba(246, 245, 239, 0.92);
 }
 
-.dark .hero-identity-reveal {
-  background: rgba(8, 11, 14, 0.48);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.28);
+.hero-fluid-reveal__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.hero-identity-reveal__base,
-.hero-identity-reveal__signal {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+.hero-fluid-reveal__disc {
+  fill: color-mix(in srgb, var(--tn-surface-raised) 54%, transparent);
+  stroke: color-mix(in srgb, var(--foreground) 18%, transparent);
+  stroke-width: 1.15;
 }
 
-.hero-identity-reveal__base span,
-.hero-identity-reveal__signal span {
-  font-size: clamp(2.4rem, 5vw, 4.1rem);
-  font-weight: 700;
-  line-height: 1;
+.dark .hero-fluid-reveal__disc {
+  fill: rgba(8, 11, 14, 0.48);
+  stroke: rgba(242, 240, 233, 0.2);
+}
+
+.hero-fluid-reveal__base-mark,
+.hero-fluid-reveal__signal-mark {
+  font-family: var(--font-sans);
+  font-size: 35px;
+  font-weight: 720;
   letter-spacing: -0.08em;
+  text-anchor: middle;
+  dominant-baseline: middle;
 }
 
-.hero-identity-reveal__base {
-  color: color-mix(in srgb, var(--muted-foreground) 48%, transparent);
+.hero-fluid-reveal__base-mark {
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--foreground) 28%, transparent);
+  stroke-width: 0.75;
+  paint-order: stroke;
 }
 
-.hero-identity-reveal__base span {
-  -webkit-text-stroke: 1px color-mix(in srgb, var(--foreground) 18%, transparent);
-  color: transparent;
+.hero-fluid-reveal__signal-disc {
+  fill: color-mix(in srgb, #ffffff 72%, var(--tn-teal) 28%);
 }
 
-.hero-identity-reveal__signal {
-  color: #12161a;
-  background:
-    radial-gradient(circle at 36% 30%, rgba(255,255,255,0.94), rgba(241,244,245,0.7) 36%, rgba(115,191,196,0.34) 70%, transparent 100%);
-  -webkit-mask-image: radial-gradient(circle 4.9rem at var(--identity-x) var(--identity-y), #000 0 44%, rgba(0,0,0,0.82) 58%, transparent 82%);
-  mask-image: radial-gradient(circle 4.9rem at var(--identity-x) var(--identity-y), #000 0 44%, rgba(0,0,0,0.82) 58%, transparent 82%);
+.hero-fluid-reveal__signal-mark {
+  fill: #11161a;
 }
 
-.dark .hero-identity-reveal__signal {
-  color: #f4f1e9;
-  background:
-    radial-gradient(circle at 36% 30%, rgba(255,255,255,0.16), rgba(115,191,196,0.12) 42%, rgba(141,160,206,0.05) 68%, transparent 100%),
-    #0c1014;
+.dark .hero-fluid-reveal__signal-disc {
+  fill: rgba(242, 244, 241, 0.15);
 }
 
-.hero-identity-reveal__cursor {
-  position: absolute;
-  z-index: 6;
-  left: var(--identity-x);
-  top: var(--identity-y);
-  width: 4.2rem;
-  height: 4.2rem;
-  border: 1px solid color-mix(in srgb, var(--foreground) 42%, transparent);
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
-  opacity: 0.68;
+.dark .hero-fluid-reveal__signal-mark {
+  fill: #f3f1ea;
+}
+
+.hero-fluid-reveal__flow {
+  stroke: currentColor;
   pointer-events: none;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tn-teal) 8%, transparent) inset;
 }
 
-.hero-identity-reveal__cursor::after {
-  content: "";
-  position: absolute;
-  inset: 50% auto auto 50%;
-  width: 0.28rem;
-  height: 0.28rem;
-  border-radius: 999px;
-  background: var(--foreground);
-  transform: translate(-50%, -50%);
+.hero-fluid-reveal__flow--glow {
+  opacity: 0.12;
 }
 
-.hero-identity-reveal__ticks i {
-  position: absolute;
-  z-index: 7;
-  width: 0.45rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--foreground) 38%, transparent);
+.hero-fluid-reveal__flow--core {
+  opacity: 0.72;
 }
 
-.hero-identity-reveal__ticks i:nth-child(1) { left: 0.65rem; top: 50%; }
-.hero-identity-reveal__ticks i:nth-child(2) { right: 0.65rem; top: 50%; }
-.hero-identity-reveal__ticks i:nth-child(3) { left: 50%; top: 0.65rem; transform: rotate(90deg); }
-.hero-identity-reveal__ticks i:nth-child(4) { left: 50%; bottom: 0.65rem; transform: rotate(90deg); }
-
-.hero-identity-reveal--static .hero-identity-reveal__signal {
-  -webkit-mask-image: none;
-  mask-image: none;
-  opacity: 0.88;
+.hero-fluid-reveal__head {
+  fill: currentColor;
+  opacity: 0.9;
+  pointer-events: none;
 }
 
-.hero-identity-reveal--static .hero-identity-reveal__cursor {
+.dark .hero-fluid-reveal__flow--glow {
+  opacity: 0.2;
+}
+
+.dark .hero-fluid-reveal__flow--core {
+  opacity: 0.84;
+}
+
+.hero-fluid-reveal--static .hero-fluid-reveal__revealed {
+  mask: none;
+}
+
+.hero-fluid-reveal--static .hero-fluid-reveal__flow,
+.hero-fluid-reveal--static .hero-fluid-reveal__head {
   display: none;
 }
 
-@media (max-width: 959px) and (min-width: 700px) {
-  .hero.hero--technical {
-    min-height: 38rem;
-    padding-top: 8rem;
-  }
-
-  .hero-technical-grid {
-    grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
-    min-height: 29rem;
-  }
-
-  .hero-title.hero-title--technical {
-    font-size: clamp(3.7rem, 7vw, 5.25rem);
-  }
-
-  .hero-visual {
-    min-height: 30rem;
-    margin-right: -5.5rem;
-  }
-
-  .hero-identity-reveal {
-    left: 2%;
-    bottom: 10%;
+@media (pointer: fine) {
+  .hero-fluid-reveal:not(.hero-fluid-reveal--static) {
+    cursor: none;
   }
 }
 
-@media (max-width: 699px) {
+@media (min-width: 640px) {
   .hero.hero--technical {
-    min-height: 0;
-    padding: 7.4rem 0 3.25rem;
-    overflow: hidden;
-  }
-
-  .hero-technical-grid {
-    grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
-  }
-
-  .hero-copy.hero-copy--technical {
-    width: 100%;
-    padding-right: 0.2rem;
-  }
-
-  .hero-kicker {
-    margin-bottom: 0.9rem;
-    font-size: 0.66rem;
+    padding: 14rem 0 4rem;
   }
 
   .hero-title.hero-title--technical {
-    font-size: clamp(3.5rem, 17vw, 4.85rem);
-    line-height: 0.91;
+    font-size: 4.5rem;
+    line-height: 1.125;
   }
 
   .hero-description.hero-description--technical {
-    width: min(100%, 28rem);
-    margin-top: 1.2rem;
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .hero.hero--technical {
+    padding: 8rem 0 3.5rem;
+    overflow: hidden;
+  }
+
+  .hero-identity-reveal.hero-fluid-reveal {
+    width: min(10.25rem, 68vw);
+    height: 4.25rem;
+  }
+
+  .hero-copy.hero-copy--technical {
+    margin-top: 1.25rem;
+  }
+
+  .hero-title.hero-title--technical {
+    font-size: clamp(2.75rem, 12vw, 3.15rem);
+    letter-spacing: -0.052em;
+  }
+
+  .hero-description.hero-description--technical {
+    width: min(100%, 27rem);
     font-size: 1rem;
   }
 
   .hero-actions.hero-actions--technical {
     flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 0.9rem;
+    gap: 1rem;
     margin-top: 1.35rem;
   }
 
-  .hero-visual {
-    min-height: 18.5rem;
-    margin: 1.35rem -4.5rem -1rem 1.25rem;
+  .hero-actions--technical .social-actions {
+    gap: 1.25rem;
   }
+}
 
-  .hero-atmosphere {
-    inset: -9% -1% -10% -18%;
-  }
-
-  .hero-atmosphere__fallback {
-    transform: translateX(5%) scale(1.08);
-    filter: blur(20px) saturate(0.86);
-  }
-
-  .hero-atmosphere__vignette {
-    background:
-      linear-gradient(90deg, color-mix(in srgb, var(--tn-canvas) 62%, transparent), transparent 42%),
-      radial-gradient(ellipse at center, transparent 38%, color-mix(in srgb, var(--tn-canvas) 76%, transparent) 100%);
-  }
-
-  .hero-identity-reveal {
-    left: 5%;
-    bottom: 4%;
-    width: 8.25rem;
-    cursor: default;
-  }
-
-  .hero-identity-reveal__cursor {
-    display: none;
-  }
-
-  .hero-identity-reveal__signal {
-    -webkit-mask-image: radial-gradient(circle 4.6rem at 54% 48%, #000 0 52%, transparent 88%);
-    mask-image: radial-gradient(circle 4.6rem at 54% 48%, #000 0 52%, transparent 88%);
+@media (max-width: 380px) {
+  .hero-title.hero-title--technical {
+    font-size: 2.62rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-atmosphere__shader,
   .hero-actions--technical .social-actions a {
-    animation: none;
     transition: none;
   }
 
