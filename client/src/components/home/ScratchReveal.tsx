@@ -1,44 +1,37 @@
 import { RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { type ScratchRevealContent } from "@/data/portfolio";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { scratchRewards } from "@/data/scratchRewards";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { cn } from "@/lib/utils";
+import styles from "./scratchReveal.module.css";
 
 const BRUSH_RADIUS = 30;
 const COMPLETE_THRESHOLD = 0.2;
-const GRADIENT_COLORS = ["rgba(169, 124, 249, 0.2)", "rgba(243, 140, 185, 0.2)", "rgba(253, 204, 146, 0.2)"] as const;
+const GRADIENT_COLORS = ["#A97CF833", "#F38CB833", "#FDCC9233"] as const;
 
-type ScratchRevealProps = {
-  content: ScratchRevealContent;
-  className?: string;
-};
-
-function RevealLayer({ content }: { content: ScratchRevealContent }) {
-  if (content.kind === "text") {
-    return <p className="scratch-reveal-line">{content.text}</p>;
-  }
-  return <img className="scratch-reveal-media" src={content.src} alt={content.alt} />;
+function differentReward(current: number) {
+  if (scratchRewards.length <= 1) return 0;
+  let next = current;
+  while (next === current) next = Math.floor(Math.random() * scratchRewards.length);
+  return next;
 }
 
-export function ScratchReveal({ content, className }: ScratchRevealProps) {
+export function ScratchReveal() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const scratching = useRef(false);
+  const [rewardIndex, setRewardIndex] = useState(() => Math.floor(Math.random() * scratchRewards.length));
   const [complete, setComplete] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
-  const [resetKey, setResetKey] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
-  const labelId = useId();
 
   const paintCover = useCallback(() => {
     const canvas = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
+    const stage = stageRef.current;
+    if (!canvas || !stage) return;
 
-    const rect = wrap.getBoundingClientRect();
+    const rect = stage.getBoundingClientRect();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
 
@@ -59,19 +52,20 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
   useEffect(() => {
     if (reducedMotion) return;
     paintCover();
-    const wrap = wrapRef.current;
-    if (!wrap) return;
+    const stage = stageRef.current;
+    if (!stage) return;
     const observer = new ResizeObserver(() => {
       if (!complete) paintCover();
     });
-    observer.observe(wrap);
+    observer.observe(stage);
     return () => observer.disconnect();
-  }, [complete, paintCover, reducedMotion, resetKey]);
+  }, [complete, paintCover, reducedMotion, rewardIndex]);
 
   const scratchAt = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
+
     const rect = canvas.getBoundingClientRect();
     const dpr = canvas.width / Math.max(1, rect.width);
     ctx.save();
@@ -83,85 +77,78 @@ export function ScratchReveal({ content, className }: ScratchRevealProps) {
     ctx.restore();
   };
 
-  const checkComplete = () => {
+  const checkCompletion = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || complete) return;
-    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let cleared = 0;
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] === 0) cleared += 1;
+
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let clearPixels = 0;
+    for (let i = 3; i < pixels.length; i += 4) {
+      if (pixels[i] === 0) clearPixels += 1;
     }
-    if (cleared / (data.length / 4) >= COMPLETE_THRESHOLD) {
+
+    if (clearPixels / (pixels.length / 4) >= COMPLETE_THRESHOLD) {
       setComplete(true);
-      setCelebrate(true);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      window.setTimeout(() => setCelebrate(false), 500);
+      ctx.restore();
     }
   };
 
-  useEffect(() => {
-    if (reducedMotion) return;
-    const onMove = (event: PointerEvent) => {
-      if (!scratching.current) return;
-      scratchAt(event.clientX, event.clientY);
-    };
-    const onUp = () => {
-      if (!scratching.current) return;
-      scratching.current = false;
-      checkComplete();
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-  }, [complete, reducedMotion]);
-
   const reset = () => {
+    scratching.current = false;
     setComplete(false);
-    setCelebrate(false);
-    setResetKey((key) => key + 1);
+    setRewardIndex((current) => differentReward(current));
   };
 
   return (
-    <div className={cn("scratch-reveal", className)}>
-      <div
-        ref={wrapRef}
-        className={cn("scratch-reveal-stage", celebrate && "scratch-reveal-stage--celebrate")}
-        aria-labelledby={labelId}
-        onPointerDown={(event) => {
-          if (reducedMotion || complete) return;
-          scratching.current = true;
-          scratchAt(event.clientX, event.clientY);
-        }}
-      >
-        <div className="scratch-reveal-content" id={labelId}>
-          <div className="scratch-reveal-payload scratch-reveal-payload--visible">
-            <RevealLayer content={content} />
-          </div>
+    <div className={styles.root}>
+      <div ref={stageRef} className={styles.stage}>
+        <div className={styles.reward}>
+          <img src={scratchRewards[rewardIndex]} alt="Scratch reward" draggable={false} />
         </div>
+
         {!reducedMotion ? (
           <canvas
             ref={canvasRef}
-            className={cn("scratch-reveal-canvas", complete && "scratch-reveal-canvas--done")}
-            style={{ cursor: "none" }}
+            className={`${styles.canvas} ${complete ? styles.canvasDone : ""}`}
             aria-hidden="true"
+            onPointerDown={(event) => {
+              if (complete) return;
+              scratching.current = true;
+              event.currentTarget.setPointerCapture(event.pointerId);
+              scratchAt(event.clientX, event.clientY);
+            }}
+            onPointerMove={(event) => {
+              if (!scratching.current || complete) return;
+              scratchAt(event.clientX, event.clientY);
+            }}
+            onPointerUp={(event) => {
+              if (!scratching.current) return;
+              scratching.current = false;
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              checkCompletion();
+            }}
+            onPointerCancel={() => {
+              scratching.current = false;
+              checkCompletion();
+            }}
           />
         ) : null}
+
         <button
           type="button"
-          className="scratch-reveal-reset"
-          style={{ position: "absolute", top: "0.3rem", right: "0.3rem", zIndex: 4, padding: "0.25rem" }}
+          className={styles.refresh}
           onClick={(event) => {
             event.stopPropagation();
             reset();
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          aria-label="Refresh scratch"
+          aria-label="Refresh scratch reward"
         >
           <RefreshCw size={14} aria-hidden="true" />
         </button>
