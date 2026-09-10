@@ -1,135 +1,128 @@
-import { ArrowUpRight, Brain, Code2, Github, Layers, Link2, Mail, Server, Sparkles, Wrench } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { aiFocus, backendFocus, dashboardCopy, profile, socials, tools } from "@/data/portfolio";
-import { cn } from "@/lib/utils";
-import styles from "./dashboard.module.css";
-
-function Tile({
-  area,
-  icon,
-  title,
-  children,
-  className,
-}: {
-  area: string;
-  icon: ReactNode;
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <li className={cn("dashboard-item", className)} style={{ gridArea: area }}>
-      <div className="dashboard-item-frame">
-        <article className="dashboard-tile">
-          <div className="tile-header">
-            <span className="tile-icon" aria-hidden="true">
-              {icon}
-            </span>
-            <h3 className="tile-title">{title}</h3>
-          </div>
-          <div className="tile-body">{children}</div>
-        </article>
-      </div>
-    </li>
-  );
-}
-
-function ChipList({ items }: { items: readonly string[] }) {
-  return (
-    <ul className="tile-chips">
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
-  );
-}
-
-function ScratchCard() {
-  const [revealed, setRevealed] = useState(false);
-
-  return (
-    <button
-      type="button"
-      className={cn("scratch-card", revealed && "scratch-card--revealed")}
-      onClick={() => setRevealed(true)}
-      aria-pressed={revealed}
-    >
-      <Sparkles size={18} aria-hidden="true" />
-      <strong>{revealed ? dashboardCopy.scratchReveal : dashboardCopy.scratchPrompt}</strong>
-    </button>
-  );
-}
+import { Github, Linkedin, Mail } from "lucide-react";
+import { DashboardCard, dashboardHeaderIcon } from "@/components/home/DashboardCard";
+import { DashboardCursorProvider } from "@/components/home/DashboardCursor";
+import { FeatureCard, featureCardTitle } from "@/components/home/FeatureCard";
+import { GitHubActivity } from "@/components/home/GitHubActivity";
+import { Globe } from "@/components/home/Globe";
+import { ScratchReveal } from "@/components/home/ScratchReveal";
+import { CoreStackTools, ToolsMarquee } from "@/components/home/ToolsMarquee";
+import {
+  dashboardCopy,
+  dashboardFeature,
+  formatMetric,
+  metrics,
+  visibleSocials,
+} from "@/data/portfolio";
+import "./dashboardParity.css";
 
 export function Dashboard() {
   return (
-    <section className="dashboard-section" id="dashboard" aria-labelledby="dashboard-heading">
-      <h2 id="dashboard-heading" className="sr-only">
-        Personal dashboard
-      </h2>
-      <ul className={cn("dashboard-grid", styles.dashboardGrid)}>
-        <Tile area="location" icon={<Code2 size={20} />} title={dashboardCopy.aboutTitle} className="dashboard-item--tall">
-          <div className="about-copy">
-            <p className="tile-prose tile-prose--large">{dashboardCopy.aboutLead}</p>
-            <p className="tile-prose">{dashboardCopy.aboutBody}</p>
-          </div>
-        </Tile>
+    <DashboardCursorProvider>
+      <section className="dashboard-section dashboard-section--cascade" id="dashboard" aria-labelledby="dashboard-heading">
+        <h2 id="dashboard-heading" className="sr-only">Personal dashboard</h2>
+        <ul className="dashboard-grid">
+          <DashboardCard
+            area="location"
+            title={dashboardCopy.locationTitle}
+            headerIcon={dashboardHeaderIcon("plane")}
+            cursorKind="plane"
+            className="dashboard-item--tall dashboard-item--location"
+          >
+            <Globe />
+          </DashboardCard>
 
-        <Tile area="scratch" icon={<Sparkles size={20} />} title={dashboardCopy.scratchTitle}>
-          <ScratchCard />
-        </Tile>
+          <DashboardCard
+            area="scratch"
+            title={dashboardCopy.scratchTitle}
+            headerIcon={dashboardHeaderIcon("hand")}
+            cursorKind="hand"
+          >
+            <ScratchReveal />
+          </DashboardCard>
 
-        <Tile area="github" icon={<Github size={20} />} title={dashboardCopy.githubTitle} className="dashboard-item--stack">
-          <p className="github-handle">{dashboardCopy.githubHandle}</p>
-          <a className="tile-link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
-            {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
-          </a>
-        </Tile>
+          <DashboardCard
+            area="activity"
+            title={dashboardCopy.activityTitle}
+            headerIcon={<Github size={20} />}
+            cursorKind="laptop"
+            className="dashboard-item--stack"
+          >
+            <GitHubActivity />
+          </DashboardCard>
 
-        <Tile area="coffees" icon={<Server size={20} />} title={dashboardCopy.backendTitle} className="dashboard-item--metric">
-          <ChipList items={backendFocus} />
-        </Tile>
+          <DashboardCard
+            area="workouts"
+            title={dashboardCopy.workoutsTitle}
+            headerIcon={dashboardHeaderIcon("dumbbell")}
+            cursorKind="dumbbell"
+            className="dashboard-item--metric"
+          >
+            <p className="tile-metric-value">{formatMetric(metrics.workouts)}</p>
+          </DashboardCard>
 
-        <Tile area="hours" icon={<Brain size={20} />} title={dashboardCopy.aiTitle} className="dashboard-item--metric">
-          <ChipList items={aiFocus} />
-        </Tile>
+          <DashboardCard
+            area="hours"
+            title={dashboardCopy.hoursTitle}
+            headerIcon={dashboardHeaderIcon("clock")}
+            cursorKind="clock"
+            className="dashboard-item--metric"
+          >
+            <p className="tile-metric-value">{formatMetric(metrics.codingHours)}</p>
+          </DashboardCard>
 
-        <Tile area="music" icon={<Layers size={20} />} title={dashboardCopy.nowBuildingTitle}>
-          <p className="tile-prose tile-prose--large">{dashboardCopy.nowBuildingName}</p>
-          <p className="tile-prose">{dashboardCopy.nowBuildingBody}</p>
-        </Tile>
+          <DashboardCard
+            area="feature"
+            title={featureCardTitle(dashboardFeature)}
+            headerIcon={dashboardHeaderIcon(dashboardFeature.kind === "building" ? "hammer" : "music")}
+            cursorKind={dashboardFeature.kind === "building" ? "hammer" : "music"}
+            className="dashboard-item--feature"
+          >
+            <FeatureCard feature={dashboardFeature} />
+          </DashboardCard>
 
-        <Tile area="favorite" icon={<Wrench size={20} />} title={dashboardCopy.stackTitle}>
-          <p className="tile-prose tile-prose--large">{dashboardCopy.stackBody}</p>
-        </Tile>
+          <DashboardCard
+            area="corestack"
+            title={dashboardCopy.coreStackTitle}
+            headerIcon={dashboardHeaderIcon("heart")}
+            cursorKind="heart"
+          >
+            <CoreStackTools />
+          </DashboardCard>
 
-        <Tile area="contact" icon={<Link2 size={20} />} title={dashboardCopy.connectTitle}>
-          <ul className="connect-list">
-            {socials.map((social) => (
-              <li key={social.label}>
-                <a
-                  href={social.href}
-                  target={social.external ? "_blank" : undefined}
-                  rel={social.external ? "noopener noreferrer" : undefined}
-                  aria-label={social.aria}
-                >
-                  {social.icon === "mail" ? <Mail size={18} /> : <Github size={18} />}
-                  <span>{social.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </Tile>
-
-        <Tile area="tools" icon={<Wrench size={20} />} title={dashboardCopy.toolsTitle}>
-          <div className="tools-marquee" aria-label="Tools">
-            <div className="tools-track">
-              {[...tools, ...tools].map((tool, index) => (
-                <span key={`${tool}-${index}`}>{tool}</span>
+          <DashboardCard
+            area="contact"
+            title={dashboardCopy.connectTitle}
+            headerIcon={dashboardHeaderIcon("link")}
+            cursorKind="link"
+            className="dashboard-item--tall-contact"
+          >
+            <ul className="connect-list">
+              {visibleSocials.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target={social.external ? "_blank" : undefined}
+                    rel={social.external ? "noopener noreferrer" : undefined}
+                    aria-label={social.aria}
+                  >
+                    {social.icon === "mail" ? <Mail size={18} /> : social.icon === "linkedin" ? <Linkedin size={18} /> : <Github size={18} />}
+                    <span>{social.label}</span>
+                  </a>
+                </li>
               ))}
-            </div>
-          </div>
-        </Tile>
-      </ul>
-    </section>
+            </ul>
+          </DashboardCard>
+
+          <DashboardCard
+            area="tools"
+            title={dashboardCopy.toolsTitle}
+            headerIcon={dashboardHeaderIcon("wrench")}
+            cursorKind="wrench"
+          >
+            <ToolsMarquee />
+          </DashboardCard>
+        </ul>
+      </section>
+    </DashboardCursorProvider>
   );
 }
