@@ -5,6 +5,7 @@ import { Hero } from "@/components/home/Hero";
 import { Projects } from "@/components/home/Projects";
 import { WritingSection } from "@/components/home/WritingSection";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { FluidCursorLayer } from "@/components/layout/FluidCursorLayer";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { SiteAtmosphere } from "@/components/layout/SiteAtmosphere";
@@ -25,6 +26,7 @@ export default function Home() {
   return (
     <div className="site-shell">
       <SiteAtmosphere />
+      <FluidCursorLayer />
       <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
       <div className="page-column">
         <Hero />
