@@ -19,6 +19,7 @@ import type { DashboardCursorKind } from "@/data/portfolio";
 import { useFinePointer } from "@/hooks/useFinePointer";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
+import cursorStyles from "./dashboardCardCursor.module.css";
 
 const CURSOR_ICONS: Record<DashboardCursorKind, LucideIcon> = {
   plane: Plane,
@@ -76,9 +77,9 @@ export function DashboardCard({
         className={cn(
           "dashboard-item-frame",
           surfaceEnabled && "dashboard-item-frame--interactive",
+          surfaceEnabled && cursorStyles.customCursorSurface,
         )}
         data-cursor-kind={cursorKind}
-        style={surfaceEnabled ? { cursor: "none" } : undefined}
         onPointerMove={onMove}
         onPointerLeave={onLeave}
       >
