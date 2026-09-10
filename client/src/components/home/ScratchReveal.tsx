@@ -6,7 +6,7 @@ import styles from "./scratchReveal.module.css";
 
 const BRUSH_RADIUS = 30;
 const COMPLETE_THRESHOLD = 0.2;
-const GRADIENT_COLORS = ["#A97CF833", "#F38CB833", "#FDCC9233"] as const;
+const GRADIENT_COLORS = ["#A97CF8", "#F38CB8", "#FDCC92"] as const;
 
 function differentReward(current: number) {
   if (scratchRewards.length <= 1) return 0;
@@ -40,6 +40,9 @@ export function ScratchReveal() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, rect.width, rect.height);
+
+    ctx.fillStyle = "#ccc";
+    ctx.fillRect(0, 0, rect.width, rect.height);
 
     const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
     gradient.addColorStop(0, GRADIENT_COLORS[0]);
