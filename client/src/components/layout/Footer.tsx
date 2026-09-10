@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Send } from "lucide-react";
+import { Github, Linkedin, Mail, Send, Star } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { profile, socialUrls, visibleSocials } from "@/data/portfolio";
@@ -23,9 +23,9 @@ export function Footer() {
   };
 
   const socialIcon = (icon: string) => {
-    if (icon === "mail") return <Mail size={14} aria-hidden="true" />;
-    if (icon === "linkedin") return <Linkedin size={14} aria-hidden="true" />;
-    return <Github size={14} aria-hidden="true" />;
+    if (icon === "mail") return <Mail size={17} aria-hidden="true" />;
+    if (icon === "linkedin") return <Linkedin size={17} aria-hidden="true" />;
+    return <Github size={17} aria-hidden="true" />;
   };
 
   const handleContactClick = () => {
@@ -35,35 +35,46 @@ export function Footer() {
   };
 
   return (
-    <footer className="site-footer" id="contact">
+    <footer className={cn("site-footer", styles.footer)} id="contact">
       <div className="footer-cta">
         <h2 className="footer-hello">
-          Say <span className="hero-script hero-script--inline">hello</span>.
+          Say <span className="hero-script hero-script--inline">hello</span>.{" "}
+          <span className={styles.wave} aria-hidden="true">👋</span>
         </h2>
+
         <a
-          className={cn("footer-contact", planeSending && "footer-contact--sending")}
+          className={cn("footer-contact", styles.contactButton, planeSending && "footer-contact--sending")}
           href={`mailto:${socialUrls.email}`}
           onClick={handleContactClick}
         >
           <Send className="footer-contact-plane" size={16} aria-hidden="true" />
           Contact Me
         </a>
-        <a className="footer-opensource" href={profile.repoHref} target="_blank" rel="noopener noreferrer">
-          This site is open source
+
+        <a
+          className={styles.sourceLink}
+          href={profile.repoHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open this site's repository on GitHub"
+        >
+          <Github size={15} aria-hidden="true" />
+          <span>This site is open source: star it on GitHub</span>
+          <Star size={13} aria-hidden="true" />
         </a>
       </div>
 
-      <div className={cn("footer-columns", styles.columns)}>
+      <div className={styles.columns}>
         <div className={styles.identity}>
           <span className={styles.mark} aria-hidden="true">{profile.initials}</span>
           <p className={styles.name}>{profile.name}</p>
           <p className={styles.role}>{profile.role}</p>
-          <p className={styles.role}>{profile.summary}</p>
+          <p className={styles.summary}>{profile.summary}</p>
         </div>
 
         <div className={styles.linkColumn}>
           <p className="footer-kicker">Navigate</p>
-          <ul>
+          <ul className={styles.linkList}>
             {footerNav.map((item) => (
               <li key={item.name}>
                 {item.href.startsWith("#") ? (
@@ -78,7 +89,7 @@ export function Footer() {
 
         <div className={styles.linkColumn}>
           <p className="footer-kicker">Connect</p>
-          <ul>
+          <ul className={styles.linkList}>
             {visibleSocials.map((social) => (
               <li key={social.label}>
                 <a
@@ -95,7 +106,10 @@ export function Footer() {
         </div>
       </div>
 
-      <p className="footer-copy">© 2026 {profile.name}</p>
+      <div className={styles.bottomRow}>
+        <p>© 2026 {profile.name}. All rights reserved.</p>
+        <p>Built with <span aria-hidden="true">❤️</span> using React, Vite and Tailwind</p>
+      </div>
     </footer>
   );
 }
