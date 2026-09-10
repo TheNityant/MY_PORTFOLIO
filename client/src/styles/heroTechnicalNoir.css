@@ -1,7 +1,7 @@
 /*
- * Technical Noir hero, using the original baseline's centered composition.
- * The site-level ShaderGradient now owns the atmosphere; this file only
- * controls identity, typography and the lightweight fluid cursor reveal.
+ * Technical Noir hero. The site-level ShaderGradient owns the atmospheric
+ * background; the identity region uses three-fluid-fx only as a portrait
+ * reveal compositor. The dashboard/custom cursor remains a separate system.
  */
 
 .hero.hero--technical {
@@ -35,7 +35,7 @@
 .hero-copy.hero-copy--technical {
   width: 100%;
   max-width: none;
-  margin: 1.5rem 0 0;
+  margin: 1.35rem 0 0;
   text-align: center;
 }
 
@@ -50,9 +50,6 @@
   white-space: nowrap;
 }
 
-/* Preserve the main-branch name treatment inside the personalized hero:
-   the greeting uses the original clipped tonal gradient and Nityant keeps
-   the handwritten/script contrast instead of being flattened into the sans. */
 .hero-title--technical .hero-title-fade {
   background: linear-gradient(to bottom, oklch(0.92 0 0), oklch(0.28 0 0));
   -webkit-background-clip: text;
@@ -134,135 +131,101 @@
   background: var(--tn-hairline-strong);
 }
 
-/* --------------------------------------------------------------------------
-   Fluid identity reveal
-   --------------------------------------------------------------------------
-   The interaction is deliberately bounded to the original portrait slot's
-   vertical footprint. A wider invisible interaction field gives the fluid
-   trail room to breathe without moving the headline away from its baseline
-   position. The real portrait can later be supplied through profile.portraitSrc.
- */
-
+/* three-fluid-fx identity compositor -------------------------------------------------
+   The WebGL canvas is transparent and renders only the aligned identity visual.
+   Fluid density decides how much of the colour treatment is exposed. Velocity
+   perturbs only the transition band. There is no visible rectangular canvas. */
 .hero-identity-reveal.hero-fluid-reveal {
   position: relative;
-  inset: auto;
-  left: auto;
-  right: auto;
-  top: auto;
-  bottom: auto;
   z-index: 4;
-  width: min(12rem, 72vw);
-  height: 5rem;
+  width: min(18rem, 80vw);
+  height: 8rem;
   margin: 0 auto;
   overflow: visible;
   border: 0;
-  border-radius: 0;
   background: transparent;
-  box-shadow: none;
-  color: rgba(15, 19, 24, 0.88);
-  transform: none;
-  backdrop-filter: none;
   user-select: none;
   touch-action: pan-y;
+  contain: layout style;
 }
 
-.dark .hero-identity-reveal.hero-fluid-reveal {
-  background: transparent;
-  box-shadow: none;
-  color: rgba(246, 245, 239, 0.92);
+.hero-fluid-reveal__fallback,
+.hero-fluid-reveal__canvas-host {
+  position: absolute;
+  inset: 0;
 }
 
-.hero-fluid-reveal__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.hero-fluid-reveal__fallback {
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.hero-fluid-reveal__fallback::before {
+  content: "";
+  position: absolute;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 19%, transparent);
+  background:
+    radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--tn-blue) 10%, transparent), transparent 55%),
+    color-mix(in srgb, var(--tn-surface-raised) 48%, transparent);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.05);
+}
+
+.dark .hero-fluid-reveal__fallback::before {
+  border-color: rgba(242, 240, 233, 0.2);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(141, 160, 206, 0.08), transparent 55%),
+    rgba(8, 11, 14, 0.48);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+
+.hero-fluid-reveal__fallback-mark {
+  position: relative;
+  z-index: 1;
+  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+  font-family: var(--font-sans);
+  font-size: 2.25rem;
+  font-weight: 720;
+  letter-spacing: -0.08em;
+}
+
+.hero-fluid-reveal__fallback img {
+  position: relative;
+  z-index: 1;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 999px;
+  object-fit: cover;
+  object-position: center;
+  filter: grayscale(1) saturate(0.15) contrast(0.94);
+  opacity: 0.82;
+}
+
+.hero-fluid-reveal__canvas-host {
+  z-index: 1;
+  pointer-events: none;
   overflow: visible;
 }
 
-.hero-fluid-reveal__disc {
-  fill: color-mix(in srgb, var(--tn-surface-raised) 54%, transparent);
-  stroke: color-mix(in srgb, var(--foreground) 18%, transparent);
-  stroke-width: 1.15;
+.hero-fluid-reveal__canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  filter: drop-shadow(0 13px 34px rgba(0, 0, 0, 0.08));
 }
 
-.dark .hero-fluid-reveal__disc {
-  fill: rgba(8, 11, 14, 0.48);
-  stroke: rgba(242, 240, 233, 0.2);
+.dark .hero-fluid-reveal__canvas {
+  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.22));
 }
 
-.hero-fluid-reveal__base-mark,
-.hero-fluid-reveal__signal-mark {
-  font-family: var(--font-sans);
-  font-size: 35px;
-  font-weight: 720;
-  letter-spacing: -0.08em;
-  text-anchor: middle;
-  dominant-baseline: middle;
-}
-
-.hero-fluid-reveal__base-mark {
-  fill: transparent;
-  stroke: color-mix(in srgb, var(--foreground) 28%, transparent);
-  stroke-width: 0.75;
-  paint-order: stroke;
-}
-
-.hero-fluid-reveal__signal-disc {
-  fill: color-mix(in srgb, #ffffff 72%, var(--tn-teal) 28%);
-}
-
-.hero-fluid-reveal__signal-mark {
-  fill: #11161a;
-}
-
-.dark .hero-fluid-reveal__signal-disc {
-  fill: rgba(242, 244, 241, 0.15);
-}
-
-.dark .hero-fluid-reveal__signal-mark {
-  fill: #f3f1ea;
-}
-
-.hero-fluid-reveal__flow {
-  stroke: currentColor;
-  pointer-events: none;
-}
-
-.hero-fluid-reveal__flow--glow {
-  opacity: 0.12;
-}
-
-.hero-fluid-reveal__flow--core {
-  opacity: 0.72;
-}
-
-.hero-fluid-reveal__head {
-  fill: currentColor;
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-.dark .hero-fluid-reveal__flow--glow {
-  opacity: 0.2;
-}
-
-.dark .hero-fluid-reveal__flow--core {
-  opacity: 0.84;
-}
-
-.hero-fluid-reveal--static .hero-fluid-reveal__revealed {
-  mask: none;
-}
-
-.hero-fluid-reveal--static .hero-fluid-reveal__flow,
-.hero-fluid-reveal--static .hero-fluid-reveal__head {
+.hero-fluid-reveal--static .hero-fluid-reveal__canvas-host {
   display: none;
-}
-
-@media (pointer: fine) {
-  .hero-fluid-reveal:not(.hero-fluid-reveal--static) {
-    cursor: none;
-  }
 }
 
 @media (min-width: 640px) {
@@ -287,12 +250,22 @@
   }
 
   .hero-identity-reveal.hero-fluid-reveal {
-    width: min(10.25rem, 68vw);
-    height: 4.25rem;
+    width: min(15rem, 84vw);
+    height: 7rem;
+  }
+
+  .hero-fluid-reveal__fallback::before,
+  .hero-fluid-reveal__fallback img {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .hero-fluid-reveal__fallback-mark {
+    font-size: 1.95rem;
   }
 
   .hero-copy.hero-copy--technical {
-    margin-top: 1.25rem;
+    margin-top: 1.15rem;
   }
 
   .hero-title.hero-title--technical {
@@ -323,6 +296,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-fluid-reveal__fallback,
+  .hero-fluid-reveal__fallback img {
+    filter: grayscale(0.45) saturate(0.65);
+  }
+
   .hero-actions--technical .social-actions a {
     transition: none;
   }
