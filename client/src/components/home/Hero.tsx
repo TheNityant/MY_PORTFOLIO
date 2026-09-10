@@ -1,5 +1,4 @@
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
-import { HeroIdentityReveal } from "@/components/home/HeroIdentityReveal";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -23,7 +22,9 @@ export function Hero() {
       <TooltipProvider>
         <div className="hero-content hero-content--technical">
           <div className="portrait-wrap portrait-wrap--fluid">
-            <HeroIdentityReveal />
+            <div className="portrait-placeholder" role="img" aria-label={profile.portraitAlt}>
+              {profile.initials}
+            </div>
             <div className="hero-status-slot" aria-hidden="true" />
           </div>
 
