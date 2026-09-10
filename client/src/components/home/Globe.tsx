@@ -5,7 +5,6 @@ import { profile } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
-const MUMBAI = { lat: profile.locationLat, lng: profile.locationLng };
 const DRAG_DAMPING = 1400;
 const PHI_IDLE = 0.005;
 const THETA_TARGET = 0.4;
@@ -14,67 +13,13 @@ const THETA_MAX = 0.55;
 const INERTIA_DECAY = 0.92;
 const SPRING = 0.14;
 const DPR = 2;
-const COBE_SCREEN_RADIUS = 0.8;
-
-/** Match cobe's coordinate convention: lng=0 sits on +X. */
-function cobeLocationToVec(lat: number, lng: number): [number, number, number] {
-  const latRad = (lat * Math.PI) / 180;
-  const lngRad = (lng * Math.PI) / 180;
-  const cosLat = Math.cos(latRad);
-  return [cosLat * Math.cos(lngRad), Math.sin(latRad), -cosLat * Math.sin(lngRad)];
-}
-
-/** Match cobe's M_theta * M_phi rotation and its 0.8 screen-space globe radius. */
-function projectMumbai(phi: number, theta: number, size: number) {
-  const [x, y, z] = cobeLocationToVec(MUMBAI.lat, MUMBAI.lng);
-  const cosPhi = Math.cos(phi);
-  const sinPhi = Math.sin(phi);
-  const cosTheta = Math.cos(theta);
-  const sinTheta = Math.sin(theta);
-  const x1 = cosPhi * x + sinPhi * z;
-  const z1 = -sinPhi * x + cosPhi * z;
-  const y1 = cosTheta * y - sinTheta * z1;
-  const depth = sinTheta * y + cosTheta * z1;
-  const center = size / 2;
-  const radius = center * COBE_SCREEN_RADIUS;
-
-  return {
-    x: center + x1 * radius,
-    y: center - y1 * radius,
-    visible: depth >= -0.02,
-    depth,
-  };
-}
-
-function drawMumbaiGlow(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  visible: boolean,
-  depth: number,
-) {
-  if (!visible) return;
-  const alpha = Math.min(1, Math.max(0.25, depth + 0.4));
-  const glowRadius = 10 * DPR;
-  const coreRadius = 3 * DPR;
-  const glow = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
-  glow.addColorStop(0, `rgba(245, 158, 11, ${0.9 * alpha})`);
-  glow.addColorStop(0.42, `rgba(245, 158, 11, ${0.38 * alpha})`);
-  glow.addColorStop(1, "rgba(245, 158, 11, 0)");
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
-  ctx.beginPath();
-  ctx.arc(x, y, coreRadius, 0, Math.PI * 2);
-  ctx.fill();
-}
+const MUMBAI_MARKER = {
+  location: [profile.locationLat, profile.locationLng] as [number, number],
+  size: 0.085,
+};
 
 export function Globe({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayRef = useRef<HTMLCanvasElement>(null);
   const pointerId = useRef<number | null>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
   const phiRef = useRef(2.45);
@@ -88,8 +33,7 @@ export function Globe({ className }: { className?: string }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const overlay = overlayRef.current;
-    if (!canvas || !overlay) return;
+    if (!canvas) return;
 
     let width = canvas.offsetWidth;
     let frameId = 0;
@@ -106,30 +50,11 @@ export function Globe({ className }: { className?: string }) {
       mapSamples: 22000,
       mapBrightness: isDark ? 1.2 : 1.35,
       baseColor: (isDark ? [0.8, 0.9, 1.2] : [0.96, 0.97, 0.99]) as [number, number, number],
-      markerColor: [0.98, 0.99, 1],
+      markerColor: [245 / 255, 158 / 255, 11 / 255],
       glowColor: isDark ? [1, 1, 1] : [0.9, 0.92, 0.95],
-      markers: [],
+      markers: [MUMBAI_MARKER],
       scale: 1,
     });
-
-    const paintOverlay = () => {
-      const octx = overlay.getContext("2d");
-      if (!octx || width <= 0) return;
-      const renderSize = width * DPR;
-      if (overlay.width !== renderSize || overlay.height !== renderSize) {
-        overlay.width = renderSize;
-        overlay.height = renderSize;
-        overlay.style.width = `${width}px`;
-        overlay.style.height = `${width}px`;
-      }
-      octx.clearRect(0, 0, renderSize, renderSize);
-      const projected = projectMumbai(
-        phiRef.current + dragPhi.current,
-        thetaRef.current,
-        renderSize,
-      );
-      drawMumbaiGlow(octx, projected.x, projected.y, projected.visible, projected.depth);
-    };
 
     const onResize = () => {
       width = canvas.offsetWidth;
@@ -162,7 +87,6 @@ export function Globe({ className }: { className?: string }) {
         width: renderWidth,
         height: renderWidth,
       });
-      paintOverlay();
       frameId = requestAnimationFrame(tick);
     };
 
@@ -208,7 +132,6 @@ export function Globe({ className }: { className?: string }) {
       onPointerCancel={endDrag}
     >
       <canvas ref={canvasRef} className="globe-canvas" aria-hidden="true" />
-      <canvas ref={overlayRef} className="globe-overlay" aria-hidden="true" />
     </div>
   );
 }
