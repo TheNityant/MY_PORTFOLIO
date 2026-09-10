@@ -3,7 +3,9 @@ import { Dashboard } from "@/components/home/Dashboard";
 import { Experience } from "@/components/home/Experience";
 import { Hero } from "@/components/home/Hero";
 import { Projects } from "@/components/home/Projects";
+import { WritingSection } from "@/components/home/WritingSection";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 
 export default function Home() {
@@ -26,7 +28,9 @@ export default function Home() {
         <Hero />
         <Dashboard />
         <Projects />
+        <WritingSection />
         <Experience />
+        <Footer />
       </div>
       <CommandPalette open={searchOpen} onClose={closeSearch} />
     </div>

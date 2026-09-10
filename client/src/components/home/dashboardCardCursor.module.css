@@ -1,0 +1,4 @@
+.customCursorSurface,
+.customCursorSurface * {
+  cursor: none !important;
+}

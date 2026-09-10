@@ -23,7 +23,16 @@ an independent Vite + React implementation.
 - Employers, projects, writing, travel photos, music, GIFs, statistics
 - Contact addresses and social profile URLs
 - `public/` assets (profile images, album art, tool SVGs, sunset photos, logos)
-- WebGL globe, particle constellation, glowing-border effects, custom cursor
+- Particle constellation, glowing-border effects, custom cursor
+- Reference WebGL globe implementation and travel/relocation animation
+- `public/` GIFs, album art, and tool SVGs from the reference repo
+
+### Independent third-party libraries (not from the reference)
+
+- **cobe** (MIT) — WebGL globe used for a Mumbai location marker. Independent of the
+  reference globe implementation; no relocation/two-city story.
+- **Simple Icons** (CC0 1.0) — monochrome tool marks in `client/public/tools/`
+  (Java/OpenJDK, Spring, Python, PostgreSQL, TypeScript, React, Node.js).
 
 ### Attribution required by Apache 2.0
 
