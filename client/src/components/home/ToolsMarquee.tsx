@@ -54,19 +54,25 @@ export function CoreStackTools() {
   );
 }
 
+function ToolLogoGroup({ toolsToRender, duplicate = false }: { toolsToRender: ToolMark[]; duplicate?: boolean }) {
+  return (
+    <div className="tools-marquee-group" aria-hidden={duplicate ? true : undefined}>
+      {toolsToRender.map((tool) => (
+        <ToolMarkView key={`${duplicate ? "copy" : "primary"}-${tool.name}`} tool={tool} iconOnly />
+      ))}
+    </div>
+  );
+}
+
 export function ToolsMarquee() {
   const reducedMotion = usePrefersReducedMotion();
-  // The reference dashboard keeps this strip visual: logos only, names on hover.
-  // Exclude text-only entries so the row never falls back to a word label.
   const logoTools = tools.filter((tool) => Boolean(tool.icon));
-  const items = reducedMotion ? logoTools : [...logoTools, ...logoTools];
 
   return (
     <div className="tools-marquee tools-marquee--logos" aria-label="Tools and technologies">
       <div className={cn("tools-track", reducedMotion && "tools-track--static")}>
-        {items.map((tool, index) => (
-          <ToolMarkView key={`${tool.name}-${index}`} tool={tool} iconOnly />
-        ))}
+        <ToolLogoGroup toolsToRender={logoTools} />
+        {!reducedMotion ? <ToolLogoGroup toolsToRender={logoTools} duplicate /> : null}
       </div>
     </div>
   );
