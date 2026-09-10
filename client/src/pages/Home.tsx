@@ -7,6 +7,7 @@ import { WritingSection } from "@/components/home/WritingSection";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { SiteAtmosphere } from "@/components/layout/SiteAtmosphere";
 
 export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -23,6 +24,7 @@ export default function Home() {
 
   return (
     <div className="site-shell">
+      <SiteAtmosphere />
       <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
       <div className="page-column">
         <Hero />
