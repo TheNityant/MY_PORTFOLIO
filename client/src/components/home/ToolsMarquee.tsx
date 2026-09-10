@@ -4,7 +4,15 @@ import { coreStackTools, tools, type ToolMark } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
-export function ToolMarkView({ tool, large }: { tool: ToolMark; large?: boolean }) {
+export function ToolMarkView({
+  tool,
+  large,
+  iconOnly,
+}: {
+  tool: ToolMark;
+  large?: boolean;
+  iconOnly?: boolean;
+}) {
   const style = {
     ...(tool.accent ? { "--tool-accent": tool.accent } : {}),
     ...(tool.iconColor || tool.accent ? { "--tool-icon-color": tool.iconColor ?? tool.accent } : {}),
@@ -16,18 +24,20 @@ export function ToolMarkView({ tool, large }: { tool: ToolMark; large?: boolean 
       className={cn(
         "tool-mark",
         large && "tool-mark--large",
+        iconOnly && "tool-mark--icon-only",
         tool.icon ? "tool-mark--has-icon" : "tool-mark--text-only",
         tool.needsDarkVariant && "tool-mark--needs-dark-variant",
       )}
       style={style}
-      title={tool.needsDarkVariant ? `${tool.name} — dark icon variant recommended` : undefined}
+      title={tool.name}
+      aria-label={iconOnly ? tool.name : undefined}
     >
       {tool.icon ? (
         <span className="tool-mark-icon" aria-hidden="true" />
       ) : (
-        <Sparkles size={large ? 22 : 14} aria-hidden="true" />
+        <Sparkles size={large ? 22 : 20} aria-hidden="true" />
       )}
-      <span>{tool.name}</span>
+      {!iconOnly ? <span>{tool.name}</span> : null}
     </span>
   );
 }
@@ -46,13 +56,16 @@ export function CoreStackTools() {
 
 export function ToolsMarquee() {
   const reducedMotion = usePrefersReducedMotion();
-  const items = reducedMotion ? tools : [...tools, ...tools];
+  // The reference dashboard keeps this strip visual: logos only, names on hover.
+  // Exclude text-only entries so the row never falls back to a word label.
+  const logoTools = tools.filter((tool) => Boolean(tool.icon));
+  const items = reducedMotion ? logoTools : [...logoTools, ...logoTools];
 
   return (
-    <div className="tools-marquee" aria-label="Tools">
+    <div className="tools-marquee tools-marquee--logos" aria-label="Tools and technologies">
       <div className={cn("tools-track", reducedMotion && "tools-track--static")}>
         {items.map((tool, index) => (
-          <ToolMarkView key={`${tool.name}-${index}`} tool={tool} />
+          <ToolMarkView key={`${tool.name}-${index}`} tool={tool} iconOnly />
         ))}
       </div>
     </div>
