@@ -6,7 +6,9 @@ import styles from "./scratchReveal.module.css";
 
 const BRUSH_RADIUS = 30;
 const COMPLETE_THRESHOLD = 0.2;
-const GRADIENT_COLORS = ["#A97CF8", "#F38CB8", "#FDCC92"] as const;
+// Match the reference scratch layer: the gradient is intentionally translucent
+// rather than a fully saturated pink/purple/orange panel.
+const GRADIENT_COLORS = ["#A97CF933", "#F38CB933", "#FDCC9233"] as const;
 
 function differentReward(current: number) {
   if (scratchRewards.length <= 1) return 0;
@@ -108,7 +110,7 @@ export function ScratchReveal() {
 
   return (
     <div className={styles.root}>
-      <div ref={stageRef} className={styles.stage}>
+      <div ref={stageRef} className={`${styles.stage} ${complete ? styles.stageComplete : ""}`}>
         <div className={styles.reward}>
           <img src={scratchRewards[rewardIndex]} alt="Scratch reward" draggable={false} />
         </div>
