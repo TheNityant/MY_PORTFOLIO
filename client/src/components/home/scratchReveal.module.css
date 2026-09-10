@@ -1,0 +1,90 @@
+.root {
+  width: 100%;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 6rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--background);
+  user-select: none;
+  touch-action: none;
+}
+
+.reward {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0.45rem;
+}
+
+.reward img {
+  display: block;
+  width: auto;
+  height: 3.75rem;
+  max-width: 78%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  touch-action: none;
+}
+
+.canvasDone {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.refresh {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.38rem;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--background) 72%, transparent);
+  backdrop-filter: blur(6px);
+  transition: color 180ms ease, background 180ms ease, transform 220ms ease;
+}
+
+.refresh:hover,
+.refresh:focus-visible {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--background) 88%, var(--foreground) 4%);
+}
+
+.refresh:hover svg {
+  transform: rotate(180deg);
+}
+
+.refresh svg {
+  transition: transform 300ms ease;
+}
+
+@media (min-width: 640px) {
+  .stage { height: 8.75rem; }
+  .reward img { height: 4.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refresh,
+  .refresh svg,
+  .canvasDone { transition: none; }
+}
