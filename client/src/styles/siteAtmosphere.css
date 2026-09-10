@@ -67,8 +67,8 @@
   position: fixed;
 }
 
-/* Surfaces become translucent so the approved shader still reads between and
-   subtly through content instead of disappearing after the hero. */
+/* Surfaces stay translucent enough for the approved shader to remain present
+   through the page without sacrificing the readability of technical content. */
 .dark .dashboard-item-frame,
 .dark .dashboard-tile,
 .dark .project-card,
@@ -80,21 +80,6 @@
 
 .dark .site-header {
   background: rgba(4, 6, 8, 0.7);
-}
-
-/* The sphere no longer lives inside the hero. Keep the second hero column only
-   for the identity reveal so the ShaderGradient can breathe across the page. */
-.hero-visual {
-  min-height: 30rem;
-  margin-right: 0;
-}
-
-.hero-identity-reveal {
-  left: 50%;
-  right: auto;
-  top: 50%;
-  bottom: auto;
-  transform: translate(-50%, -50%);
 }
 
 /* Light theme keeps its global Cotton Candy counterpart without making the
@@ -121,17 +106,6 @@
 :root:not(.dark) .experience-card {
   background: rgba(250, 250, 248, 0.84);
   backdrop-filter: blur(12px);
-}
-
-@media (max-width: 699px) {
-  .hero-visual {
-    min-height: 11rem;
-    margin: 0.75rem 0 -0.25rem;
-  }
-
-  .hero-identity-reveal {
-    width: 7.75rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
