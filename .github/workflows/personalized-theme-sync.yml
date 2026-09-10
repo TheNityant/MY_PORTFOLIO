@@ -1,0 +1,53 @@
+name: Personalized theme dependency sync
+
+on:
+  push:
+    branches:
+      - rebuild/personalized-theme-v1
+
+permissions:
+  contents: write
+
+jobs:
+  sync-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: rebuild/personalized-theme-v1
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Synchronize lockfile
+        run: pnpm install --lockfile-only
+
+      - name: Install frozen dependency graph
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        run: pnpm check
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Commit synchronized lockfile
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "Lockfile already synchronized."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "build: sync ShaderGradient lockfile"
+          git push origin HEAD:rebuild/personalized-theme-v1
