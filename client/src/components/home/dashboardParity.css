@@ -1,11 +1,10 @@
-/* Reference-derived desktop proportions for the dashboard.
-   Shivam's layout is a 10-column grid: 4 / 2 / 2 / 2 on the top rows,
-   then 5 / 3 / 2 and 8 / 2 beneath it. Keeping the same proportions gives
-   Scratch and Activity enough width without disturbing the mobile layout. */
+/* Reference-derived dashboard proportions and tools marquee behavior. */
 @media (min-width: 900px) {
   .dashboard-grid {
     grid-template-columns: repeat(10, minmax(0, 1fr));
-    grid-template-rows: 7.875rem 7.875rem 9.0625rem 6.0625rem;
+    /* Keep Shivam's top-row proportions, but give our Tools row a little
+       more vertical breathing room so the icon strip does not feel cramped. */
+    grid-template-rows: 7.875rem 7.875rem 9.0625rem 7.5rem;
   }
 
   .dashboard-area-location {
@@ -59,34 +58,60 @@
   }
 }
 
-/* Shivam's tools strip is deliberately icon-led: large colorful marks, no
-   repeated labels, with the name available on hover via the title attribute. */
-.dashboard-area-tools .tools-marquee--logos {
-  min-height: 2.35rem;
+/* Shivam's strip is logo-first and behaves as a continuous marquee rather
+   than a sequence that reaches an end and visibly starts over. */
+.dashboard-area-tools .dashboard-tile {
+  padding-bottom: 1.05rem;
+}
+
+.dashboard-area-tools .tile-body {
   display: flex;
   align-items: center;
+  min-height: 3.5rem;
+}
+
+.dashboard-area-tools .tools-marquee--logos {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3.5rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent);
 }
 
 .dashboard-area-tools .tools-track {
-  gap: 1.55rem;
+  display: flex;
   align-items: center;
-  animation-duration: 20s;
+  flex-wrap: nowrap;
+  width: max-content;
+  gap: 2.25rem;
+  animation: tools-marquee-seamless 20s linear infinite;
+  will-change: transform;
+}
+
+.dashboard-area-tools .tools-marquee-group {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 2.25rem;
 }
 
 .dashboard-area-tools .tool-mark--icon-only {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
   gap: 0;
   color: var(--tool-icon-color, var(--foreground));
 }
 
 .dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
-  width: 1.9rem;
-  height: 1.9rem;
-  flex-basis: 1.9rem;
+  width: 2rem;
+  height: 2rem;
+  flex-basis: 2rem;
   opacity: 1;
   background: var(--tool-icon-color, var(--tool-accent, var(--foreground)));
 }
@@ -99,7 +124,42 @@
   animation-play-state: paused;
 }
 
+@media (min-width: 900px) {
+  .dashboard-area-tools .tools-marquee--logos {
+    min-height: 4rem;
+  }
+
+  .dashboard-area-tools .tool-mark--icon-only {
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-basis: 2.6rem;
+  }
+
+  .dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-basis: 2.25rem;
+  }
+}
+
+.dashboard-area-tools .tools-track--static {
+  animation: none;
+  width: auto;
+}
+
+/* Two identical groups sit side-by-side. Moving by exactly one group's width
+   plus the inter-group gap makes the next frame identical to the first one,
+   so there is no visible rewind/restart. */
+@keyframes tools-marquee-seamless {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 1.125rem)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .dashboard-area-tools .tools-track {
+    animation: none;
+  }
+
   .dashboard-area-tools .tool-mark--icon-only:hover {
     transform: none;
   }
