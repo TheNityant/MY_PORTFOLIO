@@ -33,6 +33,12 @@ an independent Vite + React implementation.
   reference globe implementation; no relocation/two-city story.
 - **Simple Icons** (CC0 1.0) — monochrome tool marks in `client/public/tools/`
   (Java/OpenJDK, Spring, Python, PostgreSQL, TypeScript, React, Node.js).
+- **three-fluid-fx** (MIT) by Artem Korenevych — Stable-Fluids WebGL solver used only
+  for the hero identity reveal. The integration follows the project's GLSL
+  `reveal-mask` architecture: density drives the reveal and velocity is sampled
+  only at the reveal boundary. The portfolio compositor and Nityant-specific
+  identity treatment are independent. License copy: `licenses/THREE-FLUID-FX-MIT.txt`.
+  Source: https://github.com/artcodev/three-fluid-fx
 
 ### Attribution required by Apache 2.0
 
