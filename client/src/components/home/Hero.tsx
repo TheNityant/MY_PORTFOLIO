@@ -1,5 +1,4 @@
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
-import { HeroAtmosphere } from "@/components/home/HeroAtmosphere";
 import { HeroIdentityReveal } from "@/components/home/HeroIdentityReveal";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
@@ -60,7 +59,6 @@ export function Hero() {
           </div>
 
           <div className="hero-visual">
-            <HeroAtmosphere />
             <HeroIdentityReveal />
           </div>
         </div>
