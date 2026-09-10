@@ -13,6 +13,11 @@
   background: var(--background);
   user-select: none;
   touch-action: none;
+  transform-origin: center;
+}
+
+.stageComplete {
+  animation: scratch-complete 500ms ease-out;
 }
 
 .reward {
@@ -20,14 +25,13 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 0.45rem;
 }
 
 .reward img {
   display: block;
   width: auto;
-  height: 3.75rem;
-  max-width: 78%;
+  height: 3.5rem;
+  max-width: 72%;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
@@ -55,35 +59,42 @@
   z-index: 4;
   display: grid;
   place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
-  border-radius: 0.38rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.32rem;
   color: var(--muted-foreground);
-  background: color-mix(in oklab, var(--background) 72%, transparent);
-  backdrop-filter: blur(6px);
-  transition: color 180ms ease, background 180ms ease, transform 220ms ease;
+  background: transparent;
+  transition: color 180ms ease, background 180ms ease;
 }
 
 .refresh:hover,
 .refresh:focus-visible {
   color: var(--foreground);
-  background: color-mix(in oklab, var(--background) 88%, var(--foreground) 4%);
-}
-
-.refresh:hover svg {
-  transform: rotate(180deg);
+  background: color-mix(in oklab, var(--background) 64%, transparent);
 }
 
 .refresh svg {
   transition: transform 300ms ease;
 }
 
+.refresh:hover svg {
+  transform: rotate(180deg);
+}
+
+@keyframes scratch-complete {
+  0% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(1.07) rotate(3deg); }
+  65% { transform: scale(0.98) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
 @media (min-width: 640px) {
   .stage { height: 8.75rem; }
-  .reward img { height: 4.5rem; }
+  .reward img { height: 4rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stageComplete { animation: none; }
   .refresh,
   .refresh svg,
   .canvasDone { transition: none; }
