@@ -50,20 +50,30 @@
   white-space: nowrap;
 }
 
+/* Preserve the main-branch name treatment inside the personalized hero:
+   the greeting uses the original clipped tonal gradient and Nityant keeps
+   the handwritten/script contrast instead of being flattened into the sans. */
 .hero-title--technical .hero-title-fade {
-  color: color-mix(in srgb, var(--foreground) 68%, var(--muted-foreground));
+  background: linear-gradient(to bottom, oklch(0.92 0 0), oklch(0.28 0 0));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .dark .hero-title--technical .hero-title-fade {
-  color: #aab0b8;
+  background: linear-gradient(to bottom, oklch(0.98 0 0), oklch(0.72 0 0));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero-title--technical .hero-name {
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-script);
   font-style: normal;
-  font-weight: 720;
-  letter-spacing: -0.06em;
+  font-weight: 400;
+  font-size: 1.05em;
+  letter-spacing: 0;
 }
 
 .hero-description.hero-description--technical {
@@ -78,7 +88,11 @@
 
 .hero-description-emphasis {
   color: var(--foreground);
-  font-weight: 600;
+  font-family: var(--font-script);
+  font-style: normal;
+  font-size: 1.05em;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .hero-actions.hero-actions--technical {
