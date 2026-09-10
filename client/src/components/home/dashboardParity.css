@@ -1,0 +1,106 @@
+/* Reference-derived desktop proportions for the dashboard.
+   Shivam's layout is a 10-column grid: 4 / 2 / 2 / 2 on the top rows,
+   then 5 / 3 / 2 and 8 / 2 beneath it. Keeping the same proportions gives
+   Scratch and Activity enough width without disturbing the mobile layout. */
+@media (min-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: 7.875rem 7.875rem 9.0625rem 6.0625rem;
+  }
+
+  .dashboard-area-location {
+    grid-column: 1 / span 4;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-scratch {
+    grid-column: 5 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-activity {
+    grid-column: 7 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-workouts {
+    grid-column: 9 / span 2;
+    grid-row: 1 / span 1;
+  }
+
+  .dashboard-area-hours {
+    grid-column: 9 / span 2;
+    grid-row: 2 / span 1;
+  }
+
+  .dashboard-area-feature {
+    grid-column: 1 / span 5;
+    grid-row: 3 / span 1;
+  }
+
+  .dashboard-area-corestack {
+    grid-column: 6 / span 3;
+    grid-row: 3 / span 1;
+  }
+
+  .dashboard-area-contact {
+    grid-column: 9 / span 2;
+    grid-row: 3 / span 2;
+  }
+
+  .dashboard-area-tools {
+    grid-column: 1 / span 8;
+    grid-row: 4 / span 1;
+  }
+
+  .dashboard-area-scratch .tile-title {
+    font-size: 0.875rem;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Shivam's tools strip is deliberately icon-led: large colorful marks, no
+   repeated labels, with the name available on hover via the title attribute. */
+.dashboard-area-tools .tools-marquee--logos {
+  min-height: 2.35rem;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-area-tools .tools-track {
+  gap: 1.55rem;
+  align-items: center;
+  animation-duration: 20s;
+}
+
+.dashboard-area-tools .tool-mark--icon-only {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  gap: 0;
+  color: var(--tool-icon-color, var(--foreground));
+}
+
+.dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-basis: 1.9rem;
+  opacity: 1;
+  background: var(--tool-icon-color, var(--tool-accent, var(--foreground)));
+}
+
+.dashboard-area-tools .tool-mark--icon-only:hover {
+  transform: translateY(-2px) scale(1.08);
+}
+
+.dashboard-area-tools .tools-marquee:hover .tools-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-area-tools .tool-mark--icon-only:hover {
+    transform: none;
+  }
+}
