@@ -43,7 +43,7 @@ export function AnimatedHeroName({ name }: { name: string }) {
   return (
     <span className="hero-name-shell" aria-label={name}>
       <motion.span
-        key={phase === "redraw" ? `redraw-${Date.now()}` : phase}
+        key={phase}
         aria-hidden="true"
         className="hero-name hero-name--animated"
         initial={initialClip ? { clipPath: initialClip, opacity: 0.88 } : false}
