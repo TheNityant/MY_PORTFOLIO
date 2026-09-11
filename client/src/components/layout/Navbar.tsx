@@ -1,5 +1,5 @@
 import { Briefcase, Brush, Github, Home, Moon, Pencil, Search, Sun } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type MouseEvent } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { nav, profile } from "@/data/portfolio";
 import { useHideOnScroll } from "@/hooks/useHideOnScroll";
@@ -27,12 +27,13 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onToggleSearch]);
 
-  const handleNav = (href: string) => {
-    const id = href.replace("#", "");
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
-    }
+  const handleNav = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    const section = document.getElementById(href.replace("#", ""));
+    if (!section) return;
+
+    event.preventDefault();
+    section.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    window.history.replaceState(null, "", href);
   };
 
   const navIcon = (icon: string) => {
@@ -56,16 +57,16 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
 
       <nav className="main-nav" aria-label="Primary">
         {nav.map((item) => (
-          <button
+          <a
             key={item.name}
-            type="button"
+            href={item.href}
             className="nav-link"
-            onClick={() => handleNav(item.href)}
+            onClick={(event) => handleNav(event, item.href)}
             aria-label={item.name}
           >
             <span className="nav-link-icon" aria-hidden="true">{navIcon(item.icon)}</span>
             <span className="nav-link-label">{item.name}</span>
-          </button>
+          </a>
         ))}
       </nav>
 
