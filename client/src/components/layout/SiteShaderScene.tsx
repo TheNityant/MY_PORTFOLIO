@@ -1,17 +1,31 @@
 import { ShaderGradient, ShaderGradientCanvas } from "@shadergradient/react";
+import { useEffect, useState } from "react";
+import {
+  ATMOSPHERE_LAB_UPDATE_EVENT,
+  readAtmosphereLabSettings,
+  type AtmosphereFluidSettings,
+  type AtmospherePreset,
+} from "@/config/atmosphereLab";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
-/**
- * One persistent ShaderGradient canvas for the whole site.
- * Dark mode uses the quieter Nighty Nighty water-plane preset so the portfolio
- * reads first and the atmosphere supports it. Light mode keeps the approved
- * Cotton Candy counterpart on the same single WebGL canvas.
- */
 export default function SiteShaderScene() {
   const { theme } = useTheme();
   const reducedMotion = usePrefersReducedMotion();
   const animate = reducedMotion ? "off" : "on";
+  const [darkPreset, setDarkPreset] = useState<AtmospherePreset>(() =>
+    import.meta.env.DEV ? readAtmosphereLabSettings().preset : "nighty",
+  );
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const onUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<AtmosphereFluidSettings>).detail;
+      if (detail?.preset) setDarkPreset(detail.preset);
+    };
+    window.addEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
+    return () => window.removeEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
+  }, []);
 
   return (
     <ShaderGradientCanvas
@@ -19,7 +33,43 @@ export default function SiteShaderScene() {
       pixelDensity={1}
       fov={45}
     >
-      {theme === "dark" ? (
+      {theme === "dark" && darkPreset === "interstella" ? (
+        <ShaderGradient
+          control="props"
+          animate={animate}
+          type="sphere"
+          wireframe={false}
+          shader="defaults"
+          uTime={0}
+          uSpeed={0.3}
+          uStrength={0.3}
+          uDensity={0.8}
+          uFrequency={5.5}
+          uAmplitude={3.2}
+          positionX={-0.1}
+          positionY={0}
+          positionZ={0}
+          rotationX={0}
+          rotationY={130}
+          rotationZ={70}
+          color1="#73bfc4"
+          color2="#ff810a"
+          color3="#8da0ce"
+          reflection={0.4}
+          cAzimuthAngle={270}
+          cPolarAngle={180}
+          cDistance={0.5}
+          cameraZoom={15.1}
+          lightType="env"
+          brightness={0.8}
+          envPreset="city"
+          grain="on"
+          toggleAxis={false}
+          zoomOut={false}
+          hoverState=""
+          enableTransition={false}
+        />
+      ) : theme === "dark" ? (
         <ShaderGradient
           control="props"
           animate={animate}
