@@ -52,22 +52,24 @@ export function Hero() {
       <TooltipProvider>
         <div className="hero-content hero-content--technical">
           <div className="portrait-wrap portrait-wrap--fluid">
-            <HeroIdentityReveal />
-            <a
-              className="hero-live-status"
-              data-status={status.tone}
-              href={`mailto:${profile.email}`}
-              aria-label={`${status.label}; schedule-based status in India Standard Time. Email Nityant.`}
-              title="Schedule-based status in India Standard Time"
-            >
-              <span className="hero-live-status__dot-wrap" aria-hidden="true">
-                <span className="hero-live-status__ping" />
-                <span className="hero-live-status__dot" />
-              </span>
-              <span className="hero-live-status__label" aria-live="polite">
-                {status.label}
-              </span>
-            </a>
+            <div className="hero-identity-cluster">
+              <HeroIdentityReveal />
+              <a
+                className="hero-live-status"
+                data-status={status.tone}
+                href={`mailto:${profile.email}`}
+                aria-label={`${status.label}; schedule-based status in India Standard Time. Email Nityant.`}
+                title="Schedule-based status in India Standard Time"
+              >
+                <span className="hero-live-status__dot-wrap" aria-hidden="true">
+                  <span className="hero-live-status__ping" />
+                  <span className="hero-live-status__dot" />
+                </span>
+                <span className="hero-live-status__label" aria-live="polite">
+                  {status.label}
+                </span>
+              </a>
+            </div>
           </div>
 
           <div className="hero-copy hero-copy--technical">
