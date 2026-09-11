@@ -1,14 +1,42 @@
+.launcher {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 121;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.35rem;
+  padding: 0.58rem 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.62rem;
+  background: rgba(7, 9, 12, 0.9);
+  color: #f4f5f7;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.launcher:hover {
+  transform: translateY(-2px);
+  border-color: rgba(115, 191, 196, 0.62);
+  background: rgba(13, 17, 21, 0.97);
+}
+
 .panel {
   position: fixed;
   left: 1rem;
   bottom: 1rem;
   z-index: 120;
-  width: min(22rem, calc(100vw - 2rem));
+  width: min(23rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 0.9rem;
-  background: rgba(7, 9, 12, 0.94);
+  background: rgba(7, 9, 12, 0.95);
   color: #f4f5f7;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(18px);
@@ -24,7 +52,7 @@
   gap: 1rem;
   padding: 0.9rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(7, 9, 12, 0.97);
+  background: rgba(7, 9, 12, 0.98);
 }
 
 .header strong {
@@ -82,6 +110,14 @@
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.referenceGroup {
+  margin: 0 -0.2rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(115, 191, 196, 0.18);
+  border-radius: 0.72rem;
+  background: rgba(115, 191, 196, 0.035);
+}
+
 .groupTitle {
   color: rgba(244, 245, 247, 0.74);
   font-size: 0.68rem;
@@ -98,7 +134,8 @@
 
 .presetGrid button,
 .fluidToggle,
-.footer button {
+.footer button,
+.clearCanvas {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.035);
@@ -109,7 +146,8 @@
 
 .presetGrid button:hover,
 .fluidToggle:hover,
-.footer button:hover {
+.footer button:hover,
+.clearCanvas:hover {
   transform: translateY(-1px);
   border-color: rgba(115, 191, 196, 0.45);
 }
@@ -123,6 +161,14 @@
   width: 100%;
 }
 
+.clearCanvas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
 .rangeRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -133,7 +179,7 @@
 }
 
 .rangeRow output {
-  min-width: 3.4rem;
+  min-width: 4rem;
   color: #f4f5f7;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.68rem;
@@ -144,6 +190,26 @@
   grid-column: 1 / -1;
   width: 100%;
   accent-color: #73bfc4;
+}
+
+.fullSelectRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 11rem);
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(244, 245, 247, 0.76);
+  font-size: 0.72rem;
+}
+
+.fullSelectRow select,
+.selectGrid select {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  background: #0d1115;
+  color: #f4f5f7;
+  padding: 0.42rem;
+  font-size: 0.7rem;
 }
 
 .selectGrid {
@@ -159,14 +225,18 @@
   font-size: 0.68rem;
 }
 
-.selectGrid select {
-  min-width: 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.4rem;
-  background: #0d1115;
+.visualReadout {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  color: rgba(244, 245, 247, 0.55);
+  font-size: 0.68rem;
+}
+
+.visualReadout code {
   color: #f4f5f7;
-  padding: 0.42rem;
-  font-size: 0.7rem;
+  font-size: 0.67rem;
 }
 
 .footer {
@@ -185,6 +255,11 @@
 }
 
 @media (max-width: 700px) {
+  .launcher {
+    left: 0.75rem;
+    bottom: 0.75rem;
+  }
+
   .panel {
     left: 0.75rem;
     right: 0.75rem;
