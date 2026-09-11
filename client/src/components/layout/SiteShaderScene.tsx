@@ -4,9 +4,9 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**
  * One persistent ShaderGradient canvas for the whole site.
- * Dark mode mirrors the approved ShaderGradient sphere URL exactly at the
- * renderer level. Light mode keeps the approved Cotton Candy counterpart,
- * still using the same single WebGL canvas.
+ * Dark mode uses the quieter Nighty Nighty water-plane preset so the portfolio
+ * reads first and the atmosphere supports it. Light mode keeps the approved
+ * Cotton Candy counterpart on the same single WebGL canvas.
  */
 export default function SiteShaderScene() {
   const { theme } = useTheme();
@@ -23,30 +23,31 @@ export default function SiteShaderScene() {
         <ShaderGradient
           control="props"
           animate={animate}
-          type="sphere"
+          type="waterPlane"
           wireframe={false}
           shader="defaults"
+          uTime={8}
           uSpeed={0.3}
-          uStrength={0.3}
-          uDensity={0.8}
-          uFrequency={5.5}
-          uAmplitude={3.2}
-          positionX={-0.1}
+          uStrength={1.5}
+          uDensity={1.5}
+          uFrequency={0}
+          uAmplitude={0}
+          positionX={0}
           positionY={0}
           positionZ={0}
-          rotationX={0}
-          rotationY={130}
-          rotationZ={70}
-          color1="#73bfc4"
-          color2="#ff810a"
-          color3="#8da0ce"
-          reflection={0.4}
-          cAzimuthAngle={270}
-          cPolarAngle={180}
-          cDistance={0.5}
-          cameraZoom={15.1}
-          lightType="env"
-          brightness={0.8}
+          rotationX={50}
+          rotationY={0}
+          rotationZ={-60}
+          color1="#606080"
+          color2="#8d7dca"
+          color3="#212121"
+          reflection={0.1}
+          cAzimuthAngle={180}
+          cPolarAngle={80}
+          cDistance={2.8}
+          cameraZoom={9.1}
+          lightType="3d"
+          brightness={1}
           envPreset="city"
           grain="on"
           toggleAxis={false}
@@ -61,6 +62,7 @@ export default function SiteShaderScene() {
           type="waterPlane"
           wireframe={false}
           shader="defaults"
+          uTime={0.2}
           uSpeed={0.3}
           uStrength={3}
           uDensity={1}
