@@ -132,14 +132,14 @@
 }
 
 /* three-fluid-fx identity compositor -------------------------------------------------
-   The WebGL canvas is transparent and renders only the aligned identity visual.
-   Fluid density decides how much of the colour treatment is exposed. Velocity
-   perturbs only the transition band. There is no visible rectangular canvas. */
+   The WebGL canvas stays confined to this local identity zone. Unlike the older
+   compositor, density is now also rendered outside the portrait alpha so the
+   user can actually see the cursor stir a short liquid trail around the identity. */
 .hero-identity-reveal.hero-fluid-reveal {
   position: relative;
   z-index: 4;
-  width: min(18rem, 80vw);
-  height: 8rem;
+  width: min(22rem, 86vw);
+  height: 10rem;
   margin: 0 auto;
   overflow: visible;
   border: 0;
@@ -147,6 +147,12 @@
   user-select: none;
   touch-action: pan-y;
   contain: layout style;
+}
+
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-identity-reveal.hero-fluid-reveal[data-fluid-active="true"] {
+    cursor: none;
+  }
 }
 
 .hero-fluid-reveal__fallback,
@@ -250,8 +256,8 @@
   }
 
   .hero-identity-reveal.hero-fluid-reveal {
-    width: min(15rem, 84vw);
-    height: 7rem;
+    width: min(18rem, 90vw);
+    height: 8.5rem;
   }
 
   .hero-fluid-reveal__fallback::before,
