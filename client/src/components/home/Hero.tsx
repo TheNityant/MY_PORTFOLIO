@@ -1,9 +1,16 @@
+import { useEffect, useState } from "react";
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
+import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import { HeroIdentityReveal } from "@/components/home/HeroIdentityReveal";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+type HeroStatus = {
+  label: "Available" | "Away";
+  tone: "available" | "away";
+};
 
 function SocialIcon({ name }: { name: SocialIconName }) {
   if (name === "mail") return <Mail size={20} strokeWidth={1.7} />;
@@ -11,8 +18,30 @@ function SocialIcon({ name }: { name: SocialIconName }) {
   return <Github size={20} strokeWidth={1.7} />;
 }
 
+function getHeroStatus(): HeroStatus {
+  const hourText = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date());
+  const hour = Number.parseInt(hourText, 10);
+  const available = hour >= 8 && hour < 22;
+
+  return available
+    ? { label: "Available", tone: "available" }
+    : { label: "Away", tone: "away" };
+}
+
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
+  const [status, setStatus] = useState<HeroStatus>(() => getHeroStatus());
+
+  useEffect(() => {
+    const updateStatus = () => setStatus(getHeroStatus());
+    updateStatus();
+    const interval = window.setInterval(updateStatus, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
     <section
@@ -24,13 +53,27 @@ export function Hero() {
         <div className="hero-content hero-content--technical">
           <div className="portrait-wrap portrait-wrap--fluid">
             <HeroIdentityReveal />
-            <div className="hero-status-slot" aria-hidden="true" />
+            <a
+              className="hero-live-status"
+              data-status={status.tone}
+              href={`mailto:${profile.email}`}
+              aria-label={`${status.label}; schedule-based status in India Standard Time. Email Nityant.`}
+              title="Schedule-based status in India Standard Time"
+            >
+              <span className="hero-live-status__dot-wrap" aria-hidden="true">
+                <span className="hero-live-status__ping" />
+                <span className="hero-live-status__dot" />
+              </span>
+              <span className="hero-live-status__label" aria-live="polite">
+                {status.label}
+              </span>
+            </a>
           </div>
 
           <div className="hero-copy hero-copy--technical">
             <h1 id="hero-title" className="hero-title hero-title--technical">
               <span className="hero-title-fade">Hi. I&apos;m </span>
-              <span className="hero-name">{profile.displayName}</span>
+              <AnimatedHeroName name={profile.displayName} />
             </h1>
             <p className="hero-description hero-description--technical">
               {profile.taglineLead}{" "}
