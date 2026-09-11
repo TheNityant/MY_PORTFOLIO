@@ -26,6 +26,9 @@ export const fluidRevealConfig = {
   revealSoftness: 0.13,
   boundaryDistortion: 0.00008,
   rimStrength: 0.08,
+  flowThreshold: 0.035,
+  flowSoftness: 0.075,
+  flowOpacity: 0.58,
   mobileBreakpoint: 720,
   idle: {
     enabled: false,
@@ -34,12 +37,14 @@ export const fluidRevealConfig = {
     dark: {
       baseTint: "#858b93",
       revealTint: "#ffffff",
+      flowTint: "#f5f1e8",
       baseDesaturation: 0.92,
       rimStrength: 0.08,
     },
     light: {
       baseTint: "#555c66",
       revealTint: "#ffffff",
+      flowTint: "#202832",
       baseDesaturation: 0.96,
       rimStrength: 0.055,
     },
