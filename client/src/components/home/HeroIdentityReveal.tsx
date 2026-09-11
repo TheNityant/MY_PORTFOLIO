@@ -109,6 +109,7 @@ function applyTheme(material: ShaderMaterial, theme: FluidRevealTheme, rimMultip
   const presentation = fluidRevealConfig.theme[theme];
   material.uniforms.uBaseTint.value.set(presentation.baseTint);
   material.uniforms.uRevealTint.value.set(presentation.revealTint);
+  material.uniforms.uFlowTint.value.set(presentation.flowTint);
   material.uniforms.uBaseDesaturation.value = presentation.baseDesaturation;
   material.uniforms.uRimStrength.value = presentation.rimStrength * rimMultiplier;
 }
@@ -196,6 +197,7 @@ export function HeroIdentityReveal() {
     renderer.domElement.setAttribute("aria-hidden", "true");
     renderer.domElement.style.pointerEvents = "none";
     host.appendChild(renderer.domElement);
+    region.dataset.fluidActive = "true";
 
     const fluid = new FluidSimulation(renderer, {
       profile: quality.profile,
@@ -230,11 +232,15 @@ export function HeroIdentityReveal() {
         uniform vec2 uViewSize;
         uniform vec3 uBaseTint;
         uniform vec3 uRevealTint;
+        uniform vec3 uFlowTint;
         uniform float uBaseDesaturation;
         uniform float uRevealThreshold;
         uniform float uRevealSoftness;
         uniform float uBoundaryDistortion;
         uniform float uRimStrength;
+        uniform float uFlowThreshold;
+        uniform float uFlowSoftness;
+        uniform float uFlowOpacity;
 
         vec2 coverUv(vec2 uv, vec2 imageSize, vec2 viewSize) {
           float viewAspect = viewSize.x / max(viewSize.y, 1.0);
@@ -256,6 +262,11 @@ export function HeroIdentityReveal() {
           float revealMask = smoothstep(thresholdLow, thresholdHigh, densityField.b);
           float edgeBand = revealMask * (1.0 - revealMask) * 4.0;
 
+          float flowLow = max(0.0, uFlowThreshold - uFlowSoftness);
+          float flowHigh = uFlowThreshold + uFlowSoftness;
+          float flowMask = smoothstep(flowLow, flowHigh, densityField.b);
+          float flowEdge = flowMask * (1.0 - flowMask) * 4.0;
+
           vec2 revealUv = clamp(
             imgUv - velocity * uBoundaryDistortion * edgeBand,
             0.0,
@@ -269,15 +280,20 @@ export function HeroIdentityReveal() {
           vec3 monochrome = mix(identity.rgb, vec3(luma), uBaseDesaturation);
           vec3 base = mix(monochrome, uBaseTint, 0.28);
           vec3 revealed = revealedIdentity.rgb * uRevealTint;
-          vec3 color = mix(base, revealed, revealMask);
-          color += revealed * edgeBand * uRimStrength;
+          vec3 portraitColor = mix(base, revealed, revealMask);
+          portraitColor += revealed * edgeBand * uRimStrength;
 
           vec2 centered = vUv - 0.5;
           centered.x *= uViewSize.x / max(uViewSize.y, 1.0);
           float portraitFeather = 1.0 - smoothstep(0.34, 0.405, length(centered));
           float portraitAlpha = max(identity.a, revealedIdentity.a) * portraitFeather;
 
-          gl_FragColor = vec4(color, portraitAlpha);
+          float flowAlpha = flowMask * uFlowOpacity * (1.0 - portraitAlpha * 0.72);
+          vec3 flowColor = uFlowTint * (0.82 + flowEdge * 0.18);
+          vec3 finalColor = mix(flowColor, portraitColor, portraitAlpha);
+          float finalAlpha = max(portraitAlpha, flowAlpha);
+
+          gl_FragColor = vec4(finalColor, finalAlpha);
         }
       `,
       transparent: true,
@@ -292,11 +308,15 @@ export function HeroIdentityReveal() {
         uViewSize: new Uniform(new Vector2(1, 1)),
         uBaseTint: new Uniform(new Color("#858b93")),
         uRevealTint: new Uniform(new Color("#ffffff")),
+        uFlowTint: new Uniform(new Color(fluidRevealConfig.theme.dark.flowTint)),
         uBaseDesaturation: new Uniform(fluidRevealConfig.theme.dark.baseDesaturation),
         uRevealThreshold: new Uniform(import.meta.env.DEV ? tuning.revealThreshold : fluidRevealConfig.revealThreshold),
         uRevealSoftness: new Uniform(import.meta.env.DEV ? tuning.revealSoftness : fluidRevealConfig.revealSoftness),
         uBoundaryDistortion: new Uniform(import.meta.env.DEV ? tuning.boundaryDistortion : fluidRevealConfig.boundaryDistortion),
         uRimStrength: new Uniform(fluidRevealConfig.rimStrength),
+        uFlowThreshold: new Uniform(fluidRevealConfig.flowThreshold),
+        uFlowSoftness: new Uniform(fluidRevealConfig.flowSoftness),
+        uFlowOpacity: new Uniform(fluidRevealConfig.flowOpacity),
       },
     });
     materialRef.current = composite;
@@ -396,6 +416,7 @@ export function HeroIdentityReveal() {
     return () => {
       disposed = true;
       materialRef.current = null;
+      delete region.dataset.fluidActive;
       window.cancelAnimationFrame(frameId);
       intersectionObserver.disconnect();
       resizeObserver.disconnect();
