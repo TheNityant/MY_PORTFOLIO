@@ -1,0 +1,303 @@
+.panel {
+  position: fixed;
+  top: 5.25rem;
+  right: 1rem;
+  z-index: 140;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 6.25rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.85rem;
+  background: rgba(7, 10, 13, 0.93);
+  color: #f3f1ea;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(22px) saturate(0.82);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.panelCollapsed {
+  width: 13rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: 0.75rem 0.8rem 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.header strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.98rem;
+  letter-spacing: -0.025em;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #73bfc4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.headerActions button {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  color: #a7afb9;
+}
+
+.headerActions button:hover,
+.headerActions button:focus-visible {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.body {
+  max-height: calc(100vh - 10.25rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(141, 160, 206, 0.42) transparent;
+}
+
+.hint {
+  margin: 0;
+  padding: 0.8rem 1rem 0.65rem;
+  color: #858f9c;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.group {
+  padding: 0.8rem 1rem 0.95rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.groupTitle {
+  margin-bottom: 0.7rem;
+  color: #8d97a4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.presetButton {
+  min-height: 2.15rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.025);
+  color: #aab2bd;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-align: left;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.presetButton:hover,
+.presetButton:focus-visible {
+  border-color: rgba(115, 191, 196, 0.45);
+  color: #f5f4ef;
+}
+
+.presetButtonActive {
+  border-color: rgba(115, 191, 196, 0.62);
+  background: rgba(115, 191, 196, 0.11);
+  color: #f5f4ef;
+}
+
+.rangeRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.25rem 0.7rem;
+  margin-top: 0.65rem;
+}
+
+.controlLabel,
+.selectRow span {
+  color: #c4cad2;
+  font-size: 0.72rem;
+}
+
+.value {
+  min-width: 4.2rem;
+  color: #e8e5de;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.67rem;
+  text-align: right;
+}
+
+.range {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  accent-color: #73bfc4;
+  cursor: ew-resize;
+}
+
+.toggles {
+  display: grid;
+  gap: 0.52rem;
+  margin-top: 0.8rem;
+}
+
+.toggleRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.toggleRow input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggleTrack {
+  position: relative;
+  width: 2rem;
+  height: 1.1rem;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  background: #171c22;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #7f8994;
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.toggleRow input:checked + .toggleTrack {
+  border-color: rgba(115, 191, 196, 0.55);
+  background: rgba(115, 191, 196, 0.18);
+}
+
+.toggleRow input:checked + .toggleTrack .toggleThumb {
+  transform: translateX(0.88rem);
+  background: #73bfc4;
+}
+
+.toggleRow input:focus-visible + .toggleTrack {
+  outline: 2px solid #73bfc4;
+  outline-offset: 3px;
+}
+
+.selectRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.55rem;
+}
+
+.selectRow select {
+  min-width: 6.25rem;
+  height: 2rem;
+  padding: 0 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.45rem;
+  background: #11161b;
+  color: #ece9e2;
+  font: 0.68rem ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.selectRow select:focus-visible {
+  outline: 2px solid #73bfc4;
+  outline-offset: 2px;
+}
+
+.footerActions {
+  display: grid;
+  grid-template-columns: 1fr 0.72fr 1.35fr;
+  gap: 0.4rem;
+  padding: 0.8rem 1rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footerActions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.48rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: #b5bdc7;
+  font-size: 0.66rem;
+  font-weight: 650;
+}
+
+.footerActions button:hover,
+.footerActions button:focus-visible {
+  border-color: rgba(255, 129, 10, 0.42);
+  color: #fff;
+  background: rgba(255, 129, 10, 0.08);
+}
+
+@media (max-width: 640px) {
+  .panel {
+    top: auto;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    left: 0.6rem;
+    width: auto;
+    max-height: min(78vh, 42rem);
+  }
+
+  .panelCollapsed {
+    left: auto;
+    width: 13rem;
+  }
+
+  .body {
+    max-height: calc(min(78vh, 42rem) - 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presetButton,
+  .toggleTrack,
+  .toggleThumb {
+    transition: none;
+  }
+}
