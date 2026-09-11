@@ -35,6 +35,7 @@ export function Dashboard() {
             area="scratch"
             title={dashboardCopy.scratchTitle}
             headerIcon={dashboardHeaderIcon("hand")}
+            cursorKind="hand"
           >
             <ScratchReveal />
           </DashboardCard>
