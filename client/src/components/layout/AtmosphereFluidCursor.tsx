@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Color,
   ShaderMaterial,
   Uniform,
   WebGLRenderer,
@@ -35,6 +36,7 @@ function applyRuntimeSettings(
   material.uniforms.uThreshold.value = settings.threshold;
   material.uniforms.uSoftness.value = settings.softness;
   material.uniforms.uOpacity.value = settings.opacity;
+  material.uniforms.uInkColor.value.set(settings.inkColor);
 }
 
 export function AtmosphereFluidCursor() {
@@ -77,7 +79,6 @@ export function AtmosphereFluidCursor() {
     const host = hostRef.current;
     if (!host) return;
 
-    let disposed = false;
     let frameId = 0;
     let lastFrame = performance.now();
     let pageVisible = !document.hidden;
@@ -131,13 +132,14 @@ export function AtmosphereFluidCursor() {
         uniform float uThreshold;
         uniform float uSoftness;
         uniform float uOpacity;
+        uniform vec3 uInkColor;
 
         void main() {
           float density = texture2D(tDensity, vUv).b;
           float low = max(0.0, uThreshold - uSoftness);
           float high = uThreshold + uSoftness;
           float ink = smoothstep(low, high, density) * uOpacity;
-          gl_FragColor = vec4(vec3(1.0), ink);
+          gl_FragColor = vec4(uInkColor, ink);
         }
       `,
       transparent: true,
@@ -149,6 +151,7 @@ export function AtmosphereFluidCursor() {
         uThreshold: new Uniform(current.threshold),
         uSoftness: new Uniform(current.softness),
         uOpacity: new Uniform(current.opacity),
+        uInkColor: new Uniform(new Color(current.inkColor)),
       },
     });
     materialRef.current = material;
@@ -213,8 +216,6 @@ export function AtmosphereFluidCursor() {
     frameId = window.requestAnimationFrame(frame);
 
     return () => {
-      disposed = true;
-      void disposed;
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
@@ -233,5 +234,12 @@ export function AtmosphereFluidCursor() {
 
   if (!import.meta.env.DEV || reducedMotion || !settings.fluidEnabled) return null;
 
-  return <div ref={hostRef} className={styles.root} aria-hidden="true" />;
+  return (
+    <div
+      ref={hostRef}
+      className={styles.root}
+      style={{ mixBlendMode: settings.blendMode }}
+      aria-hidden="true"
+    />
+  );
 }
