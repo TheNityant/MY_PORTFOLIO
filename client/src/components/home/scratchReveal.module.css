@@ -1,15 +1,18 @@
 .root {
+  display: grid;
+  place-items: center;
   width: 100%;
+  height: 100%;
 }
 
 .stage {
   position: relative;
   display: grid;
   place-items: center;
-  width: 100%;
-  height: 6rem;
+  width: min(100%, 10.5rem);
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: 0.55rem;
   background: var(--background);
   user-select: none;
   touch-action: none;
@@ -30,7 +33,7 @@
 .reward img {
   display: block;
   width: auto;
-  height: 3.5rem;
+  height: 42%;
   max-width: 72%;
   object-fit: contain;
   pointer-events: none;
@@ -55,8 +58,8 @@
 
 .refresh {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
+  top: 0.3rem;
+  right: 0.3rem;
   z-index: 4;
   display: grid;
   place-items: center;
@@ -84,16 +87,17 @@
 
 @keyframes scratch-complete {
   0% { transform: scale(1) rotate(0deg); }
-  20% { transform: scale(1.22) rotate(6deg); }
-  42% { transform: scale(1.42) rotate(-8deg); }
-  62% { transform: scale(1.16) rotate(6deg); }
-  82% { transform: scale(1.05) rotate(-3deg); }
+  20% { transform: scale(1.12) rotate(4deg); }
+  42% { transform: scale(1.2) rotate(-5deg); }
+  62% { transform: scale(1.1) rotate(4deg); }
+  82% { transform: scale(1.04) rotate(-2deg); }
   100% { transform: scale(1) rotate(0deg); }
 }
 
-@media (min-width: 640px) {
-  .stage { height: 8.75rem; }
-  .reward img { height: 4rem; }
+@media (max-width: 639px) {
+  .stage {
+    width: min(100%, 11.5rem);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
