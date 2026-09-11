@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, Clipboard, RotateCcw, X, Zap } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clipboard, RotateCcw, Settings2, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   dispatchFluidRevealLabRebuild,
@@ -116,6 +116,7 @@ export default function FluidLabPanel() {
         const next = !current;
         if (next) {
           window.localStorage.setItem(FLUID_LAB_PANEL_KEY, "1");
+          dispatchFluidRevealLabUpdate(settings);
         } else {
           window.localStorage.removeItem(FLUID_LAB_PANEL_KEY);
           removeFluidLabQuery();
@@ -171,20 +172,35 @@ export default function FluidLabPanel() {
     }
   };
 
+  const open = () => {
+    setVisible(true);
+    window.localStorage.setItem(FLUID_LAB_PANEL_KEY, "1");
+    dispatchFluidRevealLabUpdate(settings);
+  };
+
   const close = () => {
     setVisible(false);
     window.localStorage.removeItem(FLUID_LAB_PANEL_KEY);
     removeFluidLabQuery();
   };
 
-  if (!import.meta.env.DEV || !visible) return null;
+  if (!import.meta.env.DEV) return null;
+
+  if (!visible) {
+    return (
+      <button type="button" className={styles.launcher} onClick={open} aria-label="Open hero fluid tuning panel">
+        <Settings2 size={15} />
+        <span>Tune hero fluid</span>
+      </button>
+    );
+  }
 
   return (
     <aside className={`${styles.panel} ${collapsed ? styles.panelCollapsed : ""}`} aria-label="Fluid reveal developer tuning">
       <div className={styles.header}>
         <div>
           <div className={styles.eyebrow}><Zap size={12} /> DEV ONLY</div>
-          <strong>Fluid Lab</strong>
+          <strong>Hero Fluid Lab</strong>
         </div>
         <div className={styles.headerActions}>
           <button type="button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? "Expand Fluid Lab" : "Collapse Fluid Lab"}>
@@ -196,10 +212,10 @@ export default function FluidLabPanel() {
 
       {!collapsed ? (
         <div className={styles.body}>
-          <p className={styles.hint}>Live-tunes the real hero fluid simulation. Ctrl/⌘ + Shift + F toggles this panel.</p>
+          <p className={styles.hint}>This now tunes only the hero identity reveal. The global fluid cursor is gone. Ctrl/⌘ + Shift + F toggles this panel.</p>
 
           <section className={styles.group}>
-            <div className={styles.groupTitle}>Presets</div>
+            <div className={styles.groupTitle}>Taha-style live controls</div>
             <div className={styles.presets}>
               {(Object.entries(fluidRevealLabPresets) as [FluidRevealPresetId, (typeof fluidRevealLabPresets)[FluidRevealPresetId]][]).map(([id, preset]) => (
                 <button
@@ -213,20 +229,17 @@ export default function FluidLabPanel() {
                 </button>
               ))}
             </div>
-          </section>
-
-          <section className={styles.group}>
-            <div className={styles.groupTitle}>Splat</div>
+            <RangeControl label="Swirl" value={settings.curlStrength} min={0} max={2} step={0.01} onChange={(value) => setNumber("curlStrength", value)} format={(value) => value.toFixed(2)} />
+            <RangeControl label="Pressure iters" value={settings.pressureIterations} min={1} max={30} step={1} onChange={(value) => setNumber("pressureIterations", value)} format={(value) => String(Math.round(value))} />
+            <RangeControl label="Trail fade" value={settings.densityDissipation} min={0.85} max={1} step={0.001} onChange={(value) => setNumber("densityDissipation", value)} format={(value) => value.toFixed(3)} />
             <RangeControl label="Trail width" value={settings.splatRadius} min={0.0005} max={0.03} step={0.0001} onChange={(value) => setNumber("splatRadius", value)} format={(value) => value.toFixed(4)} />
-            <RangeControl label="Force" value={settings.splatForce} min={1} max={18} step={0.1} onChange={(value) => setNumber("splatForce", value)} format={(value) => value.toFixed(1)} />
+            <button type="button" className={styles.clearButton} onClick={dispatchFluidRevealLabRebuild}><RotateCcw size={14} /> Clear fluid</button>
           </section>
 
           <section className={styles.group}>
-            <div className={styles.groupTitle}>Fluid sim</div>
-            <RangeControl label="Curl" value={settings.curlStrength} min={0} max={2} step={0.01} onChange={(value) => setNumber("curlStrength", value)} format={(value) => value.toFixed(2)} />
-            <RangeControl label="Pressure" value={settings.pressureIterations} min={1} max={30} step={1} onChange={(value) => setNumber("pressureIterations", value)} format={(value) => String(Math.round(value))} />
+            <div className={styles.groupTitle}>Advanced physics</div>
+            <RangeControl label="Force" value={settings.splatForce} min={1} max={18} step={0.1} onChange={(value) => setNumber("splatForce", value)} format={(value) => value.toFixed(1)} />
             <RangeControl label="Motion life" value={settings.velocityDissipation} min={0.85} max={1} step={0.001} onChange={(value) => setNumber("velocityDissipation", value)} format={(value) => value.toFixed(3)} />
-            <RangeControl label="Trail life" value={settings.densityDissipation} min={0.85} max={1} step={0.001} onChange={(value) => setNumber("densityDissipation", value)} format={(value) => value.toFixed(3)} />
             <RangeControl label="Pressure decay" value={settings.pressureDissipation} min={0} max={1} step={0.01} onChange={(value) => setNumber("pressureDissipation", value)} format={(value) => value.toFixed(2)} />
             <div className={styles.toggles}>
               <ToggleControl label="Vorticity" checked={settings.enableVorticity} onChange={(value) => setToggle("enableVorticity", value)} />
@@ -266,7 +279,7 @@ export default function FluidLabPanel() {
           </section>
 
           <div className={styles.footerActions}>
-            <button type="button" onClick={dispatchFluidRevealLabRebuild}><RotateCcw size={14} /> Clear fluid</button>
+            <button type="button" onClick={dispatchFluidRevealLabRebuild}><RotateCcw size={14} /> Clear</button>
             <button type="button" onClick={reset}>Reset</button>
             <button type="button" onClick={copySettings}>{copied ? <Check size={14} /> : <Clipboard size={14} />}{copied ? "Copied" : "Copy settings"}</button>
           </div>
