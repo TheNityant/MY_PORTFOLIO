@@ -1,7 +1,6 @@
 /* Full-site ShaderGradient atmosphere.
    The shader is a single fixed viewport canvas behind every page section, so
-   the approved sphere remains the visual environment from top to bottom while
-   the document scrolls over it. */
+   the document scrolls over one continuous visual environment. */
 
 .site-shell {
   position: relative;
@@ -19,7 +18,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #000;
+  background: #07080b;
 }
 
 .site-atmosphere__fallback,
@@ -39,47 +38,47 @@
   height: 100% !important;
 }
 
+/* Static fallback echoes Nighty Nighty rather than the old orange-heavy sphere. */
 .site-atmosphere__fallback {
   z-index: 0;
   background:
-    radial-gradient(circle at 42% 45%, rgba(115, 191, 196, 0.72), transparent 31%),
-    radial-gradient(circle at 64% 48%, rgba(255, 129, 10, 0.62), transparent 28%),
-    radial-gradient(circle at 57% 64%, rgba(141, 160, 206, 0.52), transparent 34%),
-    #000;
-  filter: saturate(0.94);
+    radial-gradient(circle at 26% 18%, rgba(96, 96, 128, 0.44), transparent 34%),
+    radial-gradient(circle at 72% 64%, rgba(141, 125, 202, 0.34), transparent 38%),
+    radial-gradient(circle at 54% 44%, rgba(33, 33, 33, 0.7), transparent 48%),
+    #07080b;
 }
 
 .site-atmosphere__readability {
   z-index: 2;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.26), transparent 30%, transparent 72%, rgba(0, 0, 0, 0.16)),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.08), transparent 24%, rgba(0, 0, 0, 0.16));
+    linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.14)),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), transparent 25%, rgba(0, 0, 0, 0.18));
 }
 
-.page-column,
-.site-header,
-.search-overlay {
+.page-column {
   position: relative;
   z-index: 2;
 }
 
+/* Keep the controls in their own stacking tier. The previous atmosphere layer
+   accidentally reset this from z-index: 50 to z-index: 2, allowing the page
+   column to sit on top of the nav and swallow clicks. */
 .site-header {
   position: fixed;
+  z-index: 60;
 }
 
-/* Surfaces stay translucent enough for the approved shader to remain present
-   through the page without sacrificing the readability of technical content. */
 .dark .dashboard-item-frame,
 .dark .dashboard-tile,
 .dark .project-card,
 .dark .writing-card,
 .dark .experience-card {
-  background: rgba(8, 11, 14, 0.76);
+  background: rgba(8, 11, 14, 0.78);
   backdrop-filter: blur(14px) saturate(0.9);
 }
 
 .dark .site-header {
-  background: rgba(4, 6, 8, 0.7);
+  background: rgba(4, 6, 8, 0.74);
 }
 
 /* Light theme keeps its global Cotton Candy counterpart without making the
