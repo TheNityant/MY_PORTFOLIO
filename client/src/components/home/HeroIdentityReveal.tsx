@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CanvasTexture,
   Color,
@@ -18,6 +18,12 @@ import {
   FullscreenPass,
 } from "three-fluid-fx";
 import { fluidRevealConfig, type FluidRevealTheme } from "@/config/fluidReveal";
+import {
+  FLUID_LAB_REBUILD_EVENT,
+  FLUID_LAB_UPDATE_EVENT,
+  readFluidRevealLabSettings,
+  type FluidRevealTuning,
+} from "@/config/fluidRevealLab";
 import { useTheme } from "@/contexts/ThemeContext";
 import { profile } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -99,25 +105,51 @@ function createMonogramTexture() {
   };
 }
 
-function applyTheme(material: ShaderMaterial, theme: FluidRevealTheme) {
+function applyTheme(material: ShaderMaterial, theme: FluidRevealTheme, rimMultiplier = 1) {
   const presentation = fluidRevealConfig.theme[theme];
   material.uniforms.uBaseTint.value.set(presentation.baseTint);
   material.uniforms.uRevealTint.value.set(presentation.revealTint);
   material.uniforms.uBaseDesaturation.value = presentation.baseDesaturation;
-  material.uniforms.uRimStrength.value = presentation.rimStrength;
+  material.uniforms.uRimStrength.value = presentation.rimStrength * rimMultiplier;
 }
 
 export function HeroIdentityReveal() {
   const regionRef = useRef<HTMLDivElement>(null);
   const canvasHostRef = useRef<HTMLDivElement>(null);
   const materialRef = useRef<ShaderMaterial | null>(null);
+  const tuningRef = useRef<FluidRevealTuning>(readFluidRevealLabSettings());
+  const [rebuildRevision, setRebuildRevision] = useState(0);
   const { theme } = useTheme();
   const themeRef = useRef<FluidRevealTheme>(theme);
   const reducedMotion = usePrefersReducedMotion();
   themeRef.current = theme;
 
   useEffect(() => {
-    if (materialRef.current) applyTheme(materialRef.current, theme);
+    if (!import.meta.env.DEV) return;
+
+    const onUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<FluidRevealTuning>;
+      if (!customEvent.detail) return;
+      tuningRef.current = customEvent.detail;
+    };
+    const onRebuild = () => setRebuildRevision((value) => value + 1);
+
+    window.addEventListener(FLUID_LAB_UPDATE_EVENT, onUpdate);
+    window.addEventListener(FLUID_LAB_REBUILD_EVENT, onRebuild);
+    return () => {
+      window.removeEventListener(FLUID_LAB_UPDATE_EVENT, onUpdate);
+      window.removeEventListener(FLUID_LAB_REBUILD_EVENT, onRebuild);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (materialRef.current) {
+      applyTheme(
+        materialRef.current,
+        theme,
+        import.meta.env.DEV ? tuningRef.current.rimMultiplier : 1,
+      );
+    }
   }, [theme]);
 
   useEffect(() => {
@@ -146,8 +178,18 @@ export function HeroIdentityReveal() {
       `(max-width: ${fluidRevealConfig.mobileBreakpoint}px), (pointer: coarse)`,
     ).matches;
     const quality = mobile ? fluidRevealConfig.mobile : fluidRevealConfig.desktop;
+    const tuning = tuningRef.current;
+    const useLabQuality = import.meta.env.DEV && !mobile;
+    const simulationResolution = useLabQuality
+      ? tuning.simulationResolution
+      : quality.simulationResolution;
+    const densityResolution = useLabQuality ? tuning.densityResolution : quality.densityResolution;
+    const maxDpr = useLabQuality ? tuning.maxDpr : quality.maxDpr;
+    const initialPressureIterations = import.meta.env.DEV
+      ? tuning.pressureIterations
+      : quality.pressureIterations;
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.maxDpr));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxDpr));
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = "hero-fluid-reveal__canvas";
@@ -157,18 +199,18 @@ export function HeroIdentityReveal() {
 
     const fluid = new FluidSimulation(renderer, {
       profile: quality.profile,
-      simResolution: quality.simulationResolution,
-      dyeResolution: quality.densityResolution,
-      pressureIterations: quality.pressureIterations,
-      velocityDissipation: fluidRevealConfig.velocityDissipation,
-      densityDissipation: fluidRevealConfig.densityDissipation,
-      pressureDissipation: fluidRevealConfig.pressureDissipation,
-      curlStrength: fluidRevealConfig.curlStrength,
-      enableVorticity: fluidRevealConfig.enableVorticity,
-      splatRadius: fluidRevealConfig.splatRadius,
-      splatForce: fluidRevealConfig.splatForce,
-      bfecc: fluidRevealConfig.useBFECC,
-      reflectWalls: fluidRevealConfig.reflectWalls,
+      simResolution: simulationResolution,
+      dyeResolution: densityResolution,
+      pressureIterations: initialPressureIterations,
+      velocityDissipation: import.meta.env.DEV ? tuning.velocityDissipation : fluidRevealConfig.velocityDissipation,
+      densityDissipation: import.meta.env.DEV ? tuning.densityDissipation : fluidRevealConfig.densityDissipation,
+      pressureDissipation: import.meta.env.DEV ? tuning.pressureDissipation : fluidRevealConfig.pressureDissipation,
+      curlStrength: import.meta.env.DEV ? tuning.curlStrength : fluidRevealConfig.curlStrength,
+      enableVorticity: import.meta.env.DEV ? tuning.enableVorticity : fluidRevealConfig.enableVorticity,
+      splatRadius: import.meta.env.DEV ? tuning.splatRadius : fluidRevealConfig.splatRadius,
+      splatForce: import.meta.env.DEV ? tuning.splatForce : fluidRevealConfig.splatForce,
+      bfecc: import.meta.env.DEV ? tuning.useBFECC : fluidRevealConfig.useBFECC,
+      reflectWalls: import.meta.env.DEV ? tuning.reflectWalls : fluidRevealConfig.reflectWalls,
     });
 
     const initialIdentity = createMonogramTexture();
@@ -251,14 +293,14 @@ export function HeroIdentityReveal() {
         uBaseTint: new Uniform(new Color("#858b93")),
         uRevealTint: new Uniform(new Color("#ffffff")),
         uBaseDesaturation: new Uniform(fluidRevealConfig.theme.dark.baseDesaturation),
-        uRevealThreshold: new Uniform(fluidRevealConfig.revealThreshold),
-        uRevealSoftness: new Uniform(fluidRevealConfig.revealSoftness),
-        uBoundaryDistortion: new Uniform(fluidRevealConfig.boundaryDistortion),
+        uRevealThreshold: new Uniform(import.meta.env.DEV ? tuning.revealThreshold : fluidRevealConfig.revealThreshold),
+        uRevealSoftness: new Uniform(import.meta.env.DEV ? tuning.revealSoftness : fluidRevealConfig.revealSoftness),
+        uBoundaryDistortion: new Uniform(import.meta.env.DEV ? tuning.boundaryDistortion : fluidRevealConfig.boundaryDistortion),
         uRimStrength: new Uniform(fluidRevealConfig.rimStrength),
       },
     });
     materialRef.current = composite;
-    applyTheme(composite, themeRef.current);
+    applyTheme(composite, themeRef.current, import.meta.env.DEV ? tuning.rimMultiplier : 1);
 
     const pass = new FullscreenPass(composite);
 
@@ -322,6 +364,25 @@ export function HeroIdentityReveal() {
         return;
       }
 
+      if (import.meta.env.DEV) {
+        const live = tuningRef.current;
+        fluid.splatRadius = live.splatRadius;
+        fluid.splatForce = live.splatForce;
+        fluid.pressureIterations = live.pressureIterations;
+        fluid.curlStrength = live.curlStrength;
+        fluid.velocityDissipation = live.velocityDissipation;
+        fluid.densityDissipation = live.densityDissipation;
+        fluid.pressureDissipation = live.pressureDissipation;
+        fluid.enableVorticity = live.enableVorticity;
+        fluid.bfecc = live.useBFECC;
+        fluid.reflectWalls = live.reflectWalls;
+        composite.uniforms.uRevealThreshold.value = live.revealThreshold;
+        composite.uniforms.uRevealSoftness.value = live.revealSoftness;
+        composite.uniforms.uBoundaryDistortion.value = live.boundaryDistortion;
+        composite.uniforms.uRimStrength.value =
+          fluidRevealConfig.theme[themeRef.current].rimStrength * live.rimMultiplier;
+      }
+
       const dt = Math.min(Math.max((now - lastFrame) / 1000, 1e-6), 1 / 60);
       lastFrame = now;
       fluid.step(dt);
@@ -346,7 +407,7 @@ export function HeroIdentityReveal() {
       renderer.forceContextLoss();
       if (renderer.domElement.parentNode === host) host.removeChild(renderer.domElement);
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, rebuildRevision]);
 
   return (
     <div
