@@ -33,7 +33,7 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
 
     event.preventDefault();
     section.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-    window.history.replaceState(null, "", href);
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   };
 
   const navIcon = (icon: string) => {
@@ -51,7 +51,12 @@ export function Navbar({ searchOpen, onToggleSearch }: NavbarProps) {
         reducedMotion && "site-header--static",
       )}
     >
-      <a className="wordmark" href="#hero" aria-label={`${profile.name}, home`}>
+      <a
+        className="wordmark"
+        href="#hero"
+        aria-label={`${profile.name}, home`}
+        onClick={(event) => handleNav(event, "#hero")}
+      >
         <span aria-hidden="true">{profile.initials}</span>
       </a>
 
