@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import { HeroIdentityReveal } from "@/components/home/HeroIdentityReveal";
@@ -35,6 +35,7 @@ function getHeroStatus(): HeroStatus {
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<HeroStatus>(() => getHeroStatus());
+  const ctaRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const updateStatus = () => setStatus(getHeroStatus());
@@ -42,6 +43,22 @@ export function Hero() {
     const interval = window.setInterval(updateStatus, 60_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  const onCtaPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
+    const element = ctaRef.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    element.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
+    element.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
+  };
+
+  const onViewWork = (event: MouseEvent<HTMLAnchorElement>) => {
+    const section = document.getElementById("projects");
+    if (!section) return;
+    event.preventDefault();
+    section.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  };
 
   return (
     <section
@@ -103,7 +120,13 @@ export function Hero() {
               ))}
             </div>
             <span className="hero-divider" aria-hidden="true" />
-            <a href="#projects" className="outline-action">
+            <a
+              ref={ctaRef}
+              href="#projects"
+              className="outline-action"
+              onPointerMove={onCtaPointerMove}
+              onClick={onViewWork}
+            >
               <span>View my work</span>
               <ArrowRight size={16} aria-hidden="true" />
             </a>
