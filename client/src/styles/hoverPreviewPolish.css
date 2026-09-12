@@ -1,0 +1,26 @@
+/* Keep the floating preview on the same reverse-tone surface as its hovered row. */
+.experience-row--preview:hover .experience-hover-preview,
+.experience-row--preview:focus-visible .experience-hover-preview,
+.experience-row--preview:focus-within .experience-hover-preview,
+.writing-preview-card--interactive:hover .writing-hover-preview,
+.writing-preview-card--interactive:focus-visible .writing-hover-preview {
+  background: var(--section-hover-bg);
+  color: var(--section-hover-fg);
+  border-color: color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+}
+
+.experience-row--preview:hover .experience-hover-preview strong,
+.experience-row--preview:focus-visible .experience-hover-preview strong,
+.experience-row--preview:focus-within .experience-hover-preview strong,
+.writing-preview-card--interactive:hover .writing-hover-preview strong,
+.writing-preview-card--interactive:focus-visible .writing-hover-preview strong {
+  color: var(--section-hover-fg) !important;
+}
+
+.experience-row--preview:hover .experience-hover-preview :is(p, span),
+.experience-row--preview:focus-visible .experience-hover-preview :is(p, span),
+.experience-row--preview:focus-within .experience-hover-preview :is(p, span),
+.writing-preview-card--interactive:hover .writing-hover-preview :is(p, span),
+.writing-preview-card--interactive:focus-visible .writing-hover-preview :is(p, span) {
+  color: var(--section-hover-muted) !important;
+}
