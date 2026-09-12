@@ -1,0 +1,511 @@
+/* Final-layer interaction polish. Keep this file imported last so it can tune
+   inherited baseline styles without rewriting the original layout system. */
+
+/* Hero --------------------------------------------------------------------- */
+.hero-title--technical .hero-name-shell {
+  min-width: 4.35em;
+  text-align: left;
+}
+
+.hero-title--technical .hero-name--animated {
+  white-space: nowrap;
+}
+
+.hero-actions--technical .outline-action::after {
+  background:
+    radial-gradient(
+      120px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      color-mix(in srgb, var(--foreground) 14%, transparent),
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--background) 72%, transparent);
+}
+
+.dark .hero-actions--technical .outline-action::after {
+  background:
+    radial-gradient(
+      120px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      rgba(255, 255, 255, 0.12),
+      transparent 62%
+    ),
+    rgba(8, 11, 14, 0.7);
+}
+
+/* Dashboard cursor reflection --------------------------------------------- */
+.dashboard-item-frame--interactive {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.dashboard-item-frame--interactive:hover {
+  border-color: color-mix(in srgb, var(--foreground) 28%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--foreground) 7%, transparent),
+    0 0 26px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.dashboard-item-frame--interactive::before {
+  background: radial-gradient(
+    280px circle at var(--pointer-x) var(--pointer-y),
+    color-mix(in srgb, var(--foreground) 12%, transparent),
+    transparent 62%
+  );
+}
+
+.dashboard-item-frame--interactive::after {
+  background:
+    radial-gradient(
+      205px circle at var(--pointer-x) var(--pointer-y),
+      color-mix(in srgb, var(--foreground) 42%, transparent),
+      transparent 50%
+    ) border-box;
+}
+
+.dashboard-item-frame--interactive:hover::before {
+  opacity: 0.86;
+}
+
+.dashboard-item-frame--interactive:hover::after {
+  opacity: 0.95;
+}
+
+/* Writing + experience: readable reverse-tone hover ----------------------- */
+.experience-row--preview,
+.writing-preview-card--interactive {
+  --section-hover-bg: rgba(11, 13, 16, 0.96);
+  --section-hover-fg: #f7f7f4;
+  --section-hover-muted: rgba(247, 247, 244, 0.7);
+  position: relative;
+  isolation: isolate;
+  border-radius: 0.85rem;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.dark .experience-row--preview,
+.dark .writing-preview-card--interactive {
+  --section-hover-bg: rgba(247, 245, 239, 0.96);
+  --section-hover-fg: #111417;
+  --section-hover-muted: rgba(17, 20, 23, 0.68);
+}
+
+.experience-row--preview {
+  outline: none;
+}
+
+.experience-row--preview:hover,
+.experience-row--preview:focus-visible,
+.experience-row--preview:focus-within,
+.writing-preview-card--interactive:hover,
+.writing-preview-card--interactive:focus-visible {
+  z-index: 24;
+  color: var(--section-hover-fg);
+  background: var(--section-hover-bg);
+  border-color: color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+  transform: translateY(-2px);
+}
+
+.experience-row--preview:hover :is(h3, strong, a, .experience-mark),
+.experience-row--preview:focus-visible :is(h3, strong, a, .experience-mark),
+.experience-row--preview:focus-within :is(h3, strong, a, .experience-mark),
+.writing-preview-card--interactive:hover :is(h3, strong, .writing-preview-action),
+.writing-preview-card--interactive:focus-visible :is(h3, strong, .writing-preview-action) {
+  color: var(--section-hover-fg) !important;
+}
+
+.experience-row--preview:hover :is(p, span),
+.experience-row--preview:focus-visible :is(p, span),
+.experience-row--preview:focus-within :is(p, span),
+.writing-preview-card--interactive:hover :is(p, span),
+.writing-preview-card--interactive:focus-visible :is(p, span) {
+  color: var(--section-hover-muted) !important;
+}
+
+.experience-row--preview:hover .project-tech li,
+.experience-row--preview:focus-visible .project-tech li,
+.experience-row--preview:focus-within .project-tech li,
+.writing-preview-card--interactive:hover .project-tech li,
+.writing-preview-card--interactive:focus-visible .project-tech li {
+  color: var(--section-hover-fg);
+  border-color: color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+  background: color-mix(in srgb, var(--section-hover-fg) 7%, transparent);
+}
+
+.experience-hover-preview,
+.writing-hover-preview {
+  position: absolute;
+  right: 0.75rem;
+  top: calc(100% - 0.35rem);
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 8.4rem minmax(0, 1fr);
+  gap: 0.8rem;
+  width: min(26rem, calc(100% - 1.5rem));
+  padding: 0.72rem;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.985);
+  transform-origin: top right;
+  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(20px) saturate(1.08);
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease,
+    visibility 160ms ease;
+}
+
+.experience-row--preview:hover .experience-hover-preview,
+.experience-row--preview:focus-visible .experience-hover-preview,
+.experience-row--preview:focus-within .experience-hover-preview,
+.writing-preview-card--interactive:hover .writing-hover-preview,
+.writing-preview-card--interactive:focus-visible .writing-hover-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.experience-hover-preview__media,
+.writing-hover-preview__media {
+  overflow: hidden;
+  min-height: 6.2rem;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.experience-hover-preview__media img,
+.writing-hover-preview__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 6.2rem;
+  object-fit: cover;
+}
+
+.experience-hover-preview__copy,
+.writing-hover-preview > div:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.experience-hover-preview span,
+.writing-hover-preview span {
+  color: var(--muted-foreground) !important;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.experience-hover-preview strong,
+.writing-hover-preview strong {
+  color: var(--foreground) !important;
+  font-size: 0.9rem;
+}
+
+.experience-hover-preview p,
+.writing-hover-preview p {
+  margin: 0;
+  color: var(--muted-foreground) !important;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+/* Command palette ---------------------------------------------------------- */
+.search-overlay {
+  z-index: 6000;
+  align-items: flex-start;
+  padding: clamp(1rem, 8vh, 5.5rem) 1rem 1rem;
+}
+
+.search-backdrop {
+  background: rgba(0, 0, 0, 0.58) !important;
+  backdrop-filter: blur(8px);
+}
+
+.search-panel.search-panel--command {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  width: min(38rem, calc(100vw - 2rem));
+  max-height: min(44rem, calc(100svh - 2rem));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(24px) saturate(1.08);
+}
+
+.search-command-header {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.search-field.search-field--command {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0.95rem;
+}
+
+.search-field--command input {
+  min-width: 0;
+  padding-block: 1rem;
+}
+
+.search-close-button {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.search-close-button:hover,
+.search-close-button:focus-visible {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.search-command-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.55rem;
+}
+
+.search-command-group {
+  padding: 0.25rem 0;
+}
+
+.search-command-group + .search-command-group {
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 7%, transparent);
+  margin-top: 0.3rem;
+  padding-top: 0.6rem;
+}
+
+.search-command-group > p {
+  margin: 0 0 0.25rem;
+  padding: 0.35rem 0.55rem;
+  color: color-mix(in srgb, var(--muted-foreground) 78%, transparent);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.search-command-group > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.search-command-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.7rem;
+  padding: 0.55rem;
+  border: 0;
+  border-radius: 0.62rem;
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.search-command-item:hover,
+.search-command-item[data-selected="true"] {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.search-command-item[data-selected="true"] {
+  transform: translateX(2px);
+}
+
+.search-command-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--foreground) 11%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+}
+
+.search-command-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.search-command-copy strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-command-copy small {
+  max-width: 45%;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-command-arrow {
+  flex: none;
+  color: var(--muted-foreground);
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.search-command-item:hover .search-command-arrow,
+.search-command-item[data-selected="true"] .search-command-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.search-command-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.9rem;
+  padding: 0.62rem 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.64rem;
+}
+
+.search-command-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search-command-footer kbd {
+  display: inline-grid;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  padding: 0 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  font-size: 0.6rem;
+}
+
+.search-command-future {
+  margin-left: auto;
+  color: color-mix(in srgb, var(--tn-teal) 72%, var(--muted-foreground));
+}
+
+/* Give the navbar controls a more deliberate control-surface feel. */
+.header-tools .header-tool {
+  min-height: 2rem;
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.header-tools .header-tool:hover,
+.header-tools .header-tool:focus-visible {
+  border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  transform: translateY(-1px);
+}
+
+.header-tools .header-github {
+  border-color: color-mix(in srgb, var(--foreground) 11%, transparent);
+  background: color-mix(in srgb, var(--background) 38%, transparent);
+}
+
+@media (max-width: 720px) {
+  .hero-title--technical .hero-name-shell {
+    min-width: 3.95em;
+  }
+
+  .experience-hover-preview,
+  .writing-hover-preview {
+    display: none;
+  }
+
+  .search-overlay {
+    padding: 0.75rem;
+  }
+
+  .search-panel.search-panel--command {
+    width: calc(100vw - 1.5rem);
+    max-height: calc(100svh - 1.5rem);
+  }
+
+  .search-command-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .search-command-copy small {
+    max-width: 100%;
+  }
+
+  .search-command-future {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-item-frame--interactive,
+  .experience-row--preview,
+  .writing-preview-card--interactive,
+  .search-command-item {
+    transition: none;
+  }
+
+  .experience-row--preview:hover,
+  .experience-row--preview:focus-visible,
+  .experience-row--preview:focus-within,
+  .writing-preview-card--interactive:hover,
+  .writing-preview-card--interactive:focus-visible {
+    transform: none;
+  }
+}
