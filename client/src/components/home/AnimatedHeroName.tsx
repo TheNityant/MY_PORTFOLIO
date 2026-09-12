@@ -1,43 +1,46 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const SWAP_EVERY_MS = 4600;
 
 export function AnimatedHeroName({ name }: { name: string }) {
   const reducedMotion = usePrefersReducedMotion();
-  const variants = useMemo(() => [name, name === "Nityant" ? "TheNityant" : `The${name}`], [name]);
-  const [variantIndex, setVariantIndex] = useState(0);
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     if (reducedMotion) return;
     const interval = window.setInterval(() => {
-      setVariantIndex((value) => (value + 1) % variants.length);
+      setExpanded((value) => !value);
     }, SWAP_EVERY_MS);
     return () => window.clearInterval(interval);
-  }, [reducedMotion, variants.length]);
+  }, [reducedMotion]);
 
   if (reducedMotion) {
     return <span className="hero-name">{name}</span>;
   }
 
-  const current = variants[variantIndex];
+  const prefix = name === "Nityant" ? "Nit" : name.slice(0, Math.min(3, name.length));
+  const suffix = name.slice(prefix.length);
 
   return (
     <span className="hero-name-shell" aria-label={name}>
-      <AnimatePresence mode="wait" initial>
+      <span className="hero-name hero-name--animated" aria-hidden="true">
+        <span>{prefix}</span>
         <motion.span
-          key={current}
-          aria-hidden="true"
-          className="hero-name hero-name--animated"
-          initial={{ clipPath: "inset(0 100% 0 0)", y: 4, opacity: 0.25 }}
-          animate={{ clipPath: "inset(0 0% 0 0)", y: 0, opacity: 1 }}
-          exit={{ clipPath: "inset(0 0 0 100%)", y: -3, opacity: 0.2 }}
-          transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
+          className="hero-name-suffix"
+          initial={false}
+          animate={
+            expanded
+              ? { clipPath: "inset(0 0% 0 0)", opacity: 1, scaleX: 1, y: 0 }
+              : { clipPath: "inset(0 100% 0 0)", opacity: 0, scaleX: 0.82, y: -1 }
+          }
+          transition={{ duration: 0.62, ease: [0.16, 1, 0.3, 1] }}
+          style={{ display: "inline-block", transformOrigin: "left bottom" }}
         >
-          {current}
+          {suffix}
         </motion.span>
-      </AnimatePresence>
+      </span>
 
       <motion.span
         className="hero-name-stroke"
