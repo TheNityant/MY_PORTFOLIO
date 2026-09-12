@@ -6,5 +6,6 @@ import "./styles/heroTechnicalNoir.css";
 import "./styles/heroVisibilityFix.css";
 import "./styles/siteAtmosphere.css";
 import "./styles/portfolioPolish.css";
+import "./styles/hoverPreviewPolish.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
