@@ -1,27 +1,37 @@
 import { ShaderGradient, ShaderGradientCanvas } from "@shadergradient/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ATMOSPHERE_LAB_UPDATE_EVENT,
+  atmosphereLabDefaults,
+  getAtmospherePresetTuning,
   readAtmosphereLabSettings,
-  type AtmosphereFluidSettings,
-  type AtmospherePreset,
+  type AtmosphereLabSettings,
 } from "@/config/atmosphereLab";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+function productionSettings(): AtmosphereLabSettings {
+  return {
+    preset: atmosphereLabDefaults.preset,
+    nighty: { ...atmosphereLabDefaults.nighty },
+    interstella: { ...atmosphereLabDefaults.interstella },
+  };
+}
 
 export default function SiteShaderScene() {
   const { theme } = useTheme();
   const reducedMotion = usePrefersReducedMotion();
   const animate = reducedMotion ? "off" : "on";
-  const [darkPreset, setDarkPreset] = useState<AtmospherePreset>(() =>
-    import.meta.env.DEV ? readAtmosphereLabSettings().preset : "nighty",
+  const [settings, setSettings] = useState<AtmosphereLabSettings>(() =>
+    import.meta.env.DEV ? readAtmosphereLabSettings() : productionSettings(),
   );
+  const tuning = useMemo(() => getAtmospherePresetTuning(settings), [settings]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     const onUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<AtmosphereFluidSettings>).detail;
-      if (detail?.preset) setDarkPreset(detail.preset);
+      const detail = (event as CustomEvent<AtmosphereLabSettings>).detail;
+      if (detail) setSettings(detail);
     };
     window.addEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
     return () => window.removeEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
@@ -33,7 +43,7 @@ export default function SiteShaderScene() {
       pixelDensity={1}
       fov={45}
     >
-      {theme === "dark" && darkPreset === "interstella" ? (
+      {theme === "dark" && settings.preset === "interstella" ? (
         <ShaderGradient
           control="props"
           animate={animate}
@@ -41,7 +51,7 @@ export default function SiteShaderScene() {
           wireframe={false}
           shader="defaults"
           uTime={0}
-          uSpeed={0.3}
+          uSpeed={tuning.speed}
           uStrength={0.3}
           uDensity={0.8}
           uFrequency={5.5}
@@ -61,7 +71,7 @@ export default function SiteShaderScene() {
           cDistance={0.5}
           cameraZoom={15.1}
           lightType="env"
-          brightness={0.8}
+          brightness={tuning.brightness}
           envPreset="city"
           grain="on"
           toggleAxis={false}
@@ -77,7 +87,7 @@ export default function SiteShaderScene() {
           wireframe={false}
           shader="defaults"
           uTime={8}
-          uSpeed={0.3}
+          uSpeed={tuning.speed}
           uStrength={1.5}
           uDensity={1.5}
           uFrequency={0}
@@ -97,7 +107,7 @@ export default function SiteShaderScene() {
           cDistance={2.8}
           cameraZoom={9.1}
           lightType="3d"
-          brightness={1}
+          brightness={tuning.brightness}
           envPreset="city"
           grain="on"
           toggleAxis={false}
