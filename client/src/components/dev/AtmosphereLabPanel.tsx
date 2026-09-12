@@ -1,13 +1,16 @@
-import { Settings2, Sparkles, X } from "lucide-react";
+import { Copy, RotateCcw, Settings2, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   ATMOSPHERE_LAB_PANEL_KEY,
+  atmosphereLabDefaults,
   atmospherePresetMeta,
   dispatchAtmosphereLabUpdate,
+  getAtmospherePresetTuning,
   readAtmosphereLabSettings,
   writeAtmosphereLabSettings,
-  type AtmosphereFluidSettings,
+  type AtmosphereLabSettings,
   type AtmospherePreset,
+  type AtmospherePresetTuning,
 } from "@/config/atmosphereLab";
 import styles from "./atmosphereLabPanel.module.css";
 
@@ -17,9 +20,19 @@ function removeQuery() {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
+function cloneDefaults(): AtmosphereLabSettings {
+  return {
+    preset: atmosphereLabDefaults.preset,
+    nighty: { ...atmosphereLabDefaults.nighty },
+    interstella: { ...atmosphereLabDefaults.interstella },
+  };
+}
+
 export default function AtmosphereLabPanel() {
   const [visible, setVisible] = useState(false);
-  const [settings, setSettings] = useState<AtmosphereFluidSettings>(() => readAtmosphereLabSettings());
+  const [settings, setSettings] = useState<AtmosphereLabSettings>(() => readAtmosphereLabSettings());
+  const [copied, setCopied] = useState(false);
+  const tuning = getAtmospherePresetTuning(settings);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
@@ -53,11 +66,42 @@ export default function AtmosphereLabPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const setPreset = (preset: AtmospherePreset) => {
-    const next = { ...settings, preset };
+  const persist = (next: AtmosphereLabSettings) => {
     setSettings(next);
     writeAtmosphereLabSettings(next);
     dispatchAtmosphereLabUpdate(next);
+  };
+
+  const setPreset = (preset: AtmospherePreset) => {
+    persist({ ...settings, preset });
+  };
+
+  const setTuning = (patch: Partial<AtmospherePresetTuning>) => {
+    const preset = settings.preset;
+    const current = getAtmospherePresetTuning(settings, preset);
+    persist({
+      ...settings,
+      [preset]: { ...current, ...patch },
+    });
+  };
+
+  const resetPreset = () => {
+    const preset = settings.preset;
+    persist({
+      ...settings,
+      [preset]: { ...getAtmospherePresetTuning(cloneDefaults(), preset) },
+    });
+  };
+
+  const copyValues = async () => {
+    const value = `${atmospherePresetMeta[settings.preset].label}: uSpeed=${tuning.speed.toFixed(2)}, brightness=${tuning.brightness.toFixed(2)}`;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
+    } catch {
+      setCopied(false);
+    }
   };
 
   const open = () => {
@@ -76,26 +120,26 @@ export default function AtmosphereLabPanel() {
 
   if (!visible) {
     return (
-      <button type="button" className={styles.launcher} onClick={open} aria-label="Compare portfolio backgrounds">
+      <button type="button" className={styles.launcher} onClick={open} aria-label="Open background lab">
         <Settings2 size={15} />
-        <span>Compare backgrounds</span>
+        <span>Background lab</span>
       </button>
     );
   }
 
   return (
-    <aside className={styles.panel} aria-label="Background comparison developer panel">
+    <aside className={styles.panel} aria-label="Background developer lab">
       <header className={styles.header}>
         <div>
           <span className={styles.eyebrow}><Sparkles size={12} /> DEV ONLY</span>
-          <strong>Background A/B</strong>
+          <strong>Background Lab</strong>
         </div>
-        <button type="button" onClick={close} aria-label="Close background comparison"><X size={16} /></button>
+        <button type="button" onClick={close} aria-label="Close background lab"><X size={16} /></button>
       </header>
 
       <div className={styles.body}>
         <p className={styles.hint}>
-          Switch only the full-site ShaderGradient. The global fluid cursor has been removed; fluid now lives only in the hero identity reveal.
+          Compare Nighty Nighty and Interstella, then tune motion speed and brightness live. Each preset remembers its own values.
         </p>
 
         <section className={styles.group}>
@@ -115,8 +159,49 @@ export default function AtmosphereLabPanel() {
           </div>
         </section>
 
+        <section className={styles.group}>
+          <div className={styles.groupTitle}>{atmospherePresetMeta[settings.preset].label} tuning</div>
+
+          <label className={styles.rangeRow}>
+            <span>Motion speed</span>
+            <output>{tuning.speed.toFixed(2)}</output>
+            <input
+              type="range"
+              min="0"
+              max="1.5"
+              step="0.01"
+              value={tuning.speed}
+              onChange={(event) => setTuning({ speed: Number(event.target.value) })}
+            />
+          </label>
+
+          <label className={styles.rangeRow}>
+            <span>Brightness</span>
+            <output>{tuning.brightness.toFixed(2)}</output>
+            <input
+              type="range"
+              min="0.2"
+              max="2"
+              step="0.05"
+              value={tuning.brightness}
+              onChange={(event) => setTuning({ brightness: Number(event.target.value) })}
+            />
+          </label>
+        </section>
+
+        <div className={styles.visualReadout} aria-label="Current ShaderGradient values">
+          <span>uSpeed</span><code>{tuning.speed.toFixed(2)}</code>
+          <span>brightness</span><code>{tuning.brightness.toFixed(2)}</code>
+        </div>
+
+        <div className={styles.footer}>
+          <button type="button" onClick={resetPreset}><RotateCcw size={13} /> Reset preset</button>
+          <button type="button" onClick={copyValues}><Copy size={13} /> {copied ? "Copied" : "Copy values"}</button>
+          <button type="button" onClick={close}>Done</button>
+        </div>
+
         <p className={styles.hint}>
-          Tip: compare the hero first, then scroll through Tools, Projects and Writing before choosing. Ctrl/⌘ + Shift + A also toggles this panel.
+          Ctrl/⌘ + Shift + A toggles this panel. Production still uses the committed preset values; this lab is for choosing them safely.
         </p>
       </div>
     </aside>
