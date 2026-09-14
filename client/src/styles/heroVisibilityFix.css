@@ -105,11 +105,28 @@
   vertical-align: baseline;
 }
 
+/* The word now disappears by collapsing its measured width. During the
+   moving phases this small mask feathers the moving right edge, so cursive
+   strokes do not look like they are being chopped by a vertical knife. */
 .hero-title--technical .hero-name-slot {
   display: inline-block;
-  overflow: visible;
+  box-sizing: content-box;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
   vertical-align: baseline;
   white-space: nowrap;
+  will-change: width, opacity;
+}
+
+.hero-title--technical .hero-name-slot:is([data-phase="initial"], [data-phase="exit"], [data-phase="enter"]) {
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+}
+
+.hero-title--technical .hero-name-slot[data-phase="hold"] {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .hero-title--technical .hero-name--animated {
@@ -117,7 +134,6 @@
   overflow: visible;
   white-space: nowrap;
   vertical-align: baseline;
-  will-change: clip-path;
 }
 
 /* Technical Noir take on Shivam's rotating ShimmerBorder CTA. */
