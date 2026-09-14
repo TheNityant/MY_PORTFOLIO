@@ -13,7 +13,6 @@ import {
   metrics,
   visibleSocials,
 } from "@/data/portfolio";
-import "./dashboardParity.css";
 
 export function Dashboard() {
   return (
