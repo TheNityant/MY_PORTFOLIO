@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import AtmosphereLabPanel from "@/components/dev/AtmosphereLabPanel";
-import FluidLabPanel from "@/components/dev/FluidLabPanel";
 import { Dashboard } from "@/components/home/Dashboard";
 import { Experience } from "@/components/home/Experience";
 import { Hero } from "@/components/home/Hero";
@@ -56,7 +55,6 @@ export default function Home() {
         <Footer />
       </div>
       <CommandPalette open={searchOpen} onClose={closeSearch} />
-      {import.meta.env.DEV ? <FluidLabPanel /> : null}
       {import.meta.env.DEV ? <AtmosphereLabPanel /> : null}
     </div>
   );
