@@ -137,6 +137,34 @@
   animation-play-state: paused;
 }
 
+.github-activity-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.github-repo-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  color: var(--muted-foreground);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.github-repo-count strong {
+  color: var(--foreground);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.github-activity-meta .github-cta {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
 @media (min-width: 900px) {
   .dashboard-area-tools .tools-marquee--logos {
     min-height: 4rem;
@@ -152,6 +180,12 @@
     width: 2.25rem;
     height: 2.25rem;
     flex-basis: 2.25rem;
+  }
+
+  .dashboard-area-activity .github-activity-meta {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
 
