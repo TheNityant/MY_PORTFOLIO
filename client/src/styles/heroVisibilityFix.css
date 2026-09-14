@@ -1,0 +1,267 @@
+.hero-identity-cluster {
+  position: relative;
+  display: flex;
+  width: 10rem;
+  margin: 0 auto;
+  padding-bottom: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.hero-static-identity {
+  position: relative;
+  display: grid;
+  width: 6.4rem;
+  height: 6.4rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--tn-blue) 22%, transparent), transparent 52%),
+    linear-gradient(135deg, color-mix(in srgb, var(--tn-teal) 26%, var(--background)), color-mix(in srgb, var(--tn-blue) 20%, var(--background)) 55%, color-mix(in srgb, var(--tn-amber) 18%, var(--background)));
+  color: var(--foreground);
+  box-shadow:
+    0 16px 42px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 color-mix(in srgb, white 13%, transparent);
+}
+
+.hero-static-identity::after {
+  content: "";
+  position: absolute;
+  inset: 0.42rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.hero-static-identity > span {
+  position: relative;
+  z-index: 1;
+  font-size: 2rem;
+  font-weight: 760;
+  letter-spacing: -0.08em;
+}
+
+.hero-static-identity img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.dark .hero-static-identity {
+  border-color: rgba(242, 240, 233, 0.2);
+  background:
+    radial-gradient(circle at 34% 28%, rgba(141, 160, 206, 0.2), transparent 52%),
+    linear-gradient(135deg, rgba(115, 191, 196, 0.17), rgba(141, 160, 206, 0.12) 55%, rgba(255, 129, 10, 0.1)),
+    rgba(8, 11, 14, 0.82);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Match the reference rhythm: portrait first, then a deliberate gap, then
+   status. The pill no longer overlaps or hugs the portrait. */
+.hero-identity-cluster .hero-live-status {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: 8;
+  min-width: 6.9rem;
+  min-height: 2.15rem;
+  margin: 0;
+  padding: 0.46rem 0.82rem;
+  transform: none;
+  border-color: color-mix(in srgb, var(--foreground) 26%, transparent);
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  color: var(--foreground);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 9%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.dark .hero-identity-cluster .hero-live-status {
+  background: rgba(8, 11, 14, 0.78);
+  border-color: rgba(242, 240, 233, 0.22);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.hero-live-status[data-status="available"] .hero-live-status__dot {
+  box-shadow: 0 0 0 1px rgba(70, 201, 120, 0.35), 0 0 12px rgba(70, 201, 120, 0.62);
+}
+
+.hero-live-status[data-status="away"] .hero-live-status__dot {
+  box-shadow: 0 0 0 1px rgba(233, 165, 76, 0.35), 0 0 12px rgba(233, 165, 76, 0.58);
+}
+
+/* Keep the greeting and the animated name as one baseline-locked unit. This
+   prevents Nityant/TheNityant from jumping above or below "Hi. I'm" while the
+   measured-width reveal animation is running. */
+.hero-title.hero-title--technical {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: nowrap;
+  column-gap: 0.16em;
+  white-space: nowrap;
+}
+
+.hero-title--technical .hero-title-fade,
+.hero-title--technical .hero-name-shell {
+  flex: 0 0 auto;
+}
+
+.hero-title--technical .hero-name-shell {
+  position: relative;
+  display: inline-block;
+  min-width: 0 !important;
+  overflow: visible;
+  vertical-align: baseline;
+}
+
+/* The word disappears by collapsing its measured width. During moving phases
+   the edge mask feathers the cursive stroke rather than chopping it. */
+.hero-title--technical .hero-name-slot {
+  display: inline-block;
+  box-sizing: content-box;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  vertical-align: baseline;
+  white-space: nowrap;
+  will-change: width, opacity;
+}
+
+.hero-title--technical .hero-name-slot:is([data-phase="initial"], [data-phase="exit"], [data-phase="enter"]) {
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+}
+
+.hero-title--technical .hero-name-slot[data-phase="hold"] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.hero-title--technical .hero-name--animated {
+  display: inline-block;
+  overflow: visible;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/* Give the engineering tagline its own breathing room below the identity line. */
+.hero-description.hero-description--technical {
+  margin-top: 0.9rem;
+}
+
+/* Technical Noir take on Shivam's rotating ShimmerBorder CTA. */
+.hero-actions--technical .outline-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: transparent;
+  background: transparent;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.hero-actions--technical .outline-action::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 190%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 245deg,
+    color-mix(in srgb, var(--tn-teal) 88%, white 12%) 270deg,
+    color-mix(in srgb, var(--tn-blue) 92%, white 8%) 294deg,
+    color-mix(in srgb, var(--tn-amber) 90%, white 10%) 315deg,
+    transparent 342deg 360deg
+  );
+  animation: hero-view-work-orbit 3.3s linear infinite;
+  pointer-events: none;
+}
+
+.hero-actions--technical .outline-action::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--background) 70%, transparent);
+  backdrop-filter: blur(10px) saturate(1.08);
+  pointer-events: none;
+}
+
+.dark .hero-actions--technical .outline-action::after {
+  background: rgba(8, 11, 14, 0.68);
+}
+
+.hero-actions--technical .outline-action > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-actions--technical .outline-action:hover {
+  box-shadow:
+    0 10px 30px color-mix(in srgb, var(--tn-teal) 10%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+@keyframes hero-view-work-orbit {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (max-width: 639px) {
+  .hero-identity-cluster {
+    width: 9rem;
+    padding-bottom: 0;
+    gap: 1.6rem;
+  }
+
+  .hero-static-identity {
+    width: 5.5rem;
+    height: 5.5rem;
+  }
+
+  .hero-static-identity > span {
+    font-size: 1.75rem;
+  }
+
+  .hero-identity-cluster .hero-live-status {
+    min-height: 2rem;
+    min-width: 6.4rem;
+    padding: 0.42rem 0.72rem;
+    font-size: 0.75rem;
+  }
+
+  .hero-title.hero-title--technical {
+    font-size: clamp(2.25rem, 10.8vw, 3.15rem);
+    column-gap: 0.12em;
+  }
+
+  .hero-description.hero-description--technical {
+    margin-top: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-actions--technical .outline-action::before {
+    animation: none;
+    transform: translate(-50%, -50%) rotate(285deg);
+  }
+}

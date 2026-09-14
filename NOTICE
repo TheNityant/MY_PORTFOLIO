@@ -1,0 +1,23 @@
+Portfolio Website (structural reference)
+Copyright (c) 2025 Shivam Patel
+https://github.com/shivy02/portfolio-website
+
+This product's source code is licensed under the Apache License, Version 2.0.
+If you redistribute the code or a derivative of it, you must preserve this
+NOTICE file and the attribution it contains.
+
+The personal and creative content in the reference repository (name, biography,
+photos, logo, blog posts, project descriptions, and other curated assets) is
+NOT licensed under Apache 2.0 and remains All Rights Reserved. See the LICENSE
+file in that repository for full terms.
+
+---
+
+MY_PORTFOLIO modifications
+Copyright (c) 2026 Nityant Tiwari
+https://github.com/TheNityant/MY_PORTFOLIO
+
+This repository reimplements the information architecture of the reference
+portfolio in a Vite + React codebase. Layout, grid spans, and interaction
+rhythm are adapted from Apache-2.0 licensed source. No personal content,
+photographs, logos, or copy from the reference is included.

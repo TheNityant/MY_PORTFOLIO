@@ -1,0 +1,135 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(2rem, 7vw, 5rem);
+  align-items: start;
+  padding: 2rem 0 3rem;
+}
+
+.intro {
+  position: sticky;
+  top: 6.5rem;
+}
+
+.kicker {
+  margin: 0 0 0.85rem;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  max-width: 12ch;
+  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.summary {
+  margin: 1.25rem 0 0;
+  max-width: 35rem;
+  color: var(--muted-foreground);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li,
+.topic {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+}
+
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mapHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.mapHeader h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.mapHeader span {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+.chapter {
+  padding: 1.15rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--tile-radius);
+  background: color-mix(in oklab, var(--background) 94%, var(--foreground) 1%);
+}
+
+.chapterHead {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.chapterId {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.chapter h3 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+}
+
+.topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 1rem 0 0 3.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  margin: 0.75rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .intro { position: static; }
+  .title { max-width: none; }
+  .topics { margin-left: 0; }
+}

@@ -1,0 +1,121 @@
+/* Keep the floating preview on the same reverse-tone surface as its hovered row. */
+.experience-row--preview:hover .experience-hover-preview,
+.experience-row--preview:focus-visible .experience-hover-preview,
+.experience-row--preview:focus-within .experience-hover-preview,
+.writing-preview-card--interactive:hover .writing-hover-preview,
+.writing-preview-card--interactive:focus-visible .writing-hover-preview {
+  background: var(--section-hover-bg);
+  color: var(--section-hover-fg);
+  border-color: color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+}
+
+.experience-row--preview:hover .experience-hover-preview strong,
+.experience-row--preview:focus-visible .experience-hover-preview strong,
+.experience-row--preview:focus-within .experience-hover-preview strong,
+.writing-preview-card--interactive:hover .writing-hover-preview strong,
+.writing-preview-card--interactive:focus-visible .writing-hover-preview strong {
+  color: var(--section-hover-fg) !important;
+}
+
+.experience-row--preview:hover .experience-hover-preview :is(p, span),
+.experience-row--preview:focus-visible .experience-hover-preview :is(p, span),
+.experience-row--preview:focus-within .experience-hover-preview :is(p, span),
+.writing-preview-card--interactive:hover .writing-hover-preview :is(p, span),
+.writing-preview-card--interactive:focus-visible .writing-hover-preview :is(p, span) {
+  color: var(--section-hover-muted) !important;
+}
+
+/* Final hero geometry overrides. This file loads last, so these rules prevent
+   earlier polish layers from reintroducing the name/status bugs. */
+.hero-status-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.hero-status-row .hero-live-status {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  min-width: 6.9rem;
+  margin: 0;
+  transform: none;
+  border-color: color-mix(in srgb, var(--foreground) 26%, transparent);
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  color: var(--foreground);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 9%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.dark .hero-status-row .hero-live-status {
+  background: rgba(8, 11, 14, 0.78);
+  border-color: rgba(242, 240, 233, 0.22);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.hero-title.hero-title--technical {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: nowrap;
+  column-gap: 0.14em;
+  white-space: nowrap;
+}
+
+.hero-title--technical .hero-title-fade,
+.hero-title--technical .hero-name-shell {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.hero-title--technical .hero-name-shell {
+  position: relative;
+  display: inline-block;
+  min-width: 0 !important;
+  overflow: visible;
+  text-align: left;
+  vertical-align: baseline;
+}
+
+/* The slot is allowed to overflow vertically. The inner clip-path performs the
+   horizontal wipe, so Pacifico's deep y descender is no longer cut off and the
+   inline-block baseline stays aligned with "Hi. I'm". */
+.hero-title--technical .hero-name-slot {
+  display: inline-block;
+  overflow: visible !important;
+  padding: 0;
+  margin: 0;
+  vertical-align: baseline;
+  white-space: nowrap;
+  will-change: width;
+}
+
+.hero-title--technical .hero-name--animated {
+  display: inline-block;
+  overflow: visible;
+  padding-bottom: 0.5em;
+  margin-bottom: -0.5em;
+  line-height: 1.15;
+  white-space: nowrap;
+  vertical-align: baseline;
+  will-change: clip-path, opacity;
+}
+
+@media (max-width: 639px) {
+  .hero-status-row {
+    margin-top: 1.65rem;
+  }
+
+  .hero-title.hero-title--technical {
+    font-size: clamp(2.05rem, 9.2vw, 2.9rem);
+    column-gap: 0.1em;
+  }
+}

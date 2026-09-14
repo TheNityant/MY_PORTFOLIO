@@ -1,0 +1,299 @@
+/*
+ * Technical Noir — personalized visual foundation.
+ *
+ * This layer intentionally sits after the structural baseline styles. The
+ * bento geometry and interaction architecture remain intact while the surface,
+ * typography and signal language move away from the reference identity.
+ */
+
+:root {
+  --tn-teal: #73bfc4;
+  --tn-amber: #ff810a;
+  --tn-blue: #8da0ce;
+  --tn-canvas: #f4f5f3;
+  --tn-surface: #fafaf8;
+  --tn-surface-raised: #ffffff;
+  --tn-ink: #111318;
+  --tn-ink-muted: #68707d;
+  --tn-hairline: rgba(17, 19, 24, 0.11);
+  --tn-hairline-strong: rgba(17, 19, 24, 0.18);
+  --tn-signal-soft: color-mix(in srgb, var(--tn-teal) 16%, transparent);
+
+  --background: var(--tn-canvas);
+  --foreground: var(--tn-ink);
+  --card: var(--tn-surface);
+  --card-foreground: var(--tn-ink);
+  --popover: var(--tn-surface-raised);
+  --popover-foreground: var(--tn-ink);
+  --primary: var(--tn-ink);
+  --primary-foreground: #f8f8f4;
+  --secondary: #eceeea;
+  --secondary-foreground: #252a31;
+  --muted: #e9ebe8;
+  --muted-foreground: var(--tn-ink-muted);
+  --accent: #e6eeec;
+  --accent-foreground: #172225;
+  --border: var(--tn-hairline);
+  --input: rgba(17, 19, 24, 0.13);
+  --ring: var(--tn-teal);
+  --tile-radius: 0.7rem;
+  --tile-radius-lg: 0.95rem;
+}
+
+.dark {
+  --tn-canvas: #080b0e;
+  --tn-surface: #0d1115;
+  --tn-surface-raised: #11161b;
+  --tn-ink: #f2f0e9;
+  --tn-ink-muted: #9099a5;
+  --tn-hairline: rgba(238, 240, 244, 0.09);
+  --tn-hairline-strong: rgba(238, 240, 244, 0.16);
+  --tn-signal-soft: color-mix(in srgb, var(--tn-teal) 15%, transparent);
+
+  --background: var(--tn-canvas);
+  --foreground: var(--tn-ink);
+  --card: var(--tn-surface);
+  --card-foreground: var(--tn-ink);
+  --popover: var(--tn-surface-raised);
+  --popover-foreground: var(--tn-ink);
+  --primary: #e9ecef;
+  --primary-foreground: #0b0e11;
+  --secondary: #151b20;
+  --secondary-foreground: #d8dde3;
+  --muted: #151a1f;
+  --muted-foreground: var(--tn-ink-muted);
+  --accent: #142023;
+  --accent-foreground: #e9eeee;
+  --border: var(--tn-hairline);
+  --input: rgba(238, 240, 244, 0.12);
+  --ring: var(--tn-teal);
+}
+
+html,
+body,
+.site-shell {
+  background: var(--tn-canvas);
+}
+
+body {
+  color: var(--tn-ink);
+  text-rendering: optimizeLegibility;
+}
+
+.site-shell {
+  isolation: isolate;
+  position: relative;
+  background:
+    radial-gradient(circle at 82% 4%, color-mix(in srgb, var(--tn-blue) 8%, transparent), transparent 25rem),
+    radial-gradient(circle at 14% 12%, color-mix(in srgb, var(--tn-teal) 6%, transparent), transparent 27rem),
+    var(--tn-canvas);
+}
+
+.dark .site-shell {
+  background:
+    radial-gradient(circle at 84% 4%, rgba(141, 160, 206, 0.065), transparent 27rem),
+    radial-gradient(circle at 12% 14%, rgba(115, 191, 196, 0.045), transparent 30rem),
+    #080b0e;
+}
+
+/* Retire the old generic white bloom. The hero visual will become the main
+   atmospheric object in the next phase. */
+.site-shell::before {
+  opacity: 0.36;
+  height: 22rem;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--tn-blue) 8%, transparent),
+    transparent 66%
+  );
+  filter: blur(42px);
+}
+
+/* Technical labels stay precise; primary identity remains human/editorial. */
+.hero-script,
+.hero-script--inline {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: -0.045em;
+}
+
+.hero-title {
+  letter-spacing: -0.055em;
+}
+
+.hero-title-fade {
+  background: none;
+  color: color-mix(in srgb, var(--foreground) 70%, var(--muted-foreground));
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+.dark .hero-title-fade {
+  background: none;
+  color: #aab0b8;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+.hero-description {
+  color: var(--muted-foreground);
+  font-weight: 470;
+}
+
+.hero-description .hero-script--inline {
+  color: var(--foreground);
+}
+
+/* Header: thin technical shell, low visual weight. */
+.site-header {
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 640px) {
+  .site-header {
+    border-color: var(--tn-hairline);
+    background: color-mix(in srgb, var(--tn-canvas) 76%, transparent);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.035);
+  }
+
+  .dark .site-header {
+    background: rgba(8, 11, 14, 0.72);
+    box-shadow: none;
+  }
+}
+
+.wordmark {
+  border-color: var(--tn-hairline-strong);
+  border-radius: 0.42rem;
+  background: color-mix(in srgb, var(--tn-surface-raised) 76%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.nav-link,
+.header-tool,
+.header-github {
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible,
+.header-tool:hover,
+.header-github:hover {
+  color: var(--foreground);
+}
+
+.header-github:hover {
+  border-color: color-mix(in srgb, var(--tn-teal) 42%, var(--tn-hairline));
+  background: var(--tn-signal-soft);
+}
+
+/* Card surfaces: graphite/white planes with hairlines. Glow only responds to
+   interaction; cards do not permanently advertise themselves with shadows. */
+.dashboard-item-frame {
+  border-color: var(--tn-hairline);
+  background: color-mix(in srgb, var(--tn-surface) 72%, transparent);
+  box-shadow: none;
+}
+
+.dashboard-tile {
+  background: var(--tn-surface);
+  box-shadow: none;
+}
+
+.dark .dashboard-tile {
+  box-shadow: none;
+  background: #0d1115;
+}
+
+.dashboard-item-frame--interactive::before {
+  background: radial-gradient(
+    230px circle at var(--pointer-x) var(--pointer-y),
+    color-mix(in srgb, var(--tn-teal) 8%, transparent),
+    transparent 58%
+  );
+}
+
+.dashboard-item-frame--interactive::after {
+  background:
+    radial-gradient(
+      190px circle at var(--pointer-x) var(--pointer-y),
+      color-mix(in srgb, var(--tn-teal) 32%, transparent),
+      transparent 52%
+    ) border-box;
+}
+
+.tile-title {
+  letter-spacing: -0.025em;
+}
+
+.tile-icon {
+  color: color-mix(in srgb, var(--foreground) 88%, var(--tn-teal));
+}
+
+/* CTAs use accent as a state signal instead of permanent glow. */
+.outline-action {
+  border-color: var(--tn-hairline-strong);
+  background: color-mix(in srgb, var(--tn-surface-raised) 52%, transparent);
+  color: var(--foreground);
+  box-shadow: none;
+}
+
+.outline-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--tn-teal) 12%, transparent),
+    transparent 55%,
+    color-mix(in srgb, var(--tn-amber) 8%, transparent)
+  );
+  transition: opacity 180ms ease;
+}
+
+.outline-action:hover::before,
+.outline-action:focus-visible::before {
+  opacity: 1;
+}
+
+.outline-action:hover,
+.outline-action:focus-visible {
+  border-color: color-mix(in srgb, var(--tn-teal) 38%, var(--tn-hairline-strong));
+}
+
+/* Editorial later sections inherit the same surface logic without turning
+   every block into a glowing dashboard card. */
+.project-card,
+.writing-card,
+.experience-card {
+  border-color: var(--tn-hairline);
+}
+
+/* Focus remains obvious in both themes. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline-color: var(--tn-teal);
+  outline-width: 2px;
+}
+
+::selection {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--tn-teal) 28%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-link,
+  .header-tool,
+  .header-github,
+  .outline-action,
+  .outline-action::before {
+    transition: none;
+  }
+}

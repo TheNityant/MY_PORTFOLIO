@@ -1,0 +1,215 @@
+/* Reference-derived dashboard proportions and tools marquee behavior. */
+@media (min-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    /* Match the reference dashboard: two equal top rows, then two equal lower rows. */
+    grid-template-rows: 7.875rem 7.875rem 9.0625rem 9.0625rem;
+  }
+
+  .dashboard-area-location {
+    grid-column: 1 / span 4;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-scratch {
+    grid-column: 5 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-activity {
+    grid-column: 7 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .dashboard-area-workouts {
+    grid-column: 9 / span 2;
+    grid-row: 1 / span 1;
+  }
+
+  .dashboard-area-hours {
+    grid-column: 9 / span 2;
+    grid-row: 2 / span 1;
+  }
+
+  .dashboard-area-feature {
+    grid-column: 1 / span 5;
+    grid-row: 3 / span 1;
+  }
+
+  .dashboard-area-corestack {
+    grid-column: 6 / span 3;
+    grid-row: 3 / span 1;
+  }
+
+  .dashboard-area-contact {
+    grid-column: 9 / span 2;
+    grid-row: 3 / span 2;
+  }
+
+  .dashboard-area-tools {
+    grid-column: 1 / span 8;
+    grid-row: 4 / span 1;
+  }
+
+  .dashboard-area-scratch .tile-title {
+    white-space: nowrap;
+    font-size: 0.875rem;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Keep Scratch aligned like the reference card: the reveal fills the card width
+   and stays vertically centered instead of collapsing into a narrow portrait. */
+.dashboard-area-scratch .dashboard-tile {
+  overflow: hidden;
+}
+
+.dashboard-area-scratch .tile-body {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+}
+
+/* The Tools row should read as a full dashboard row, not a compressed footer. */
+.dashboard-area-tools {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+}
+
+.dashboard-area-tools .dashboard-item-frame,
+.dashboard-area-tools .dashboard-tile {
+  height: 100%;
+  min-height: 0;
+}
+
+.dashboard-area-tools .dashboard-tile {
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 1.05rem;
+}
+
+.dashboard-area-tools .tile-body {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-area-tools .tools-marquee--logos {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 5rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.dashboard-area-tools .tools-track {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: max-content;
+  gap: 2.35rem;
+  animation: tools-marquee-seamless 20s linear infinite;
+  will-change: transform;
+}
+
+.dashboard-area-tools .tools-marquee-group {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 2.35rem;
+}
+
+.dashboard-area-tools .tool-mark--icon-only {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: 0 0 2.6rem;
+  gap: 0;
+  color: var(--tool-icon-color, var(--foreground));
+}
+
+.dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
+  display: block;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-basis: 2.25rem;
+  opacity: 1;
+  background: var(--tool-icon-color, var(--tool-accent, var(--foreground)));
+}
+
+.dashboard-area-tools .tool-mark--icon-only:hover {
+  transform: translateY(-2px) scale(1.08);
+}
+
+.dashboard-area-tools .tools-marquee:hover .tools-track {
+  animation-play-state: paused;
+}
+
+@media (max-width: 899px) {
+  .dashboard-area-tools .tools-marquee--logos {
+    min-height: 4.5rem;
+  }
+
+  .dashboard-area-tools .tool-mark--icon-only {
+    width: 2.35rem;
+    height: 2.35rem;
+    flex-basis: 2.35rem;
+  }
+
+  .dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+  }
+}
+
+.dashboard-area-tools .tools-track--static {
+  animation: none;
+  width: auto;
+}
+
+/* Keep the public repository count beneath the heatmap without changing the
+   restored dashboard geometry. */
+.github-activity-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+  color: var(--muted-foreground);
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.github-activity-meta strong {
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.github-activity-meta__label {
+  white-space: nowrap;
+}
+
+@keyframes tools-marquee-seamless {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 1.175rem)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-area-tools .tools-track {
+    animation: none;
+  }
+
+  .dashboard-area-tools .tool-mark--icon-only:hover {
+    transform: none;
+  }
+}
