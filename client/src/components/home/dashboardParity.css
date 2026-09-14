@@ -1,83 +1,65 @@
 /* Reference-derived dashboard proportions and tools marquee behavior. */
 @media (min-width: 900px) {
   .dashboard-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    /* Keep Shivam's top-row proportions, but give our Tools row a little
+       more vertical breathing room so the icon strip does not feel cramped. */
     grid-template-rows: 7.875rem 7.875rem 9.0625rem 7.5rem;
   }
 
   .dashboard-area-location {
-    grid-column: 1 / span 5;
+    grid-column: 1 / span 4;
     grid-row: 1 / span 2;
   }
 
-  /* Scratch gets a genuine card-sized footprint again instead of reading as
-     a thin strip wedged between Location and Activity. */
   .dashboard-area-scratch {
-    grid-column: 6 / span 3;
+    grid-column: 5 / span 2;
     grid-row: 1 / span 2;
   }
 
   .dashboard-area-activity {
-    grid-column: 9 / span 2;
+    grid-column: 7 / span 2;
     grid-row: 1 / span 2;
   }
 
   .dashboard-area-workouts {
-    grid-column: 11 / span 2;
+    grid-column: 9 / span 2;
     grid-row: 1 / span 1;
   }
 
   .dashboard-area-hours {
-    grid-column: 11 / span 2;
+    grid-column: 9 / span 2;
     grid-row: 2 / span 1;
   }
 
   .dashboard-area-feature {
-    grid-column: 1 / span 6;
+    grid-column: 1 / span 5;
     grid-row: 3 / span 1;
   }
 
   .dashboard-area-corestack {
-    grid-column: 7 / span 3;
+    grid-column: 6 / span 3;
     grid-row: 3 / span 1;
   }
 
   .dashboard-area-contact {
-    grid-column: 10 / span 3;
+    grid-column: 9 / span 2;
     grid-row: 3 / span 2;
   }
 
   .dashboard-area-tools {
-    grid-column: 1 / span 9;
+    grid-column: 1 / span 8;
     grid-row: 4 / span 1;
   }
 
   .dashboard-area-scratch .tile-title {
-    white-space: nowrap;
     font-size: 0.875rem;
     letter-spacing: -0.02em;
   }
 }
 
-.dashboard-area-scratch .dashboard-tile {
-  overflow: hidden;
-}
-
-.dashboard-area-scratch .tile-body {
-  display: flex;
-  align-items: center;
-  min-height: 0;
-}
-
-/* Restore the working Main-branch tools strip proportions. The personalized
-   branch had grown this into a 12.75rem row, which made it behave like a
-   separate oversized panel rather than Shivam's compact marquee card. */
-.dashboard-area-tools {
-  display: block;
-  visibility: visible;
-  opacity: 1;
-}
-
+/* Shivam's strip is logo-first and behaves as a continuous marquee rather
+   than a sequence that reaches an end and visibly starts over. */
 .dashboard-area-tools .dashboard-tile {
   padding-bottom: 1.05rem;
 }
@@ -86,7 +68,6 @@
   display: flex;
   align-items: center;
   min-height: 3.5rem;
-  overflow: hidden;
 }
 
 .dashboard-area-tools .tools-marquee--logos {
@@ -128,7 +109,6 @@
 }
 
 .dashboard-area-tools .tool-mark--icon-only .tool-mark-icon {
-  display: block;
   width: 2rem;
   height: 2rem;
   flex-basis: 2rem;
@@ -167,7 +147,8 @@
   width: auto;
 }
 
-/* GitHub summary sits under the seven-week heatmap without replacing it. */
+/* Keep the public repository count beneath the heatmap without changing the
+   restored dashboard geometry. */
 .github-activity-meta {
   display: flex;
   align-items: baseline;
@@ -190,6 +171,9 @@
   white-space: nowrap;
 }
 
+/* Two identical groups sit side-by-side. Moving by exactly one group's width
+   plus the inter-group gap makes the next frame identical to the first one,
+   so there is no visible rewind/restart. */
 @keyframes tools-marquee-seamless {
   from { transform: translateX(0); }
   to { transform: translateX(calc(-50% - 1.125rem)); }
