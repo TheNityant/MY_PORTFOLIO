@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
+import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
 import { education, experience, experienceCopy, type ExperienceMark } from "@/data/portfolio";
-import { experiencePreviewMedia, fallbackExperiencePreview } from "@/data/media";
+import {
+  experienceFeatureMedia,
+  experiencePreviewMedia,
+  fallbackExperienceFeatureMedia,
+  fallbackExperiencePreview,
+} from "@/data/media";
 
 function ExperienceMarkView({ mark }: { mark: ExperienceMark }) {
   return (
@@ -12,6 +19,8 @@ function ExperienceMarkView({ mark }: { mark: ExperienceMark }) {
 }
 
 export function Experience() {
+  const [activePreview, setActivePreview] = useState<string | null>(null);
+
   return (
     <section className="experience-section" id="experience" aria-labelledby="experience-heading">
       <header className="section-heading">
@@ -24,8 +33,19 @@ export function Experience() {
           <ol className="experience-list">
             {experience.map((item) => {
               const previewSrc = experiencePreviewMedia[item.id] ?? fallbackExperiencePreview;
+              const featureMedia = experienceFeatureMedia[item.id] ?? fallbackExperienceFeatureMedia;
+              const active = activePreview === item.id;
+
               return (
-                <li className="experience-row experience-row--preview" key={item.id} tabIndex={0}>
+                <li
+                  className="experience-row experience-row--preview"
+                  key={item.id}
+                  tabIndex={0}
+                  onMouseEnter={() => setActivePreview(item.id)}
+                  onMouseLeave={() => setActivePreview(null)}
+                  onFocus={() => setActivePreview(item.id)}
+                  onBlur={() => setActivePreview(null)}
+                >
                   <ExperienceMarkView mark={item.mark} />
                   <div className="experience-meta">
                     {item.href ? (
@@ -49,6 +69,10 @@ export function Experience() {
                       </ul>
                     ) : null}
                   </div>
+
+                  <aside className="experience-feature-preview" aria-hidden="true">
+                    <HoverFeatureMedia media={featureMedia} active={active} />
+                  </aside>
 
                   <aside className="experience-hover-preview" aria-hidden="true">
                     <div className="experience-hover-preview__media">
