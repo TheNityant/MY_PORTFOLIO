@@ -1,41 +1,11 @@
 import { ShaderGradient, ShaderGradientCanvas } from "@shadergradient/react";
-import { useEffect, useMemo, useState } from "react";
-import {
-  ATMOSPHERE_LAB_UPDATE_EVENT,
-  atmosphereLabDefaults,
-  getAtmospherePresetTuning,
-  readAtmosphereLabSettings,
-  type AtmosphereLabSettings,
-} from "@/config/atmosphereLab";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-
-function productionSettings(): AtmosphereLabSettings {
-  return {
-    preset: atmosphereLabDefaults.preset,
-    nighty: { ...atmosphereLabDefaults.nighty },
-    interstella: { ...atmosphereLabDefaults.interstella },
-  };
-}
 
 export default function SiteShaderScene() {
   const { theme } = useTheme();
   const reducedMotion = usePrefersReducedMotion();
   const animate = reducedMotion ? "off" : "on";
-  const [settings, setSettings] = useState<AtmosphereLabSettings>(() =>
-    import.meta.env.DEV ? readAtmosphereLabSettings() : productionSettings(),
-  );
-  const tuning = useMemo(() => getAtmospherePresetTuning(settings), [settings]);
-
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    const onUpdate = (event: Event) => {
-      const detail = (event as CustomEvent<AtmosphereLabSettings>).detail;
-      if (detail) setSettings(detail);
-    };
-    window.addEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
-    return () => window.removeEventListener(ATMOSPHERE_LAB_UPDATE_EVENT, onUpdate);
-  }, []);
 
   return (
     <ShaderGradientCanvas
@@ -43,43 +13,7 @@ export default function SiteShaderScene() {
       pixelDensity={1}
       fov={45}
     >
-      {theme === "dark" && settings.preset === "interstella" ? (
-        <ShaderGradient
-          control="props"
-          animate={animate}
-          type="sphere"
-          wireframe={false}
-          shader="defaults"
-          uTime={0}
-          uSpeed={tuning.speed}
-          uStrength={0.3}
-          uDensity={0.8}
-          uFrequency={5.5}
-          uAmplitude={3.2}
-          positionX={-0.1}
-          positionY={0}
-          positionZ={0}
-          rotationX={0}
-          rotationY={130}
-          rotationZ={70}
-          color1="#73bfc4"
-          color2="#ff810a"
-          color3="#8da0ce"
-          reflection={0.4}
-          cAzimuthAngle={270}
-          cPolarAngle={180}
-          cDistance={0.5}
-          cameraZoom={15.1}
-          lightType="env"
-          brightness={tuning.brightness}
-          envPreset="city"
-          grain="on"
-          toggleAxis={false}
-          zoomOut={false}
-          hoverState=""
-          enableTransition={false}
-        />
-      ) : theme === "dark" ? (
+      {theme === "dark" ? (
         <ShaderGradient
           control="props"
           animate={animate}
@@ -87,7 +21,7 @@ export default function SiteShaderScene() {
           wireframe={false}
           shader="defaults"
           uTime={8}
-          uSpeed={tuning.speed}
+          uSpeed={0.3}
           uStrength={1.5}
           uDensity={1.5}
           uFrequency={0}
@@ -107,7 +41,7 @@ export default function SiteShaderScene() {
           cDistance={2.8}
           cameraZoom={9.1}
           lightType="3d"
-          brightness={tuning.brightness}
+          brightness={1}
           envPreset="city"
           grain="on"
           toggleAxis={false}

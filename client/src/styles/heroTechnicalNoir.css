@@ -1,8 +1,4 @@
-/*
- * Technical Noir hero. The site-level ShaderGradient owns the atmospheric
- * background; the identity region uses three-fluid-fx only as a portrait
- * reveal compositor. The dashboard/custom cursor remains a separate system.
- */
+/* Technical Noir hero. The site-level ShaderGradient owns the atmospheric background. */
 
 .hero.hero--technical {
   position: relative;
@@ -23,13 +19,6 @@
   width: 100%;
   text-align: center;
   gap: 0.25rem;
-}
-
-.portrait-wrap.portrait-wrap--fluid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
 }
 
 .hero-live-status {
@@ -54,11 +43,7 @@
   text-decoration: none;
   backdrop-filter: blur(12px);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 5%, transparent);
-  transition:
-    color 160ms ease,
-    border-color 160ms ease,
-    transform 180ms ease,
-    background 160ms ease;
+  transition: color 160ms ease, border-color 160ms ease, transform 180ms ease, background 160ms ease;
 }
 
 .hero-live-status::before {
@@ -66,12 +51,7 @@
   position: absolute;
   z-index: -1;
   inset: -60% -40%;
-  background: linear-gradient(
-    110deg,
-    transparent 34%,
-    color-mix(in srgb, var(--foreground) 10%, transparent) 47%,
-    transparent 60%
-  );
+  background: linear-gradient(110deg, transparent 34%, color-mix(in srgb, var(--foreground) 10%, transparent) 47%, transparent 60%);
   transform: translateX(-52%);
   animation: hero-status-sheen 5.8s ease-in-out infinite;
 }
@@ -185,19 +165,6 @@
   will-change: clip-path, opacity;
 }
 
-.hero-name-stroke {
-  position: absolute;
-  left: 0.12em;
-  right: 0.08em;
-  bottom: 0.025em;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--tn-teal), var(--tn-blue), transparent);
-  opacity: 0.2;
-  transform: scaleX(0.94);
-  transform-origin: left center;
-}
-
 .hero-description.hero-description--technical {
   width: min(100%, 42rem);
   margin: 0.35rem auto 0;
@@ -256,229 +223,45 @@
   background: var(--tn-hairline-strong);
 }
 
-/* three-fluid-fx identity compositor -------------------------------------------------
-   The WebGL canvas stays confined to this local identity zone. Unlike the older
-   compositor, density is now also rendered outside the portrait alpha so the
-   user can actually see the cursor stir a short liquid trail around the identity. */
-.hero-identity-reveal.hero-fluid-reveal {
-  position: relative;
-  z-index: 4;
-  width: min(22rem, 86vw);
-  height: 10rem;
-  margin: 0 auto;
-  overflow: visible;
-  border: 0;
-  background: transparent;
-  user-select: none;
-  touch-action: pan-y;
-  contain: layout style;
-}
-
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .hero-identity-reveal.hero-fluid-reveal[data-fluid-active="true"] {
-    cursor: none;
-  }
-}
-
-.hero-fluid-reveal__fallback,
-.hero-fluid-reveal__canvas-host {
-  position: absolute;
-  inset: 0;
-}
-
-.hero-fluid-reveal__fallback {
-  z-index: 0;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-
-.hero-fluid-reveal__fallback::before {
-  content: "";
-  position: absolute;
-  width: 6.4rem;
-  height: 6.4rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 19%, transparent);
-  background:
-    radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--tn-blue) 10%, transparent), transparent 55%),
-    color-mix(in srgb, var(--tn-surface-raised) 48%, transparent);
-  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.05);
-}
-
-.dark .hero-fluid-reveal__fallback::before {
-  border-color: rgba(242, 240, 233, 0.2);
-  background:
-    radial-gradient(circle at 35% 28%, rgba(141, 160, 206, 0.08), transparent 55%),
-    rgba(8, 11, 14, 0.48);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
-}
-
-.hero-fluid-reveal__fallback-mark {
-  position: relative;
-  z-index: 1;
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
-  font-family: var(--font-sans);
-  font-size: 2.25rem;
-  font-weight: 720;
-  letter-spacing: -0.08em;
-}
-
-.hero-fluid-reveal__fallback img {
-  position: relative;
-  z-index: 1;
-  width: 6.4rem;
-  height: 6.4rem;
-  border-radius: 999px;
-  object-fit: cover;
-  object-position: center;
-  filter: grayscale(1) saturate(0.15) contrast(0.94);
-  opacity: 0.82;
-}
-
-.hero-fluid-reveal__canvas-host {
-  z-index: 1;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.hero-fluid-reveal__canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-  background: transparent !important;
-  filter: drop-shadow(0 13px 34px rgba(0, 0, 0, 0.08));
-}
-
-.dark .hero-fluid-reveal__canvas {
-  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.22));
-}
-
-.hero-fluid-reveal--static .hero-fluid-reveal__canvas-host {
-  display: none;
-}
-
 @keyframes hero-status-ping {
-  0% {
-    transform: scale(1);
-    opacity: 0.38;
-  }
-  72%,
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
+  0% { transform: scale(1); opacity: 0.38; }
+  72%, 100% { transform: scale(2.4); opacity: 0; }
 }
 
 @keyframes hero-status-sheen {
-  0%,
-  68% {
-    transform: translateX(-55%);
-  }
-  86%,
-  100% {
-    transform: translateX(55%);
-  }
+  0%, 68% { transform: translateX(-55%); }
+  86%, 100% { transform: translateX(55%); }
 }
 
 @media (min-width: 640px) {
-  .hero.hero--technical {
-    padding: 14rem 0 4rem;
-  }
-
-  .hero-title.hero-title--technical {
-    font-size: 4.5rem;
-    line-height: 1.125;
-  }
-
-  .hero-description.hero-description--technical {
-    font-size: 1.5rem;
-  }
-
-  .hero-live-status {
-    min-height: 2.15rem;
-    padding-inline: 0.82rem;
-    font-size: 0.82rem;
-  }
+  .hero.hero--technical { padding: 14rem 0 4rem; }
+  .hero-title.hero-title--technical { font-size: 4.5rem; line-height: 1.125; }
+  .hero-description.hero-description--technical { font-size: 1.5rem; }
+  .hero-live-status { min-height: 2.15rem; padding-inline: 0.82rem; font-size: 0.82rem; }
 }
 
 @media (max-width: 639px) {
-  .hero.hero--technical {
-    padding: 8rem 0 3.5rem;
-    overflow: hidden;
-  }
-
-  .hero-identity-reveal.hero-fluid-reveal {
-    width: min(18rem, 90vw);
-    height: 8.5rem;
-  }
-
-  .hero-fluid-reveal__fallback::before,
-  .hero-fluid-reveal__fallback img {
-    width: 5.5rem;
-    height: 5.5rem;
-  }
-
-  .hero-fluid-reveal__fallback-mark {
-    font-size: 1.95rem;
-  }
-
-  .hero-copy.hero-copy--technical {
-    margin-top: 1.15rem;
-  }
-
-  .hero-title.hero-title--technical {
-    font-size: clamp(2.75rem, 12vw, 3.15rem);
-    letter-spacing: -0.052em;
-  }
-
-  .hero-description.hero-description--technical {
-    width: min(100%, 27rem);
-    font-size: 1rem;
-  }
-
-  .hero-actions.hero-actions--technical {
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1.35rem;
-  }
-
-  .hero-actions--technical .social-actions {
-    gap: 1.25rem;
-  }
+  .hero.hero--technical { padding: 8rem 0 3.5rem; overflow: hidden; }
+  .hero-copy.hero-copy--technical { margin-top: 1.15rem; }
+  .hero-title.hero-title--technical { font-size: clamp(2.75rem, 12vw, 3.15rem); letter-spacing: -0.052em; }
+  .hero-description.hero-description--technical { width: min(100%, 27rem); font-size: 1rem; }
+  .hero-actions.hero-actions--technical { flex-wrap: wrap; gap: 1rem; margin-top: 1.35rem; }
+  .hero-actions--technical .social-actions { gap: 1.25rem; }
 }
 
 @media (max-width: 380px) {
-  .hero-title.hero-title--technical {
-    font-size: 2.62rem;
-  }
+  .hero-title.hero-title--technical { font-size: 2.62rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-fluid-reveal__fallback,
-  .hero-fluid-reveal__fallback img {
-    filter: grayscale(0.45) saturate(0.65);
-  }
-
-  .hero-name-stroke {
-    display: none;
-  }
-
   .hero-live-status::before,
-  .hero-live-status__ping {
-    animation: none;
-  }
+  .hero-live-status__ping { animation: none; }
 
   .hero-actions--technical .social-actions a,
-  .hero-live-status {
-    transition: none;
-  }
+  .hero-live-status { transition: none; }
 
   .hero-actions--technical .social-actions a:hover,
   .hero-actions--technical .social-actions a:focus-visible,
   .hero-live-status:hover,
-  .hero-live-status:focus-visible {
-    transform: none;
-  }
+  .hero-live-status:focus-visible { transform: none; }
 }

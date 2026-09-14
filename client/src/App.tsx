@@ -1,5 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Writing from "@/pages/Writing";
 import WritingEntry from "@/pages/WritingEntry";
@@ -24,10 +22,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark" switchable>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <Router />
       </ThemeProvider>
     </ErrorBoundary>
   );
