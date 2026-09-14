@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
-import { HeroIdentityReveal } from "@/components/home/HeroIdentityReveal";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -68,9 +67,15 @@ export function Hero() {
     >
       <TooltipProvider>
         <div className="hero-content hero-content--technical">
-          <div className="portrait-wrap portrait-wrap--fluid">
+          <div className="portrait-wrap portrait-wrap--static">
             <div className="hero-identity-cluster">
-              <HeroIdentityReveal />
+              <div className="hero-static-identity" aria-label={profile.portraitAlt}>
+                {profile.portraitSrc ? (
+                  <img src={profile.portraitSrc} alt={profile.portraitAlt} />
+                ) : (
+                  <span aria-hidden="true">{profile.initials}</span>
+                )}
+              </div>
               <a
                 className="hero-live-status"
                 data-status={status.tone}
@@ -92,7 +97,7 @@ export function Hero() {
           <div className="hero-copy hero-copy--technical">
             <h1 id="hero-title" className="hero-title hero-title--technical">
               <span className="hero-title-fade">Hi. I&apos;m </span>
-              <AnimatedHeroName name={profile.displayName} />
+              <AnimatedHeroName name={profile.displayName} alternate={profile.githubHandle} />
             </h1>
             <p className="hero-description hero-description--technical">
               {profile.taglineLead}{" "}
