@@ -3,6 +3,7 @@ import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import "./heroParity.css";
 
 function SocialIcon({ name }: { name: SocialIconName }) {
   if (name === "mail") return <Mail size={20} strokeWidth={1.7} />;
