@@ -1,0 +1,167 @@
+/* Final interaction layer. Imported after dashboard parity so these rules are
+   deliberate overrides rather than competing with the structural styles. */
+
+/* Hero portrait: monochrome at rest, natural color on desktop hover. */
+.hero-static-identity img {
+  display: block;
+  filter: grayscale(0) saturate(1) contrast(1);
+  transform: scale(1);
+  transition:
+    filter 420ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: filter, transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-static-identity img {
+    filter: grayscale(1) saturate(0.14) contrast(1.04);
+  }
+
+  .hero-static-identity:hover img,
+  .hero-static-identity:focus-within img {
+    filter: grayscale(0) saturate(1) contrast(1);
+    transform: scale(1.025);
+  }
+}
+
+/* Away is a muted red signal rather than the older amber/orange state. */
+.hero-live-status[data-status="away"] {
+  border-color: color-mix(in srgb, #df5b62 32%, var(--tn-hairline-strong));
+  background: color-mix(in srgb, #df5b62 5%, var(--background));
+}
+
+.dark .hero-live-status[data-status="away"] {
+  border-color: rgba(223, 91, 98, 0.32);
+  background: rgba(32, 13, 16, 0.72);
+}
+
+.hero-live-status[data-status="away"] .hero-live-status__dot,
+.hero-live-status[data-status="away"] .hero-live-status__ping {
+  background: #df5b62;
+}
+
+/* Keep the View My Work signal alive continuously instead of only on hover. */
+.hero-actions--technical .outline-action {
+  isolation: isolate;
+}
+
+.hero-actions--technical .outline-action > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-actions--technical .outline-action::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: -1px;
+  padding: 1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 8%,
+    color-mix(in srgb, var(--tn-teal) 72%, transparent) 27%,
+    color-mix(in srgb, var(--tn-blue) 74%, transparent) 47%,
+    color-mix(in srgb, var(--tn-amber) 62%, transparent) 66%,
+    transparent 88%
+  );
+  background-size: 240% 100%;
+  opacity: 0.7;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: hero-cta-border-flow 3.8s linear infinite;
+}
+
+.hero-actions--technical .outline-action:hover::after,
+.hero-actions--technical .outline-action:focus-visible::after {
+  opacity: 0.95;
+}
+
+@keyframes hero-cta-border-flow {
+  from { background-position: 120% 50%; }
+  to { background-position: -120% 50%; }
+}
+
+/* Large image/video surface above writing + experience rows. The existing
+   lower description preview remains intact and can keep its compact thumbnail. */
+.experience-feature-preview,
+.writing-feature-preview {
+  position: absolute;
+  right: 0.75rem;
+  bottom: calc(100% - 0.3rem);
+  z-index: 48;
+  width: min(36rem, calc(100% - 1.5rem));
+  aspect-ratio: 16 / 9;
+  padding: 0.55rem;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  transform: translateY(-10px) scale(0.985);
+  transform-origin: bottom right;
+  border: 1px solid color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--section-hover-bg) 96%, transparent);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(20px) saturate(1.08);
+  transition:
+    opacity 170ms ease,
+    transform 190ms ease,
+    visibility 170ms ease;
+}
+
+.experience-feature-preview img,
+.experience-feature-preview video,
+.writing-feature-preview img,
+.writing-feature-preview video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.62rem;
+  background: color-mix(in srgb, var(--section-hover-fg) 4%, transparent);
+  object-fit: contain;
+}
+
+.experience-row--preview:hover .experience-feature-preview,
+.experience-row--preview:focus-visible .experience-feature-preview,
+.experience-row--preview:focus-within .experience-feature-preview,
+.writing-preview-card--interactive:hover .writing-feature-preview,
+.writing-preview-card--interactive:focus-visible .writing-feature-preview,
+.writing-preview-card--interactive:focus-within .writing-feature-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Native SVG titles provide the exact contribution/date tooltip while keeping
+   the existing laptop cursor treatment from the dashboard card. */
+.github-calendar-wrap svg g[aria-label] {
+  outline: none;
+}
+
+@media (max-width: 760px), (hover: none) {
+  .experience-feature-preview,
+  .writing-feature-preview {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-static-identity img {
+    transition: none;
+  }
+
+  .hero-actions--technical .outline-action::after {
+    animation: none;
+    background-position: 50% 50%;
+  }
+
+  .experience-feature-preview,
+  .writing-feature-preview {
+    transition: none;
+  }
+}
