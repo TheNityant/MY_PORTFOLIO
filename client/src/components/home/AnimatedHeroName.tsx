@@ -43,8 +43,6 @@ export function AnimatedHeroName({
       timer = window.setTimeout(() => setPhase("hold"), INITIAL_REVEAL_MS);
     } else if (phase === "hold") {
       timer = window.setTimeout(() => setPhase("exit"), HOLD_MS);
-    } else if (phase === "enter") {
-      timer = window.setTimeout(() => setPhase("hold"), SWAP_MS);
     }
 
     return () => {
@@ -56,17 +54,6 @@ export function AnimatedHeroName({
     return <span className="hero-name">{name}</span>;
   }
 
-  const visibleWord = showAlternate ? alternate : name;
-  const visibleWidth = widths?.[showAlternate ? "alternate" : "primary"];
-  const hiddenClip = "inset(0 100% 0 0)";
-  const shownClip = "inset(0 0% 0 0)";
-
-  const finishExit = () => {
-    if (phase !== "exit") return;
-    setShowAlternate((value) => !value);
-    setPhase("enter");
-  };
-
   const measureStyle = {
     position: "absolute" as const,
     left: "-9999px",
@@ -76,47 +63,62 @@ export function AnimatedHeroName({
     pointerEvents: "none" as const,
   };
 
-  if (phase === "initial") {
+  const measureSpans = (
+    <>
+      <span ref={primaryMeasureRef} className="hero-name" style={measureStyle}>{name}</span>
+      <span ref={alternateMeasureRef} className="hero-name" style={measureStyle}>{alternate}</span>
+    </>
+  );
+
+  /* useLayoutEffect normally gives us these widths before paint. Keeping an
+     invisible occupying word here also prevents a one-frame title jump if a
+     browser/font takes longer than expected to report its metrics. */
+  if (!widths) {
     return (
       <span className="hero-name-shell" aria-label={name}>
-        <motion.span
-          className="hero-name hero-name--animated"
-          aria-hidden="true"
-          initial={{ clipPath: hiddenClip }}
-          animate={{ clipPath: shownClip }}
-          transition={{ duration: INITIAL_REVEAL_MS / 1000, ease: [0.6, 0.05, 0.3, 1] }}
-        >
-          {name}
-        </motion.span>
-        <span ref={primaryMeasureRef} className="hero-name" style={measureStyle}>{name}</span>
-        <span ref={alternateMeasureRef} className="hero-name" style={measureStyle}>{alternate}</span>
+        <span className="hero-name" style={{ visibility: "hidden" }}>{name}</span>
+        {measureSpans}
       </span>
     );
   }
 
+  const visibleWord = showAlternate ? alternate : name;
+  const visibleWidth = showAlternate ? widths.alternate : widths.primary;
+
+  const finishWidthAnimation = () => {
+    if (phase === "initial") {
+      setPhase("hold");
+      return;
+    }
+    if (phase === "exit") {
+      setShowAlternate((value) => !value);
+      setPhase("enter");
+      return;
+    }
+    if (phase === "enter") {
+      setPhase("hold");
+    }
+  };
+
+  const targetWidth = phase === "exit" ? 0 : visibleWidth;
+  const initialWidth = phase === "initial" || phase === "enter" ? 0 : visibleWidth;
+
   return (
     <span className="hero-name-shell" aria-label={name}>
       <motion.span
+        key={`${visibleWord}-${phase}`}
         className="hero-name-slot"
-        initial={phase === "enter" && widths ? { width: 0 } : undefined}
-        animate={widths ? { width: phase === "exit" ? 0 : visibleWidth } : undefined}
-        transition={{ duration: SWAP_MS / 1000, ease: "easeInOut" }}
-        onAnimationComplete={finishExit}
+        data-phase={phase}
+        initial={{ width: initialWidth, opacity: phase === "hold" ? 1 : 0.86 }}
+        animate={{ width: targetWidth, opacity: phase === "exit" ? 0.84 : 1 }}
+        transition={{ duration: (phase === "initial" ? INITIAL_REVEAL_MS : SWAP_MS) / 1000, ease: [0.4, 0, 0.2, 1] }}
+        onAnimationComplete={finishWidthAnimation}
       >
-        <motion.span
-          key={`${visibleWord}-${phase}`}
-          className="hero-name hero-name--animated"
-          aria-hidden="true"
-          initial={{ clipPath: phase === "enter" ? hiddenClip : shownClip }}
-          animate={{ clipPath: phase === "exit" ? hiddenClip : shownClip }}
-          transition={{ duration: SWAP_MS / 1000, ease: "easeInOut" }}
-        >
+        <span className="hero-name hero-name--animated" aria-hidden="true">
           {visibleWord}
-        </motion.span>
+        </span>
       </motion.span>
-
-      <span ref={primaryMeasureRef} className="hero-name" style={measureStyle}>{name}</span>
-      <span ref={alternateMeasureRef} className="hero-name" style={measureStyle}>{alternate}</span>
+      {measureSpans}
     </span>
   );
 }
