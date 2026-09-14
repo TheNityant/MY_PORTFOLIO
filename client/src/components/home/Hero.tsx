@@ -10,8 +10,24 @@ function SocialIcon({ name }: { name: SocialIconName }) {
   return <Github size={20} strokeWidth={1.7} />;
 }
 
+function getStatus() {
+  const localHour = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    hour12: false,
+  }).format(new Date());
+
+  const hour = Number.parseInt(localHour, 10);
+  const available = Number.isFinite(hour) && hour >= 8 && hour < 22;
+  return {
+    label: available ? "Available" : "Away",
+    tone: available ? "available" : "away",
+  } as const;
+}
+
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
+  const status = getStatus();
 
   return (
     <section className={reducedMotion ? "hero" : "hero hero--enter"} id="hero" aria-labelledby="hero-title">
@@ -21,11 +37,16 @@ export function Hero() {
             <div className="portrait-placeholder" role="img" aria-label={profile.portraitAlt}>
               <span>{profile.initials}</span>
             </div>
-            <div className="hero-status-slot" aria-hidden="true" />
           </div>
+
+          <div className={`hero-status-pill hero-status-pill--${status.tone}`} aria-label={`Status: ${status.label}`}>
+            <span className="hero-status-dot" aria-hidden="true" />
+            <span>{status.label}</span>
+          </div>
+
           <div className="hero-copy">
             <h1 id="hero-title" className="hero-title">
-              <span className="hero-title-fade">Hi. I&apos;m </span>
+              <span className="hero-title-fade">Hi. I&apos;m</span>
               <span className="hero-script">{profile.displayName}</span>
             </h1>
             <p className="hero-description">
