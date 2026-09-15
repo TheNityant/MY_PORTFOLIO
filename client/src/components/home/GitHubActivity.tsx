@@ -1,6 +1,13 @@
 import { GitHubCalendar, type Activity } from "react-github-calendar";
 import { ArrowUpRight } from "lucide-react";
-import { Component, useEffect, useState, type ReactNode } from "react";
+import {
+  Component,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
 const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
@@ -20,6 +27,12 @@ function activityLabel(activity: Activity) {
 
 type GitHubPublicProfile = {
   public_repos?: number;
+};
+
+type ContributionTooltip = {
+  label: string;
+  x: number;
+  y: number;
 };
 
 class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
@@ -42,6 +55,8 @@ class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => vo
 export function GitHubActivity() {
   const [failed, setFailed] = useState(false);
   const [publicRepoCount, setPublicRepoCount] = useState<number | null>(null);
+  const [tooltip, setTooltip] = useState<ContributionTooltip | null>(null);
+  const calendarWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -65,6 +80,25 @@ export function GitHubActivity() {
     return () => controller.abort();
   }, []);
 
+  const showContributionTooltip = (
+    event: ReactPointerEvent<SVGGElement>,
+    activity: Activity,
+  ) => {
+    const wrap = calendarWrapRef.current;
+    if (!wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const rawX = event.clientX - rect.left;
+    const x = Math.min(Math.max(rawX, 58), Math.max(58, rect.width - 58));
+    const y = Math.min(event.clientY - rect.top + 15, Math.max(24, rect.height - 4));
+
+    setTooltip({
+      label: activityLabel(activity),
+      x,
+      y,
+    });
+  };
+
   return (
     <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
       {failed ? (
@@ -74,7 +108,11 @@ export function GitHubActivity() {
         </div>
       ) : (
         <CalendarBoundary onFail={() => setFailed(true)}>
-          <div className="github-calendar-wrap">
+          <div
+            ref={calendarWrapRef}
+            className="github-calendar-wrap"
+            onPointerLeave={() => setTooltip(null)}
+          >
             <GitHubCalendar
               username={profile.githubHandle}
               colorScheme="dark"
@@ -88,12 +126,26 @@ export function GitHubActivity() {
               transformData={last49Days}
               theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
               renderBlock={(block, activity) => (
-                <g aria-label={activityLabel(activity)}>
-                  <title>{activityLabel(activity)}</title>
+                <g
+                  aria-label={activityLabel(activity)}
+                  onPointerEnter={(event) => showContributionTooltip(event, activity)}
+                  onPointerMove={(event) => showContributionTooltip(event, activity)}
+                  onPointerLeave={() => setTooltip(null)}
+                >
                   {block}
                 </g>
               )}
             />
+
+            {tooltip ? (
+              <span
+                className="github-contribution-tooltip"
+                role="tooltip"
+                style={{ left: tooltip.x, top: tooltip.y }}
+              >
+                {tooltip.label}
+              </span>
+            ) : null}
           </div>
         </CalendarBoundary>
       )}
