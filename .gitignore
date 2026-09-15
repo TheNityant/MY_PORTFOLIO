@@ -113,3 +113,6 @@ temp/
 client/public/media/projects/*.mp4
 client/public/media/projects/*.mov
 client/public/media/projects/*.webm
+
+# Local portrait assets. Production can use VITE_PORTRAIT_URL pointing at Blob/R2/CDN.
+client/public/media/profile/*
