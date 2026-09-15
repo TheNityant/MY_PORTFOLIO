@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent, type PointerEvent } from "react";
 import { ArrowRight, ArrowUpRight, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
@@ -36,6 +36,22 @@ function getHeroStatus(): HeroStatus {
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<HeroStatus>(() => getHeroStatus());
+  const portraitCandidates = useMemo(
+    () =>
+      [
+        import.meta.env.VITE_PORTRAIT_URL?.trim(),
+        profile.portraitSrc,
+        "/media/profile/portrait.jpg",
+        "/media/profile/profile.jpg",
+        "/media/profile/nityant.jpg",
+        "/media/profile/nityant-profile.jpg",
+        "/profile.jpg",
+        "/profile.png",
+      ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index),
+    [],
+  );
+  const [portraitIndex, setPortraitIndex] = useState(0);
+  const portraitSrc = portraitCandidates[portraitIndex];
 
   useEffect(() => {
     const updateStatus = () => setStatus(getHeroStatus());
@@ -70,8 +86,13 @@ export function Hero() {
           <div className="portrait-wrap portrait-wrap--static">
             <div className="hero-identity-cluster">
               <div className="hero-static-identity" aria-label={profile.portraitAlt}>
-                {profile.portraitSrc ? (
-                  <img className="hero-portrait-image" src={profile.portraitSrc} alt={profile.portraitAlt} />
+                {portraitSrc ? (
+                  <img
+                    className="hero-portrait-image"
+                    src={portraitSrc}
+                    alt={profile.portraitAlt}
+                    onError={() => setPortraitIndex((index) => index + 1)}
+                  />
                 ) : (
                   <span aria-hidden="true">{profile.initials}</span>
                 )}
