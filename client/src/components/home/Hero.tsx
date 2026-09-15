@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 import { ArrowRight, FileText, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
@@ -43,6 +43,12 @@ export function Hero() {
     const interval = window.setInterval(updateStatus, 60_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  const onViewWorkPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
+    event.currentTarget.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
+  };
 
   const onViewWork = (event: MouseEvent<HTMLAnchorElement>) => {
     const section = document.getElementById("projects");
@@ -105,7 +111,7 @@ export function Hero() {
           <div className="hero-actions hero-actions--technical">
             <a
               href={RESUME_HREF}
-              className="outline-action"
+              className="outline-action hero-resume-action"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="View Nityant Tiwari's resume"
@@ -138,11 +144,12 @@ export function Hero() {
 
             <a
               href="#projects"
-              className="outline-action"
+              className="outline-action hero-work-action"
+              onPointerMove={onViewWorkPointerMove}
               onClick={onViewWork}
             >
               <span>View my work</span>
-              <ArrowRight size={16} aria-hidden="true" />
+              <ArrowRight className="hero-work-action__arrow" size={16} aria-hidden="true" />
             </a>
           </div>
         </div>
