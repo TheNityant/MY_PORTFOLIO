@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
-import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
+import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
+import { ArrowRight, ArrowUpRight, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
@@ -10,6 +10,8 @@ type HeroStatus = {
   label: "Available" | "Away";
   tone: "available" | "away";
 };
+
+const RESUME_HREF = import.meta.env.VITE_RESUME_URL?.trim() || "/resume.pdf";
 
 function SocialIcon({ name }: { name: SocialIconName }) {
   if (name === "mail") return <Mail size={20} strokeWidth={1.7} />;
@@ -34,7 +36,6 @@ function getHeroStatus(): HeroStatus {
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<HeroStatus>(() => getHeroStatus());
-  const ctaRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const updateStatus = () => setStatus(getHeroStatus());
@@ -44,8 +45,7 @@ export function Hero() {
   }, []);
 
   const onCtaPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
-    const element = ctaRef.current;
-    if (!element) return;
+    const element = event.currentTarget;
     const rect = element.getBoundingClientRect();
     element.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
     element.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
@@ -71,7 +71,7 @@ export function Hero() {
             <div className="hero-identity-cluster">
               <div className="hero-static-identity" aria-label={profile.portraitAlt}>
                 {profile.portraitSrc ? (
-                  <img src={profile.portraitSrc} alt={profile.portraitAlt} />
+                  <img className="hero-portrait-image" src={profile.portraitSrc} alt={profile.portraitAlt} />
                 ) : (
                   <span aria-hidden="true">{profile.initials}</span>
                 )}
@@ -109,7 +109,19 @@ export function Hero() {
             </p>
           </div>
 
-          <div className="hero-actions hero-actions--technical">
+          <div className="hero-actions hero-actions--technical hero-actions--balanced">
+            <a
+              href="#projects"
+              className="outline-action hero-flow-action"
+              onPointerMove={onCtaPointerMove}
+              onClick={onViewWork}
+            >
+              <span>View my work</span>
+              <ArrowRight size={16} aria-hidden="true" />
+            </a>
+
+            <span className="hero-divider" aria-hidden="true" />
+
             <div className="social-actions" aria-label="Contact links">
               {visibleSocials.map((social) => (
                 <Tooltip key={social.label}>
@@ -127,16 +139,19 @@ export function Hero() {
                 </Tooltip>
               ))}
             </div>
+
             <span className="hero-divider" aria-hidden="true" />
+
             <a
-              ref={ctaRef}
-              href="#projects"
-              className="outline-action"
+              href={RESUME_HREF}
+              className="outline-action hero-flow-action"
               onPointerMove={onCtaPointerMove}
-              onClick={onViewWork}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View Nityant Tiwari's resume"
             >
-              <span>View my work</span>
-              <ArrowRight size={16} aria-hidden="true" />
+              <span>View resume</span>
+              <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>
         </div>
