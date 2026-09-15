@@ -80,12 +80,33 @@ export function GitHubActivity() {
     return () => controller.abort();
   }, []);
 
-  const showTooltip = (event: ReactPointerEvent<SVGRectElement>, activity: Activity) => {
-    setTooltip({
-      label: activityLabel(activity),
-      x: event.clientX,
-      y: event.clientY,
-    });
+  const showTooltipFromCell = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      setTooltip(null);
+      return;
+    }
+
+    const cell = target.closest("rect[data-contribution-label]");
+    if (!(cell instanceof SVGRectElement)) {
+      setTooltip(null);
+      return;
+    }
+
+    const label = cell.getAttribute("data-contribution-label");
+    if (!label) {
+      setTooltip(null);
+      return;
+    }
+
+    const horizontalPadding = 110;
+    const x = Math.min(
+      Math.max(event.clientX, horizontalPadding),
+      Math.max(horizontalPadding, window.innerWidth - horizontalPadding),
+    );
+    const y = Math.max(event.clientY, 56);
+
+    setTooltip({ label, x, y });
   };
 
   const tooltipPortal =
@@ -104,15 +125,27 @@ export function GitHubActivity() {
 
   return (
     <>
-      <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
+      <a
+        className="github-activity github-activity--link"
+        href={profile.githubHref}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {failed ? (
           <div className="github-fallback" aria-live="polite">
             <p className="github-fallback-label">@{profile.githubHandle}</p>
-            <p className="github-fallback-copy">Contribution calendar unavailable — open GitHub for recent activity.</p>
+            <p className="github-fallback-copy">
+              Contribution calendar unavailable — open GitHub for recent activity.
+            </p>
           </div>
         ) : (
           <CalendarBoundary onFail={() => setFailed(true)}>
-            <div className="github-calendar-wrap" onPointerLeave={() => setTooltip(null)}>
+            <div
+              className="github-calendar-wrap"
+              onPointerOver={showTooltipFromCell}
+              onPointerMove={showTooltipFromCell}
+              onPointerLeave={() => setTooltip(null)}
+            >
               <GitHubCalendar
                 username={profile.githubHandle}
                 colorScheme="dark"
@@ -125,16 +158,19 @@ export function GitHubActivity() {
                 showColorLegend={false}
                 transformData={last49Days}
                 theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
-                renderBlock={(block, activity) =>
-                  cloneElement(block, {
-                    "aria-label": activityLabel(activity),
-                    "data-contribution-count": activity.count,
-                    "data-contribution-date": activity.date,
-                    onPointerEnter: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
-                    onPointerMove: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
-                    onPointerLeave: () => setTooltip(null),
-                  })
-                }
+                renderBlock={(block, activity) => {
+                  const label = activityLabel(activity);
+                  return cloneElement(
+                    block,
+                    {
+                      "aria-label": label,
+                      "data-contribution-count": activity.count,
+                      "data-contribution-date": activity.date,
+                      "data-contribution-label": label,
+                    },
+                    <title>{label}</title>,
+                  );
+                }}
               />
             </div>
           </CalendarBoundary>
