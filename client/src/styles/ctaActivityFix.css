@@ -1,0 +1,93 @@
+/* Focused last-layer fix for the two interactions verified visually on main. */
+
+/* Hero CTAs ---------------------------------------------------------------
+   Older .outline-action::before rules set opacity: 0 and only reveal on hover.
+   Force the animated signal to stay visible so both View my work and View
+   resume carry the travelling light continuously. */
+.hero-actions--technical .hero-flow-action {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent),
+    0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+.hero-actions--technical .hero-flow-action::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: -165% !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 205deg,
+    #5fd3d8 224deg,
+    #75a8ff 244deg,
+    #9b7cff 264deg,
+    #e97fc7 284deg,
+    #ff8b55 304deg,
+    #f5cb62 322deg,
+    transparent 342deg 360deg
+  ) !important;
+  transform-origin: 50% 50% !important;
+  animation: hero-cta-signal-orbit 2.65s linear infinite !important;
+  animation-play-state: running !important;
+  transition: none !important;
+}
+
+.hero-actions--technical .hero-flow-action::after {
+  inset: 2px !important;
+}
+
+.hero-actions--technical .hero-flow-action:hover::before,
+.hero-actions--technical .hero-flow-action:focus-visible::before {
+  opacity: 1 !important;
+  animation-play-state: running !important;
+}
+
+@keyframes hero-cta-signal-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* GitHub contribution tooltip --------------------------------------------
+   This tooltip is portalled to document.body, so dashboard/card overflow can
+   never clip it. Coordinates are viewport-relative pointer coordinates. */
+.github-calendar-wrap,
+.github-calendar-wrap svg,
+.github-calendar-wrap svg rect {
+  pointer-events: auto !important;
+}
+
+.github-contribution-tooltip-portal {
+  position: fixed;
+  z-index: 10000;
+  max-width: min(15rem, calc(100vw - 1rem));
+  padding: 0.48rem 0.66rem;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 0.9rem));
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--background) 97%, transparent);
+  color: var(--foreground);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--foreground) 4%, transparent);
+  backdrop-filter: blur(16px) saturate(1.08);
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.dark .github-contribution-tooltip-portal {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(8, 11, 14, 0.98);
+  color: #f4f4ef;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-actions--technical .hero-flow-action::before {
+    animation: none !important;
+    transform: rotate(24deg) !important;
+  }
+}
