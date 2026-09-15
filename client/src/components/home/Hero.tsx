@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 import { ArrowRight, FileText, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
@@ -36,7 +36,6 @@ function getHeroStatus(): HeroStatus {
 export function Hero() {
   const reducedMotion = usePrefersReducedMotion();
   const [status, setStatus] = useState<HeroStatus>(() => getHeroStatus());
-  const ctaRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const updateStatus = () => setStatus(getHeroStatus());
@@ -46,8 +45,7 @@ export function Hero() {
   }, []);
 
   const onCtaPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
-    const element = ctaRef.current;
-    if (!element) return;
+    const element = event.currentTarget;
     const rect = element.getBoundingClientRect();
     element.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
     element.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
@@ -145,9 +143,8 @@ export function Hero() {
             <span className="hero-divider" aria-hidden="true" />
 
             <a
-              ref={ctaRef}
               href="#projects"
-              className="outline-action"
+              className="outline-action hero-flow-action"
               onPointerMove={onCtaPointerMove}
               onClick={onViewWork}
             >
