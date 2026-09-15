@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowRight, FileText, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
@@ -43,13 +43,6 @@ export function Hero() {
     const interval = window.setInterval(updateStatus, 60_000);
     return () => window.clearInterval(interval);
   }, []);
-
-  const onCtaPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
-    const element = event.currentTarget;
-    const rect = element.getBoundingClientRect();
-    element.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
-    element.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
-  };
 
   const onViewWork = (event: MouseEvent<HTMLAnchorElement>) => {
     const section = document.getElementById("projects");
@@ -110,6 +103,19 @@ export function Hero() {
           </div>
 
           <div className="hero-actions hero-actions--technical">
+            <a
+              href={RESUME_HREF}
+              className="outline-action"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View Nityant Tiwari's resume"
+            >
+              <FileText size={15} aria-hidden="true" />
+              <span>View resume</span>
+            </a>
+
+            <span className="hero-divider" aria-hidden="true" />
+
             <div className="social-actions" aria-label="Contact links">
               {visibleSocials.map((social) => (
                 <Tooltip key={social.label}>
@@ -132,26 +138,11 @@ export function Hero() {
 
             <a
               href="#projects"
-              className="outline-action hero-flow-action"
-              onPointerMove={onCtaPointerMove}
+              className="outline-action"
               onClick={onViewWork}
             >
               <span>View my work</span>
               <ArrowRight size={16} aria-hidden="true" />
-            </a>
-
-            <span className="hero-divider" aria-hidden="true" />
-
-            <a
-              href={RESUME_HREF}
-              className="outline-action hero-flow-action resume-action"
-              onPointerMove={onCtaPointerMove}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="View Nityant Tiwari's resume"
-            >
-              <FileText size={15} aria-hidden="true" />
-              <span>View resume</span>
             </a>
           </div>
         </div>
