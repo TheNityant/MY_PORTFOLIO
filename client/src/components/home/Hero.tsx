@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
-import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
+import { ArrowRight, FileText, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const RESUME_HREF = "/resume.pdf";
 
 type HeroStatus = {
   label: "Available" | "Away";
@@ -110,6 +112,18 @@ export function Hero() {
           </div>
 
           <div className="hero-actions hero-actions--technical">
+            <a
+              href={RESUME_HREF}
+              className="resume-action"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileText size={15} aria-hidden="true" />
+              <span>View my resume</span>
+            </a>
+
+            <span className="hero-divider" aria-hidden="true" />
+
             <div className="social-actions" aria-label="Contact links">
               {visibleSocials.map((social) => (
                 <Tooltip key={social.label}>
@@ -127,7 +141,9 @@ export function Hero() {
                 </Tooltip>
               ))}
             </div>
+
             <span className="hero-divider" aria-hidden="true" />
+
             <a
               ref={ctaRef}
               href="#projects"
