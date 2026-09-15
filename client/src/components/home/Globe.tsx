@@ -13,13 +13,49 @@ const THETA_MAX = 0.55;
 const INERTIA_DECAY = 0.92;
 const SPRING = 0.14;
 const DPR = 2;
-const MUMBAI_MARKER = {
-  location: [profile.locationLat, profile.locationLng] as [number, number],
-  size: 0.032,
+const MUMBAI = {
+  lat: profile.locationLat,
+  lng: profile.locationLng,
 };
+
+function toSphereVector(lat: number, lng: number) {
+  const latR = (lat * Math.PI) / 180;
+  const lngR = (lng * Math.PI) / 180;
+  const cosLat = Math.cos(latR);
+
+  return {
+    x: cosLat * Math.cos(lngR),
+    y: Math.sin(latR),
+    z: -cosLat * Math.sin(lngR),
+  };
+}
+
+function projectSpherePoint(
+  point: { x: number; y: number; z: number },
+  phi: number,
+  theta: number,
+) {
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+
+  const x1 = cosPhi * point.x + sinPhi * point.z;
+  const y1 = point.y;
+  const z1 = -sinPhi * point.x + cosPhi * point.z;
+
+  return {
+    x: x1,
+    y: cosTheta * y1 - sinTheta * z1,
+    z: sinTheta * y1 + cosTheta * z1,
+  };
+}
+
+const MUMBAI_VECTOR = toSphereVector(MUMBAI.lat, MUMBAI.lng);
 
 export function Globe({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
   const pointerId = useRef<number | null>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
   const phiRef = useRef(2.45);
@@ -33,7 +69,8 @@ export function Globe({ className }: { className?: string }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const overlay = overlayRef.current;
+    if (!canvas || !overlay) return;
 
     let width = canvas.offsetWidth;
     let frameId = 0;
@@ -50,11 +87,50 @@ export function Globe({ className }: { className?: string }) {
       mapSamples: 22000,
       mapBrightness: isDark ? 1.2 : 1.35,
       baseColor: (isDark ? [0.8, 0.9, 1.2] : [0.96, 0.97, 0.99]) as [number, number, number],
-      markerColor: (isDark ? [0.72, 0.94, 0.95] : [0.22, 0.55, 0.58]) as [number, number, number],
+      markerColor: [1, 1, 1],
       glowColor: isDark ? [1, 1, 1] : [0.9, 0.92, 0.95],
-      markers: [MUMBAI_MARKER],
+      markers: [],
       scale: 1,
     });
+
+    const drawMumbaiMarker = (phi: number, theta: number) => {
+      const ctx = overlay.getContext("2d");
+      if (!ctx || width <= 0) return;
+
+      const renderSize = Math.max(1, width * DPR);
+      if (overlay.width !== renderSize || overlay.height !== renderSize) {
+        overlay.width = renderSize;
+        overlay.height = renderSize;
+      }
+
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, width, width);
+
+      const projected = projectSpherePoint(MUMBAI_VECTOR, phi, theta);
+      if (projected.z < -0.02) return;
+
+      const radius = (width / 2) * 0.8;
+      const x = width / 2 + projected.x * radius;
+      const y = width / 2 - projected.y * radius;
+      const depthAlpha = Math.max(0.34, Math.min(1, projected.z + 0.45));
+      const coreColor = isDark ? "rgba(244, 247, 247, 0.98)" : "rgba(27, 34, 37, 0.92)";
+      const glowColor = isDark ? "rgba(115, 191, 196, 0.22)" : "rgba(58, 121, 126, 0.14)";
+
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, 5.5);
+      glow.addColorStop(0, glowColor);
+      glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.globalAlpha = depthAlpha;
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = coreColor;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    };
 
     const onResize = () => {
       width = canvas.offsetWidth;
@@ -81,12 +157,16 @@ export function Globe({ className }: { className?: string }) {
       dragTheta.current *= 0.82;
 
       const renderWidth = Math.max(1, width * DPR);
+      const renderPhi = phiRef.current + dragPhi.current;
+      const renderTheta = thetaRef.current;
+
       globe.update({
-        phi: phiRef.current + dragPhi.current,
-        theta: thetaRef.current,
+        phi: renderPhi,
+        theta: renderTheta,
         width: renderWidth,
         height: renderWidth,
       });
+      drawMumbaiMarker(renderPhi, renderTheta);
       frameId = requestAnimationFrame(tick);
     };
 
@@ -132,6 +212,7 @@ export function Globe({ className }: { className?: string }) {
       onPointerCancel={endDrag}
     >
       <canvas ref={canvasRef} className="globe-canvas" aria-hidden="true" />
+      <canvas ref={overlayRef} className="globe-overlay" aria-hidden="true" />
     </div>
   );
 }
