@@ -6,7 +6,7 @@ import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const RESUME_HREF = "/resume.pdf";
+const RESUME_HREF = import.meta.env.VITE_RESUME_URL?.trim() || "/resume.pdf";
 
 type HeroStatus = {
   label: "Available" | "Away";
@@ -110,18 +110,6 @@ export function Hero() {
           </div>
 
           <div className="hero-actions hero-actions--technical">
-            <a
-              href={RESUME_HREF}
-              className="resume-action"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <FileText size={15} aria-hidden="true" />
-              <span>View my resume</span>
-            </a>
-
-            <span className="hero-divider" aria-hidden="true" />
-
             <div className="social-actions" aria-label="Contact links">
               {visibleSocials.map((social) => (
                 <Tooltip key={social.label}>
@@ -150,6 +138,20 @@ export function Hero() {
             >
               <span>View my work</span>
               <ArrowRight size={16} aria-hidden="true" />
+            </a>
+
+            <span className="hero-divider" aria-hidden="true" />
+
+            <a
+              href={RESUME_HREF}
+              className="outline-action hero-flow-action resume-action"
+              onPointerMove={onCtaPointerMove}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="View Nityant Tiwari's resume"
+            >
+              <FileText size={15} aria-hidden="true" />
+              <span>View resume</span>
             </a>
           </div>
         </div>
