@@ -1,4 +1,123 @@
-/* Focused final-layer fix for GitHub activity interactions only. */
+/* Final interaction overrides for the hero CTAs and GitHub activity. */
+
+/* Hero CTA baseline -------------------------------------------------------
+   The resume button stays deliberately quiet. The older generic orbit rules
+   are neutralized here so only View my work receives the shimmer treatment. */
+.hero-actions--technical .hero-resume-action,
+.hero-actions--technical .hero-work-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent) !important;
+  background: color-mix(in srgb, var(--background) 62%, transparent) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(10px);
+}
+
+.hero-actions--technical .hero-resume-action::before,
+.hero-actions--technical .hero-resume-action::after {
+  content: none !important;
+  animation: none !important;
+}
+
+.hero-actions--technical .hero-resume-action:hover,
+.hero-actions--technical .hero-resume-action:focus-visible,
+.hero-actions--technical .hero-work-action:hover,
+.hero-actions--technical .hero-work-action:focus-visible {
+  border-color: color-mix(in srgb, var(--foreground) 30%, transparent) !important;
+  color: var(--foreground);
+}
+
+/* View my work ------------------------------------------------------------
+   A faint pointer-follow glow sits inside the pill, while a narrow spark runs
+   around the 1px perimeter. The button surface itself never rotates or fills. */
+@property --hero-work-spark-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.hero-actions--technical .hero-work-action {
+  --cta-x: 50%;
+  --cta-y: 50%;
+  --hero-work-spark-angle: 0deg;
+}
+
+.hero-actions--technical .hero-work-action::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background: radial-gradient(
+    120px circle at var(--cta-x) var(--cta-y),
+    color-mix(in srgb, var(--foreground) 80%, transparent),
+    transparent 60%
+  ) !important;
+  opacity: 0 !important;
+  transform: none !important;
+  animation: none !important;
+  transition: opacity 300ms ease !important;
+}
+
+.hero-actions--technical .hero-work-action:hover::before,
+.hero-actions--technical .hero-work-action:focus-visible::before {
+  opacity: 0.18 !important;
+}
+
+.hero-actions--technical .hero-work-action::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  padding: 1px !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background: conic-gradient(
+    from calc(var(--hero-work-spark-angle) - 45deg),
+    transparent 0deg,
+    transparent 8deg,
+    color-mix(in srgb, var(--foreground) 42%, transparent) 24deg,
+    color-mix(in srgb, var(--foreground) 96%, white 4%) 45deg,
+    color-mix(in srgb, var(--foreground) 48%, transparent) 68deg,
+    transparent 84deg,
+    transparent 360deg
+  ) !important;
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--foreground) 34%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0) !important;
+  -webkit-mask-composite: xor !important;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0) !important;
+  mask-composite: exclude !important;
+  animation: hero-work-border-spark 6s linear infinite !important;
+  transform: none !important;
+}
+
+.hero-actions--technical .hero-work-action > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-work-action__arrow {
+  transition: transform 300ms ease;
+}
+
+.hero-work-action:hover .hero-work-action__arrow,
+.hero-work-action:focus-visible .hero-work-action__arrow {
+  transform: translateX(0.25rem);
+}
+
+@keyframes hero-work-border-spark {
+  0% { --hero-work-spark-angle: 0deg; }
+  15%, 35% { --hero-work-spark-angle: 90deg; }
+  65%, 85% { --hero-work-spark-angle: 270deg; }
+  100% { --hero-work-spark-angle: 360deg; }
+}
 
 /* GitHub contribution tooltip --------------------------------------------
    The tooltip is rendered into document.body, so dashboard/card overflow can
@@ -38,4 +157,15 @@
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(8, 11, 14, 0.98);
   color: #f4f4ef;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-actions--technical .hero-work-action::after {
+    animation: none !important;
+    --hero-work-spark-angle: 35deg;
+  }
+
+  .hero-work-action__arrow {
+    transition: none;
+  }
 }
