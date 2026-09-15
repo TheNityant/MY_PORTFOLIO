@@ -1,9 +1,15 @@
 /* Final interaction layer. Imported after dashboard parity so these rules are
    deliberate overrides rather than competing with the structural styles. */
 
-/* Hero portrait: monochrome at rest, natural color on desktop hover. */
-.hero-static-identity img {
+/* Hero portrait -----------------------------------------------------------
+   Desktop/fine pointer: monochrome at rest, natural colour on hover.
+   Touch devices stay in colour because they do not have a persistent hover. */
+.hero-static-identity .hero-portrait-image {
   display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   filter: grayscale(0) saturate(1) contrast(1);
   transform: scale(1);
   transition:
@@ -13,26 +19,26 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .hero-static-identity img {
-    filter: grayscale(1) saturate(0.14) contrast(1.04);
+  .hero-static-identity .hero-portrait-image {
+    filter: grayscale(1) saturate(0.08) contrast(1.04);
   }
 
-  .hero-static-identity:hover img,
-  .hero-static-identity:focus-within img {
+  .hero-static-identity:hover .hero-portrait-image,
+  .hero-static-identity:focus-within .hero-portrait-image {
     filter: grayscale(0) saturate(1) contrast(1);
     transform: scale(1.025);
   }
 }
 
-/* Away is a muted red signal rather than the older amber/orange state. */
+/* Away status ------------------------------------------------------------- */
 .hero-live-status[data-status="away"] {
-  border-color: color-mix(in srgb, #df5b62 32%, var(--tn-hairline-strong));
-  background: color-mix(in srgb, #df5b62 5%, var(--background));
+  border-color: color-mix(in srgb, #df5b62 38%, var(--tn-hairline-strong));
+  background: color-mix(in srgb, #df5b62 7%, var(--background));
 }
 
 .dark .hero-live-status[data-status="away"] {
-  border-color: rgba(223, 91, 98, 0.32);
-  background: rgba(32, 13, 16, 0.72);
+  border-color: rgba(223, 91, 98, 0.38);
+  background: rgba(34, 13, 17, 0.76);
 }
 
 .hero-live-status[data-status="away"] .hero-live-status__dot,
@@ -40,74 +46,176 @@
   background: #df5b62;
 }
 
-/* Keep the View My Work signal alive continuously instead of only on hover. */
-.hero-actions--technical .outline-action {
-  isolation: isolate;
+.hero-live-status[data-status="away"] .hero-live-status__dot {
+  box-shadow:
+    0 0 0 1px rgba(223, 91, 98, 0.38),
+    0 0 12px rgba(223, 91, 98, 0.62);
 }
 
-.hero-actions--technical .outline-action > * {
+/* Hero action rail --------------------------------------------------------
+   Work | email / LinkedIn / GitHub | resume. Both CTAs have the same compact
+   footprint and a full rainbow boundary that is always moving, not only on
+   hover. The implementation avoids mask-composite so it is reliable in
+   Firefox as well as Chromium/WebKit. */
+.hero-actions--technical.hero-actions--balanced {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.9rem;
+}
+
+.hero-actions--balanced .social-actions {
+  flex: 0 0 auto;
+  gap: 1.2rem;
+}
+
+.hero-actions--balanced .hero-divider {
+  flex: 0 0 1px;
+  opacity: 0.82;
+}
+
+.hero-actions--technical .hero-flow-action {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  min-width: 7.7rem;
+  min-height: 2.15rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.78rem;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 999px;
+  background: transparent !important;
+  color: var(--foreground);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition:
+    color 180ms ease,
+    gap 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.hero-actions--technical .hero-flow-action::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -190%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 0deg,
+    #5fd3d8 0deg,
+    #75a8ff 58deg,
+    #9b7cff 116deg,
+    #e97fc7 178deg,
+    #ff8b55 235deg,
+    #f5cb62 296deg,
+    #5fd3d8 360deg
+  );
+  animation: hero-rainbow-orbit 4.6s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.hero-actions--technical .hero-flow-action::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 1.35px;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      115px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      color-mix(in srgb, var(--foreground) 0%, transparent),
+      transparent 66%
+    ),
+    color-mix(in srgb, var(--background) 94%, transparent);
+  backdrop-filter: blur(12px) saturate(1.08);
+  transition: background 180ms ease;
+}
+
+.dark .hero-actions--technical .hero-flow-action::after {
+  background:
+    radial-gradient(
+      115px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      rgba(255, 255, 255, 0),
+      transparent 66%
+    ),
+    rgba(8, 11, 14, 0.92);
+}
+
+.hero-actions--technical .hero-flow-action > * {
   position: relative;
   z-index: 2;
 }
 
-.hero-actions--technical .outline-action::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  inset: -1px;
-  padding: 1px;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(
-    105deg,
-    transparent 8%,
-    color-mix(in srgb, var(--tn-teal) 72%, transparent) 27%,
-    color-mix(in srgb, var(--tn-blue) 74%, transparent) 47%,
-    color-mix(in srgb, var(--tn-amber) 62%, transparent) 66%,
-    transparent 88%
-  );
-  background-size: 240% 100%;
-  opacity: 0.7;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: hero-cta-border-flow 3.8s linear infinite;
+.hero-actions--technical .hero-flow-action:hover,
+.hero-actions--technical .hero-flow-action:focus-visible {
+  gap: 0.62rem;
+  transform: translateY(-1px);
+  box-shadow:
+    0 11px 30px rgba(0, 0, 0, 0.12),
+    0 0 18px color-mix(in srgb, var(--tn-blue) 10%, transparent);
 }
 
-.hero-actions--technical .outline-action:hover::after,
-.hero-actions--technical .outline-action:focus-visible::after {
-  opacity: 0.95;
+.hero-actions--technical .hero-flow-action:hover::after,
+.hero-actions--technical .hero-flow-action:focus-visible::after {
+  background:
+    radial-gradient(
+      115px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      color-mix(in srgb, var(--foreground) 12%, transparent),
+      transparent 64%
+    ),
+    color-mix(in srgb, var(--background) 91%, transparent);
 }
 
-@keyframes hero-cta-border-flow {
-  from { background-position: 120% 50%; }
-  to { background-position: -120% 50%; }
+.dark .hero-actions--technical .hero-flow-action:hover::after,
+.dark .hero-actions--technical .hero-flow-action:focus-visible::after {
+  background:
+    radial-gradient(
+      115px circle at var(--cta-x, 50%) var(--cta-y, 50%),
+      rgba(255, 255, 255, 0.11),
+      transparent 64%
+    ),
+    rgba(8, 11, 14, 0.9);
+}
+
+@keyframes hero-rainbow-orbit {
+  to { transform: rotate(360deg); }
 }
 
 /* Large image/video surface above writing + experience rows. The existing
    lower description preview remains intact and can keep its compact thumbnail. */
+.experience-track,
+.experience-list,
+.experience-row--preview,
+.writing-preview-list,
+.writing-preview-card--interactive {
+  overflow: visible;
+}
+
 .experience-feature-preview,
 .writing-feature-preview {
   position: absolute;
   right: 0.75rem;
-  bottom: calc(100% - 0.3rem);
-  z-index: 48;
-  width: min(36rem, calc(100% - 1.5rem));
+  bottom: calc(100% + 0.55rem);
+  z-index: 80;
+  width: min(40rem, calc(100% - 1.5rem));
   aspect-ratio: 16 / 9;
-  padding: 0.55rem;
+  padding: 0.58rem;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
   overflow: hidden;
-  transform: translateY(-10px) scale(0.985);
+  transform: translateY(10px) scale(0.985);
   transform-origin: bottom right;
-  border: 1px solid color-mix(in srgb, var(--section-hover-fg) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--section-hover-fg) 20%, transparent);
   border-radius: 0.95rem;
-  background: color-mix(in srgb, var(--section-hover-bg) 96%, transparent);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(20px) saturate(1.08);
+  background: color-mix(in srgb, var(--section-hover-bg) 97%, transparent);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(22px) saturate(1.08);
   transition:
     opacity 170ms ease,
     transform 190ms ease,
@@ -137,10 +245,35 @@
   transform: translateY(0) scale(1);
 }
 
-/* Native SVG titles provide the exact contribution/date tooltip while keeping
-   the existing laptop cursor treatment from the dashboard card. */
-.github-calendar-wrap svg g[aria-label] {
-  outline: none;
+/* GitHub contribution tooltip -------------------------------------------- */
+.github-calendar-wrap {
+  position: relative;
+}
+
+.github-contribution-tooltip {
+  position: absolute;
+  z-index: 90;
+  left: var(--tooltip-x, 50%);
+  top: var(--tooltip-y, 50%);
+  max-width: 12.5rem;
+  padding: 0.38rem 0.5rem;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 0.55rem));
+  border: 1px solid color-mix(in srgb, var(--foreground) 16%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 9px 28px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(14px);
+  font-size: 0.66rem;
+  font-weight: 620;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.dark .github-contribution-tooltip {
+  background: rgba(8, 11, 14, 0.96);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 @media (max-width: 760px), (hover: none) {
@@ -150,14 +283,37 @@
   }
 }
 
+@media (max-width: 720px) {
+  .hero-actions--technical.hero-actions--balanced {
+    width: min(100%, 26rem);
+    flex-wrap: wrap;
+    gap: 0.72rem 0.8rem;
+  }
+
+  .hero-actions--balanced .hero-flow-action {
+    min-width: 7.2rem;
+  }
+
+  .hero-actions--balanced .social-actions {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.15rem;
+  }
+
+  .hero-actions--balanced .hero-divider {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-static-identity img {
+  .hero-static-identity .hero-portrait-image {
     transition: none;
   }
 
-  .hero-actions--technical .outline-action::after {
+  .hero-actions--technical .hero-flow-action::before {
     animation: none;
-    background-position: 50% 50%;
+    transform: rotate(18deg);
   }
 
   .experience-feature-preview,
