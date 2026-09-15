@@ -6,7 +6,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 const DRAG_DAMPING = 1400;
-const PHI_IDLE = 0.0066;
+const PHI_IDLE = 0.0072;
 const THETA_TARGET = 0.4;
 const THETA_MIN = 0.12;
 const THETA_MAX = 0.55;
