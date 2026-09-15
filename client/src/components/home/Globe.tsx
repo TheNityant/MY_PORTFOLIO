@@ -6,7 +6,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 const DRAG_DAMPING = 1400;
-const PHI_IDLE = 0.005;
+const PHI_IDLE = 0.0062;
 const THETA_TARGET = 0.4;
 const THETA_MIN = 0.12;
 const THETA_MAX = 0.55;
@@ -15,7 +15,7 @@ const SPRING = 0.14;
 const DPR = 2;
 const MUMBAI_MARKER = {
   location: [profile.locationLat, profile.locationLng] as [number, number],
-  size: 0.085,
+  size: 0.032,
 };
 
 export function Globe({ className }: { className?: string }) {
@@ -50,7 +50,7 @@ export function Globe({ className }: { className?: string }) {
       mapSamples: 22000,
       mapBrightness: isDark ? 1.2 : 1.35,
       baseColor: (isDark ? [0.8, 0.9, 1.2] : [0.96, 0.97, 0.99]) as [number, number, number],
-      markerColor: [245 / 255, 158 / 255, 11 / 255],
+      markerColor: (isDark ? [0.72, 0.94, 0.95] : [0.22, 0.55, 0.58]) as [number, number, number],
       glowColor: isDark ? [1, 1, 1] : [0.9, 0.92, 0.95],
       markers: [MUMBAI_MARKER],
       scale: 1,

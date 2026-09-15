@@ -7,6 +7,17 @@ const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
 
 const last49Days = (data: Activity[]) => data.slice(-49);
 
+function activityLabel(activity: Activity) {
+  const date = new Date(`${activity.date}T00:00:00`);
+  const dateLabel = date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const noun = activity.count === 1 ? "contribution" : "contributions";
+  return `${activity.count} ${noun} · ${dateLabel}`;
+}
+
 type GitHubPublicProfile = {
   public_repos?: number;
 };
@@ -76,6 +87,12 @@ export function GitHubActivity() {
               showColorLegend={false}
               transformData={last49Days}
               theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
+              renderBlock={(block, activity) => (
+                <g aria-label={activityLabel(activity)}>
+                  <title>{activityLabel(activity)}</title>
+                  {block}
+                </g>
+              )}
             />
           </div>
         </CalendarBoundary>

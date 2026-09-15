@@ -8,5 +8,6 @@ import "./styles/siteAtmosphere.css";
 import "./styles/portfolioPolish.css";
 import "./styles/hoverPreviewPolish.css";
 import "./components/home/dashboardParity.css";
+import "./styles/interactionEnhancements.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
