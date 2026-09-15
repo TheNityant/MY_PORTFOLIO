@@ -1,13 +1,14 @@
 import { GitHubCalendar, type Activity } from "react-github-calendar";
 import { ArrowUpRight } from "lucide-react";
 import {
+  cloneElement,
   Component,
   useEffect,
-  useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
 const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
@@ -56,7 +57,6 @@ export function GitHubActivity() {
   const [failed, setFailed] = useState(false);
   const [publicRepoCount, setPublicRepoCount] = useState<number | null>(null);
   const [tooltip, setTooltip] = useState<ContributionTooltip | null>(null);
-  const calendarWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -80,84 +80,77 @@ export function GitHubActivity() {
     return () => controller.abort();
   }, []);
 
-  const showContributionTooltip = (
-    event: ReactPointerEvent<SVGGElement>,
-    activity: Activity,
-  ) => {
-    const wrap = calendarWrapRef.current;
-    if (!wrap) return;
-
-    const rect = wrap.getBoundingClientRect();
-    const rawX = event.clientX - rect.left;
-    const x = Math.min(Math.max(rawX, 58), Math.max(58, rect.width - 58));
-    const y = Math.min(event.clientY - rect.top + 15, Math.max(24, rect.height - 4));
-
+  const showTooltip = (event: ReactPointerEvent<SVGRectElement>, activity: Activity) => {
     setTooltip({
       label: activityLabel(activity),
-      x,
-      y,
+      x: event.clientX,
+      y: event.clientY,
     });
   };
 
-  return (
-    <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
-      {failed ? (
-        <div className="github-fallback" aria-live="polite">
-          <p className="github-fallback-label">@{profile.githubHandle}</p>
-          <p className="github-fallback-copy">Contribution calendar unavailable — open GitHub for recent activity.</p>
-        </div>
-      ) : (
-        <CalendarBoundary onFail={() => setFailed(true)}>
-          <div
-            ref={calendarWrapRef}
-            className="github-calendar-wrap"
-            onPointerLeave={() => setTooltip(null)}
+  const tooltipPortal =
+    tooltip && typeof document !== "undefined"
+      ? createPortal(
+          <span
+            className="github-contribution-tooltip-portal"
+            style={{ left: tooltip.x, top: tooltip.y }}
+            role="tooltip"
           >
-            <GitHubCalendar
-              username={profile.githubHandle}
-              colorScheme="dark"
-              blockSize={10}
-              blockMargin={2}
-              fontSize={10}
-              showWeekdayLabels={false}
-              showMonthLabels={false}
-              showTotalCount={false}
-              showColorLegend={false}
-              transformData={last49Days}
-              theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
-              renderBlock={(block, activity) => (
-                <g
-                  aria-label={activityLabel(activity)}
-                  onPointerEnter={(event) => showContributionTooltip(event, activity)}
-                  onPointerMove={(event) => showContributionTooltip(event, activity)}
-                  onPointerLeave={() => setTooltip(null)}
-                >
-                  {block}
-                </g>
-              )}
-            />
+            {tooltip.label}
+          </span>,
+          document.body,
+        )
+      : null;
 
-            {tooltip ? (
-              <span
-                className="github-contribution-tooltip"
-                role="tooltip"
-                style={{ left: tooltip.x, top: tooltip.y }}
-              >
-                {tooltip.label}
-              </span>
-            ) : null}
+  return (
+    <>
+      <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
+        {failed ? (
+          <div className="github-fallback" aria-live="polite">
+            <p className="github-fallback-label">@{profile.githubHandle}</p>
+            <p className="github-fallback-copy">Contribution calendar unavailable — open GitHub for recent activity.</p>
           </div>
-        </CalendarBoundary>
-      )}
+        ) : (
+          <CalendarBoundary onFail={() => setFailed(true)}>
+            <div className="github-calendar-wrap" onPointerLeave={() => setTooltip(null)}>
+              <GitHubCalendar
+                username={profile.githubHandle}
+                colorScheme="dark"
+                blockSize={10}
+                blockMargin={2}
+                fontSize={10}
+                showWeekdayLabels={false}
+                showMonthLabels={false}
+                showTotalCount={false}
+                showColorLegend={false}
+                transformData={last49Days}
+                theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
+                renderBlock={(block, activity) =>
+                  cloneElement(block, {
+                    "aria-label": activityLabel(activity),
+                    "data-contribution-count": activity.count,
+                    "data-contribution-date": activity.date,
+                    onPointerEnter: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
+                    onPointerMove: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
+                    onPointerLeave: () => setTooltip(null),
+                  })
+                }
+              />
+            </div>
+          </CalendarBoundary>
+        )}
 
-      <div className="github-activity-meta" aria-label="GitHub repository summary">
-        <span className="github-activity-meta__label">Public repos</span>
-        <strong>{publicRepoCount ?? "—"}</strong>
-      </div>
+        <div className="github-activity-meta" aria-label="GitHub repository summary">
+          <span className="github-activity-meta__label">Public repos</span>
+          <strong>{publicRepoCount ?? "—"}</strong>
+        </div>
 
-      <span className="tile-link github-cta">
-        {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
-      </span>
-    </a>
+        <span className="tile-link github-cta">
+          {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
+        </span>
+      </a>
+
+      {tooltipPortal}
+    </>
   );
 }
