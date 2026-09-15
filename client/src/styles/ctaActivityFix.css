@@ -1,79 +1,4 @@
-/* Focused final-layer fixes for the hero CTA and GitHub activity interactions. */
-
-/* View my work ------------------------------------------------------------
-   Keep the travelling signal visible continuously, but confine it to the
-   button boundary so the center stays calm and readable. */
-.hero-actions--technical .hero-flow-action {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent),
-    0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.hero-actions--technical .hero-flow-action > * {
-  position: relative;
-  z-index: 3;
-}
-
-.hero-actions--technical .hero-flow-action::before {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 0 !important;
-  inset: -175% !important;
-  opacity: 1 !important;
-  pointer-events: none !important;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 207deg,
-    #5fd3d8 226deg,
-    #75a8ff 247deg,
-    #9b7cff 267deg,
-    #e97fc7 287deg,
-    #ff8b55 307deg,
-    #f5cb62 326deg,
-    transparent 345deg 360deg
-  ) !important;
-  transform-origin: 50% 50% !important;
-  animation: hero-cta-signal-orbit 2.7s linear infinite !important;
-  transition: none !important;
-}
-
-.hero-actions--technical .hero-flow-action::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 1 !important;
-  inset: 1px !important;
-  padding: 0 !important;
-  pointer-events: none !important;
-  border-radius: inherit !important;
-  background: color-mix(in srgb, var(--background) 88%, var(--tn-surface-raised)) !important;
-  -webkit-mask: none !important;
-  mask: none !important;
-}
-
-.dark .hero-actions--technical .hero-flow-action::after {
-  background: rgba(8, 11, 14, 0.96) !important;
-}
-
-.hero-actions--technical .hero-flow-action:hover,
-.hero-actions--technical .hero-flow-action:focus-visible {
-  transform: translateY(-1px);
-}
-
-.hero-actions--technical .hero-flow-action:hover::before,
-.hero-actions--technical .hero-flow-action:focus-visible::before {
-  opacity: 1 !important;
-  animation-play-state: running !important;
-}
-
-@keyframes hero-cta-signal-orbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+/* Focused final-layer fix for GitHub activity interactions only. */
 
 /* GitHub contribution tooltip --------------------------------------------
    The tooltip is rendered into document.body, so dashboard/card overflow can
@@ -113,17 +38,4 @@
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(8, 11, 14, 0.98);
   color: #f4f4ef;
-}
-
-@media (max-width: 639px) {
-  .hero-actions--technical .hero-flow-action {
-    font-size: 0.8rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-actions--technical .hero-flow-action::before {
-    animation: none !important;
-    transform: rotate(24deg) !important;
-  }
 }
