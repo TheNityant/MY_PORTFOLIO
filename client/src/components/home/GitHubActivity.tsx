@@ -1,6 +1,14 @@
 import { GitHubCalendar, type Activity } from "react-github-calendar";
 import { ArrowUpRight } from "lucide-react";
-import { Component, useEffect, useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  Component,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
 const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
@@ -20,6 +28,12 @@ function activityLabel(activity: Activity) {
 
 type GitHubPublicProfile = {
   public_repos?: number;
+};
+
+type ContributionTooltip = {
+  label: string;
+  x: number;
+  y: number;
 };
 
 class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => void }, { failed: boolean }> {
@@ -42,6 +56,8 @@ class CalendarBoundary extends Component<{ children: ReactNode; onFail: () => vo
 export function GitHubActivity() {
   const [failed, setFailed] = useState(false);
   const [publicRepoCount, setPublicRepoCount] = useState<number | null>(null);
+  const [tooltip, setTooltip] = useState<ContributionTooltip | null>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -65,6 +81,17 @@ export function GitHubActivity() {
     return () => controller.abort();
   }, []);
 
+  const positionTooltip = (event: ReactMouseEvent<SVGRectElement>, activity: Activity) => {
+    const root = calendarRef.current;
+    if (!root) return;
+    const rect = root.getBoundingClientRect();
+    setTooltip({
+      label: activityLabel(activity),
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
   return (
     <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
       {failed ? (
@@ -74,7 +101,7 @@ export function GitHubActivity() {
         </div>
       ) : (
         <CalendarBoundary onFail={() => setFailed(true)}>
-          <div className="github-calendar-wrap">
+          <div ref={calendarRef} className="github-calendar-wrap" onMouseLeave={() => setTooltip(null)}>
             <GitHubCalendar
               username={profile.githubHandle}
               colorScheme="dark"
@@ -87,13 +114,24 @@ export function GitHubActivity() {
               showColorLegend={false}
               transformData={last49Days}
               theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
-              renderBlock={(block, activity) => (
-                <g aria-label={activityLabel(activity)}>
-                  <title>{activityLabel(activity)}</title>
-                  {block}
-                </g>
-              )}
+              renderBlock={(block, activity) =>
+                cloneElement(block, {
+                  "aria-label": activityLabel(activity),
+                  onMouseEnter: (event: ReactMouseEvent<SVGRectElement>) => positionTooltip(event, activity),
+                  onMouseMove: (event: ReactMouseEvent<SVGRectElement>) => positionTooltip(event, activity),
+                  onMouseLeave: () => setTooltip(null),
+                })
+              }
             />
+            {tooltip ? (
+              <span
+                className="github-contribution-tooltip"
+                style={{ left: tooltip.x, top: tooltip.y }}
+                role="tooltip"
+              >
+                {tooltip.label}
+              </span>
+            ) : null}
           </div>
         </CalendarBoundary>
       )}
