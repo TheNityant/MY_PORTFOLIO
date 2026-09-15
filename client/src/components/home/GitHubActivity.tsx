@@ -4,11 +4,11 @@ import {
   cloneElement,
   Component,
   useEffect,
-  useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { dashboardCopy, profile } from "@/data/portfolio";
 
 const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
@@ -57,7 +57,6 @@ export function GitHubActivity() {
   const [failed, setFailed] = useState(false);
   const [publicRepoCount, setPublicRepoCount] = useState<number | null>(null);
   const [tooltip, setTooltip] = useState<ContributionTooltip | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -81,69 +80,77 @@ export function GitHubActivity() {
     return () => controller.abort();
   }, []);
 
-  const positionTooltip = (event: ReactMouseEvent<SVGRectElement>, activity: Activity) => {
-    const root = calendarRef.current;
-    if (!root) return;
-    const rect = root.getBoundingClientRect();
+  const showTooltip = (event: ReactPointerEvent<SVGRectElement>, activity: Activity) => {
     setTooltip({
       label: activityLabel(activity),
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: event.clientX,
+      y: event.clientY,
     });
   };
 
+  const tooltipPortal =
+    tooltip && typeof document !== "undefined"
+      ? createPortal(
+          <span
+            className="github-contribution-tooltip-portal"
+            style={{ left: tooltip.x, top: tooltip.y }}
+            role="tooltip"
+          >
+            {tooltip.label}
+          </span>,
+          document.body,
+        )
+      : null;
+
   return (
-    <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
-      {failed ? (
-        <div className="github-fallback" aria-live="polite">
-          <p className="github-fallback-label">@{profile.githubHandle}</p>
-          <p className="github-fallback-copy">Contribution calendar unavailable — open GitHub for recent activity.</p>
-        </div>
-      ) : (
-        <CalendarBoundary onFail={() => setFailed(true)}>
-          <div ref={calendarRef} className="github-calendar-wrap" onMouseLeave={() => setTooltip(null)}>
-            <GitHubCalendar
-              username={profile.githubHandle}
-              colorScheme="dark"
-              blockSize={10}
-              blockMargin={2}
-              fontSize={10}
-              showWeekdayLabels={false}
-              showMonthLabels={false}
-              showTotalCount={false}
-              showColorLegend={false}
-              transformData={last49Days}
-              theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
-              renderBlock={(block, activity) =>
-                cloneElement(block, {
-                  "aria-label": activityLabel(activity),
-                  onMouseEnter: (event: ReactMouseEvent<SVGRectElement>) => positionTooltip(event, activity),
-                  onMouseMove: (event: ReactMouseEvent<SVGRectElement>) => positionTooltip(event, activity),
-                  onMouseLeave: () => setTooltip(null),
-                })
-              }
-            />
-            {tooltip ? (
-              <span
-                className="github-contribution-tooltip"
-                style={{ left: tooltip.x, top: tooltip.y }}
-                role="tooltip"
-              >
-                {tooltip.label}
-              </span>
-            ) : null}
+    <>
+      <a className="github-activity github-activity--link" href={profile.githubHref} target="_blank" rel="noopener noreferrer">
+        {failed ? (
+          <div className="github-fallback" aria-live="polite">
+            <p className="github-fallback-label">@{profile.githubHandle}</p>
+            <p className="github-fallback-copy">Contribution calendar unavailable — open GitHub for recent activity.</p>
           </div>
-        </CalendarBoundary>
-      )}
+        ) : (
+          <CalendarBoundary onFail={() => setFailed(true)}>
+            <div className="github-calendar-wrap" onPointerLeave={() => setTooltip(null)}>
+              <GitHubCalendar
+                username={profile.githubHandle}
+                colorScheme="dark"
+                blockSize={10}
+                blockMargin={2}
+                fontSize={10}
+                showWeekdayLabels={false}
+                showMonthLabels={false}
+                showTotalCount={false}
+                showColorLegend={false}
+                transformData={last49Days}
+                theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
+                renderBlock={(block, activity) =>
+                  cloneElement(block, {
+                    "aria-label": activityLabel(activity),
+                    "data-contribution-count": activity.count,
+                    "data-contribution-date": activity.date,
+                    onPointerEnter: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
+                    onPointerMove: (event: ReactPointerEvent<SVGRectElement>) => showTooltip(event, activity),
+                    onPointerLeave: () => setTooltip(null),
+                  })
+                }
+              />
+            </div>
+          </CalendarBoundary>
+        )}
 
-      <div className="github-activity-meta" aria-label="GitHub repository summary">
-        <span className="github-activity-meta__label">Public repos</span>
-        <strong>{publicRepoCount ?? "—"}</strong>
-      </div>
+        <div className="github-activity-meta" aria-label="GitHub repository summary">
+          <span className="github-activity-meta__label">Public repos</span>
+          <strong>{publicRepoCount ?? "—"}</strong>
+        </div>
 
-      <span className="tile-link github-cta">
-        {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
-      </span>
-    </a>
+        <span className="tile-link github-cta">
+          {dashboardCopy.githubCta} <ArrowUpRight size={14} aria-hidden="true" />
+        </span>
+      </a>
+
+      {tooltipPortal}
+    </>
   );
 }
