@@ -10,5 +10,6 @@ import "./styles/hoverPreviewPolish.css";
 import "./components/home/dashboardParity.css";
 import "./styles/interactionEnhancements.css";
 import "./styles/ctaActivityFix.css";
+import "./styles/requestedFixes.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
