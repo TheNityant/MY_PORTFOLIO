@@ -1,5 +1,4 @@
-/* Final-layer interaction polish. Keep this file imported last so it can tune
-   inherited baseline styles without rewriting the original layout system. */
+/* Interaction polish for dashboard, writing/experience previews, search, and header controls. */
 
 /* Hero --------------------------------------------------------------------- */
 .hero-title--technical .hero-name-shell {
@@ -9,26 +8,6 @@
 
 .hero-title--technical .hero-name--animated {
   white-space: nowrap;
-}
-
-.hero-actions--technical .outline-action::after {
-  background:
-    radial-gradient(
-      120px circle at var(--cta-x, 50%) var(--cta-y, 50%),
-      color-mix(in srgb, var(--foreground) 14%, transparent),
-      transparent 62%
-    ),
-    color-mix(in srgb, var(--background) 72%, transparent);
-}
-
-.dark .hero-actions--technical .outline-action::after {
-  background:
-    radial-gradient(
-      120px circle at var(--cta-x, 50%) var(--cta-y, 50%),
-      rgba(255, 255, 255, 0.12),
-      transparent 62%
-    ),
-    rgba(8, 11, 14, 0.7);
 }
 
 /* Dashboard cursor reflection --------------------------------------------- */
