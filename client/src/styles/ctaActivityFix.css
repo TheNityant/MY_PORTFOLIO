@@ -1,8 +1,8 @@
 /* Final interaction overrides for the hero CTAs and GitHub activity. */
 
 /* Hero CTA baseline -------------------------------------------------------
-   The resume button stays deliberately quiet. The older generic orbit rules
-   are neutralized here so only View my work receives the shimmer treatment. */
+   View resume and View my work now share one visual language: a quiet neutral
+   surface, pointer-follow glow, and a narrow travelling spark on the perimeter. */
 .hero-actions--technical .hero-resume-action,
 .hero-actions--technical .hero-work-action {
   position: relative;
@@ -12,12 +12,9 @@
   background: color-mix(in srgb, var(--background) 62%, transparent) !important;
   box-shadow: none !important;
   backdrop-filter: blur(10px);
-}
-
-.hero-actions--technical .hero-resume-action::before,
-.hero-actions--technical .hero-resume-action::after {
-  content: none !important;
-  animation: none !important;
+  --cta-x: 50%;
+  --cta-y: 50%;
+  --hero-action-spark-angle: 0deg;
 }
 
 .hero-actions--technical .hero-resume-action:hover,
@@ -28,21 +25,16 @@
   color: var(--foreground);
 }
 
-/* View my work ------------------------------------------------------------
+/* Shared CTA shimmer ------------------------------------------------------
    A faint pointer-follow glow sits inside the pill, while a narrow spark runs
    around the 1px perimeter. The button surface itself never rotates or fills. */
-@property --hero-work-spark-angle {
+@property --hero-action-spark-angle {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
 }
 
-.hero-actions--technical .hero-work-action {
-  --cta-x: 50%;
-  --cta-y: 50%;
-  --hero-work-spark-angle: 0deg;
-}
-
+.hero-actions--technical .hero-resume-action::before,
 .hero-actions--technical .hero-work-action::before {
   content: "" !important;
   position: absolute !important;
@@ -61,11 +53,14 @@
   transition: opacity 300ms ease !important;
 }
 
+.hero-actions--technical .hero-resume-action:hover::before,
+.hero-actions--technical .hero-resume-action:focus-visible::before,
 .hero-actions--technical .hero-work-action:hover::before,
 .hero-actions--technical .hero-work-action:focus-visible::before {
   opacity: 0.18 !important;
 }
 
+.hero-actions--technical .hero-resume-action::after,
 .hero-actions--technical .hero-work-action::after {
   content: "" !important;
   position: absolute !important;
@@ -76,7 +71,7 @@
   border-radius: inherit !important;
   pointer-events: none !important;
   background: conic-gradient(
-    from calc(var(--hero-work-spark-angle) - 45deg),
+    from calc(var(--hero-action-spark-angle) - 45deg),
     transparent 0deg,
     transparent 8deg,
     color-mix(in srgb, var(--foreground) 42%, transparent) 24deg,
@@ -94,29 +89,38 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0) !important;
   mask-composite: exclude !important;
-  animation: hero-work-border-spark 6s linear infinite !important;
+  animation: hero-action-border-spark 6s linear infinite !important;
   transform: none !important;
 }
 
+/* Slight phase offset keeps the pair from looking mechanically mirrored. */
+.hero-actions--technical .hero-resume-action::after {
+  animation-delay: -3s !important;
+}
+
+.hero-actions--technical .hero-resume-action > *,
 .hero-actions--technical .hero-work-action > * {
   position: relative;
   z-index: 2;
 }
 
+.hero-resume-action__arrow,
 .hero-work-action__arrow {
   transition: transform 300ms ease;
 }
 
+.hero-resume-action:hover .hero-resume-action__arrow,
+.hero-resume-action:focus-visible .hero-resume-action__arrow,
 .hero-work-action:hover .hero-work-action__arrow,
 .hero-work-action:focus-visible .hero-work-action__arrow {
   transform: translateX(0.25rem);
 }
 
-@keyframes hero-work-border-spark {
-  0% { --hero-work-spark-angle: 0deg; }
-  15%, 35% { --hero-work-spark-angle: 90deg; }
-  65%, 85% { --hero-work-spark-angle: 270deg; }
-  100% { --hero-work-spark-angle: 360deg; }
+@keyframes hero-action-border-spark {
+  0% { --hero-action-spark-angle: 0deg; }
+  15%, 35% { --hero-action-spark-angle: 90deg; }
+  65%, 85% { --hero-action-spark-angle: 270deg; }
+  100% { --hero-action-spark-angle: 360deg; }
 }
 
 /* GitHub contribution tooltip --------------------------------------------
@@ -160,11 +164,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-actions--technical .hero-resume-action::after,
   .hero-actions--technical .hero-work-action::after {
     animation: none !important;
-    --hero-work-spark-angle: 35deg;
+    --hero-action-spark-angle: 35deg;
   }
 
+  .hero-resume-action__arrow,
   .hero-work-action__arrow {
     transition: none;
   }
