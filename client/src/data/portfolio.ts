@@ -289,7 +289,17 @@ export const projects: Project[] = [
       "Statistical analysis platform in development, combining a modern frontend with a Python analytics stack.",
     technologies: ["Frontend", "Python", "Statistics"],
     status: "In development",
-    media: { kind: "none", alt: "Media frame for the Statistical Analysis Platform." },
+    media: { kind: "video", src: "media/Projects/statforge_analytics_long_authenticator_style.mp4", alt: "Media frame for the Statistical Analysis Platform." },
+  },
+  {
+    id: "Backend_Authenticator",
+    domain: "backend",
+    title: "Login / Authenticator Backend",
+    description:
+      "A backend for handling user authentication and login, built with a modern stack.",
+    technologies: ["Frontend", "Java", "Spring Boot", "PostgreSQL"],
+    status: "Completed",
+    media: { kind: "video", src: "media/Projects/Authenticator.mp4", alt: "Media frame for the Authenticator." },
   },
   {
     id: "habit-tracker",
@@ -300,7 +310,7 @@ export const projects: Project[] = [
     technologies: ["Flutter", "Spring Boot", "PostgreSQL", "Gemini"],
     href: "https://github.com/TheNityant/HABIT_TRACKER-Full-Stack-app",
     hrefLabel: "Repository",
-    media: { kind: "none", alt: "Media frame for Habit Tracker." },
+    media: { kind: "video", src: "/media/Projects/FINAL_HB.mp4", alt: "Media frame for Habit Tracker." },
   },
   {
     id: "llm-visualizer",
@@ -312,7 +322,7 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/LLM_Visualizer",
     hrefLabel: "Repository",
     status: "In progress",
-    media: { kind: "none", alt: "Media frame for LLM Visualizer." },
+    media: { kind: "video", src: "media/Projects/LLM_V.mp4", alt: "Media frame for LLM Visualizer." },
   },
   {
     id: "genezap",
@@ -322,7 +332,7 @@ export const projects: Project[] = [
       "Experimental offline genomic-analysis pipeline combining species profiling, ML resistance prediction, CGR/CNN-style analysis, and CARD-based validation.",
     technologies: ["Python", "TensorFlow", "scikit-learn", "OpenCV"],
     status: "Experimental",
-    media: { kind: "none", alt: "Media frame for GeneZap." },
+    media: { kind: "video", src: "media/Projects/Gene_zap.mp4", alt: "Media frame for GeneZap." },
   },
   {
     id: "robotic-hand",
