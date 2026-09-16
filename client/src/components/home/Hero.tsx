@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
-import { ArrowRight, FileText, Github, Linkedin, Mail } from "lucide-react";
+import { ArrowRight, Github, Linkedin, Mail } from "lucide-react";
 import { AnimatedHeroName } from "@/components/home/AnimatedHeroName";
 import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
@@ -44,7 +44,7 @@ export function Hero() {
     return () => window.clearInterval(interval);
   }, []);
 
-  const onViewWorkPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
+  const onHeroActionPointerMove = (event: PointerEvent<HTMLAnchorElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     event.currentTarget.style.setProperty("--cta-x", `${event.clientX - rect.left}px`);
     event.currentTarget.style.setProperty("--cta-y", `${event.clientY - rect.top}px`);
@@ -112,12 +112,13 @@ export function Hero() {
             <a
               href={RESUME_HREF}
               className="outline-action hero-resume-action"
+              onPointerMove={onHeroActionPointerMove}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="View Nityant Tiwari's resume"
             >
-              <FileText size={15} aria-hidden="true" />
               <span>View resume</span>
+              <ArrowRight className="hero-resume-action__arrow" size={16} aria-hidden="true" />
             </a>
 
             <span className="hero-divider" aria-hidden="true" />
@@ -145,7 +146,7 @@ export function Hero() {
             <a
               href="#projects"
               className="outline-action hero-work-action"
-              onPointerMove={onViewWorkPointerMove}
+              onPointerMove={onHeroActionPointerMove}
               onClick={onViewWork}
             >
               <span>View my work</span>
