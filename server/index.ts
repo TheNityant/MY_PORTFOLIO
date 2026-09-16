@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getDashboardPayload, getWorkoutSummary } from "./dashboard";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +11,33 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Serve static files from dist/public in production
+  app.disable("x-powered-by");
+  app.use(express.json({ limit: "256kb" }));
+
+  app.get("/api/health", (_req, res) => {
+    res.json({
+      ok: true,
+      service: "portfolio-api",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.get("/api/dashboard", async (_req, res) => {
+    const payload = await getDashboardPayload();
+
+    // The dashboard is allowed to be slightly stale if an upstream provider is slow.
+    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+    res.json(payload);
+  });
+
+  app.get("/api/workouts", async (_req, res) => {
+    const workouts = await getWorkoutSummary();
+
+    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+    res.json(workouts);
+  });
+
+  // Serve static files from dist/public in production.
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
@@ -18,16 +45,19 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  // Handle client-side routing - serve index.html for all routes
+  // Handle client-side routing after API routes.
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
-  const port = process.env.PORT || 3000;
+  const port = Number(process.env.PORT) || 3000;
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`Portfolio server running on http://localhost:${port}/`);
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((error) => {
+  console.error("Failed to start portfolio server", error);
+  process.exitCode = 1;
+});
