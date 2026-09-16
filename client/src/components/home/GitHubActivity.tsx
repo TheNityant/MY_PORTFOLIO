@@ -15,7 +15,7 @@ const GITHUB_GREEN = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
 
 const last49Days = (data: Activity[]) => data.slice(-49);
 
-function activityLabel(activity: Activity) {
+function activityLabel(activity: Pick<Activity, "date" | "count">) {
   const date = new Date(`${activity.date}T00:00:00`);
   const dateLabel = date.toLocaleDateString("en-IN", {
     day: "numeric",
@@ -87,13 +87,13 @@ export function GitHubActivity() {
       return;
     }
 
-    const cell = target.closest("rect[data-contribution-label]");
+    const cell = target.closest("rect[aria-label]");
     if (!(cell instanceof SVGRectElement)) {
       setTooltip(null);
       return;
     }
 
-    const label = cell.getAttribute("data-contribution-label");
+    const label = cell.getAttribute("aria-label");
     if (!label) {
       setTooltip(null);
       return;
@@ -160,16 +160,7 @@ export function GitHubActivity() {
                 theme={{ dark: GITHUB_GREEN, light: GITHUB_GREEN }}
                 renderBlock={(block, activity) => {
                   const label = activityLabel(activity);
-                  return cloneElement(
-                    block,
-                    {
-                      "aria-label": label,
-                      "data-contribution-count": activity.count,
-                      "data-contribution-date": activity.date,
-                      "data-contribution-label": label,
-                    },
-                    <title>{label}</title>,
-                  );
+                  return cloneElement(block, { "aria-label": label }, <title>{label}</title>);
                 }}
               />
             </div>
