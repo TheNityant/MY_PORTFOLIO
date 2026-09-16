@@ -1,39 +1,39 @@
-/* Final interaction overrides for the hero CTAs and GitHub activity. */
+/* Final interaction layer for the two hero CTAs and GitHub activity. */
 
 /* Hero CTA baseline -------------------------------------------------------
-   View resume and View my work now share one visual language: a quiet neutral
-   surface, pointer-follow glow, and a narrow travelling spark on the perimeter. */
-.hero-actions--technical .hero-resume-action,
-.hero-actions--technical .hero-work-action {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent) !important;
-  background: color-mix(in srgb, var(--background) 62%, transparent) !important;
-  box-shadow: none !important;
-  backdrop-filter: blur(10px);
-  --cta-x: 50%;
-  --cta-y: 50%;
-  --hero-action-spark-angle: 0deg;
-}
-
-.hero-actions--technical .hero-resume-action:hover,
-.hero-actions--technical .hero-resume-action:focus-visible,
-.hero-actions--technical .hero-work-action:hover,
-.hero-actions--technical .hero-work-action:focus-visible {
-  border-color: color-mix(in srgb, var(--foreground) 30%, transparent) !important;
-  color: var(--foreground);
-}
-
-/* Shared CTA shimmer ------------------------------------------------------
-   A faint pointer-follow glow sits inside the pill, while a narrow spark runs
-   around the 1px perimeter. The button surface itself never rotates or fills. */
+   Both actions share one restrained idle state and one richer hover state.
+   Idle: neutral perimeter spark. Hover: pointer-origin rainbow bloom plus a
+   rainbow perimeter spark. The button surface itself remains dark/neutral. */
 @property --hero-action-spark-angle {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
 }
 
+.hero-actions--technical .hero-resume-action,
+.hero-actions--technical .hero-work-action {
+  --cta-x: 50%;
+  --cta-y: 50%;
+  --hero-action-spark-angle: 0deg;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent) !important;
+  background: color-mix(in srgb, var(--background) 66%, transparent) !important;
+  color: var(--foreground);
+  box-shadow: none !important;
+  backdrop-filter: blur(10px);
+}
+
+.hero-actions--technical .hero-resume-action:hover,
+.hero-actions--technical .hero-resume-action:focus-visible,
+.hero-actions--technical .hero-work-action:hover,
+.hero-actions--technical .hero-work-action:focus-visible {
+  border-color: color-mix(in srgb, var(--foreground) 28%, transparent) !important;
+}
+
+/* Pointer-origin rainbow bloom. It stays invisible at rest and appears only
+   while the user is actively hovering/focusing the CTA. */
 .hero-actions--technical .hero-resume-action::before,
 .hero-actions--technical .hero-work-action::before {
   content: "" !important;
@@ -42,24 +42,38 @@
   z-index: 0 !important;
   border-radius: inherit !important;
   pointer-events: none !important;
-  background: radial-gradient(
-    120px circle at var(--cta-x) var(--cta-y),
-    color-mix(in srgb, var(--foreground) 80%, transparent),
-    transparent 60%
-  ) !important;
+  background:
+    radial-gradient(
+      150px circle at var(--cta-x) var(--cta-y),
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(91, 206, 255, 0.50) 13%,
+      rgba(118, 137, 255, 0.46) 25%,
+      rgba(177, 105, 255, 0.42) 37%,
+      rgba(255, 93, 184, 0.38) 49%,
+      rgba(255, 139, 74, 0.34) 61%,
+      rgba(255, 217, 92, 0.24) 72%,
+      transparent 84%
+    ) !important;
   opacity: 0 !important;
-  transform: none !important;
+  transform: scale(0.78) !important;
+  transform-origin: var(--cta-x) var(--cta-y) !important;
   animation: none !important;
-  transition: opacity 300ms ease !important;
+  transition:
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 .hero-actions--technical .hero-resume-action:hover::before,
 .hero-actions--technical .hero-resume-action:focus-visible::before,
 .hero-actions--technical .hero-work-action:hover::before,
 .hero-actions--technical .hero-work-action:focus-visible::before {
-  opacity: 0.18 !important;
+  opacity: 0.34 !important;
+  transform: scale(1) !important;
 }
 
+/* Rotating perimeter spark. At rest it is intentionally neutral. On hover the
+   same orbit becomes a rainbow arc, so the interaction grows out of the calm
+   default state instead of replacing it with a separate effect. */
 .hero-actions--technical .hero-resume-action::after,
 .hero-actions--technical .hero-work-action::after {
   content: "" !important;
@@ -71,16 +85,16 @@
   border-radius: inherit !important;
   pointer-events: none !important;
   background: conic-gradient(
-    from calc(var(--hero-action-spark-angle) - 45deg),
+    from calc(var(--hero-action-spark-angle) - 42deg),
     transparent 0deg,
-    transparent 8deg,
-    color-mix(in srgb, var(--foreground) 42%, transparent) 24deg,
-    color-mix(in srgb, var(--foreground) 96%, white 4%) 45deg,
-    color-mix(in srgb, var(--foreground) 48%, transparent) 68deg,
-    transparent 84deg,
+    transparent 13deg,
+    color-mix(in srgb, var(--foreground) 26%, transparent) 25deg,
+    color-mix(in srgb, var(--foreground) 92%, white 8%) 42deg,
+    color-mix(in srgb, var(--foreground) 34%, transparent) 61deg,
+    transparent 76deg,
     transparent 360deg
   ) !important;
-  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--foreground) 34%, transparent));
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--foreground) 30%, transparent));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0) !important;
@@ -89,13 +103,36 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0) !important;
   mask-composite: exclude !important;
-  animation: hero-action-border-spark 6s linear infinite !important;
+  animation: hero-action-border-spark 5.8s linear infinite !important;
   transform: none !important;
+  transition: filter 220ms ease !important;
 }
 
-/* Slight phase offset keeps the pair from looking mechanically mirrored. */
+.hero-actions--technical .hero-resume-action:hover::after,
+.hero-actions--technical .hero-resume-action:focus-visible::after,
+.hero-actions--technical .hero-work-action:hover::after,
+.hero-actions--technical .hero-work-action:focus-visible::after {
+  background: conic-gradient(
+    from calc(var(--hero-action-spark-angle) - 64deg),
+    transparent 0deg,
+    transparent 7deg,
+    #59d8ff 18deg,
+    #7588ff 30deg,
+    #ad69ff 42deg,
+    #ff5db8 54deg,
+    #ff8b4a 66deg,
+    #ffd95c 78deg,
+    transparent 92deg,
+    transparent 360deg
+  ) !important;
+  filter:
+    drop-shadow(0 0 3px rgba(117, 136, 255, 0.52))
+    drop-shadow(0 0 7px rgba(255, 93, 184, 0.18));
+}
+
+/* Offset the pair so their idle sparks do not look mechanically synchronized. */
 .hero-actions--technical .hero-resume-action::after {
-  animation-delay: -3s !important;
+  animation-delay: -2.9s !important;
 }
 
 .hero-actions--technical .hero-resume-action > *,
@@ -106,7 +143,7 @@
 
 .hero-resume-action__arrow,
 .hero-work-action__arrow {
-  transition: transform 300ms ease;
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hero-resume-action:hover .hero-resume-action__arrow,
@@ -117,15 +154,12 @@
 }
 
 @keyframes hero-action-border-spark {
-  0% { --hero-action-spark-angle: 0deg; }
-  15%, 35% { --hero-action-spark-angle: 90deg; }
-  65%, 85% { --hero-action-spark-angle: 270deg; }
-  100% { --hero-action-spark-angle: 360deg; }
+  from { --hero-action-spark-angle: 0deg; }
+  to { --hero-action-spark-angle: 360deg; }
 }
 
 /* GitHub contribution tooltip --------------------------------------------
-   The tooltip is rendered into document.body, so dashboard/card overflow can
-   never clip it. Pointer coordinates are viewport-relative. */
+   Portalling to document.body keeps the tooltip clear of dashboard overflow. */
 .github-calendar-wrap,
 .github-calendar-wrap svg,
 .github-calendar-wrap svg rect {
@@ -163,6 +197,13 @@
   color: #f4f4ef;
 }
 
+@media (max-width: 639px) {
+  .hero-actions--technical .hero-resume-action,
+  .hero-actions--technical .hero-work-action {
+    font-size: 0.8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-actions--technical .hero-resume-action::after,
   .hero-actions--technical .hero-work-action::after {
@@ -170,8 +211,10 @@
     --hero-action-spark-angle: 35deg;
   }
 
+  .hero-actions--technical .hero-resume-action::before,
+  .hero-actions--technical .hero-work-action::before,
   .hero-resume-action__arrow,
   .hero-work-action__arrow {
-    transition: none;
+    transition: none !important;
   }
 }
