@@ -42,9 +42,9 @@
 }
 
 /* Hero actions ------------------------------------------------------------
-   Idle: a restrained neutral light orbits the 1px perimeter.
-   Hover/focus: a rainbow bloom originates at the pointer and the perimeter
-   spark becomes rainbow as well. The button body itself stays neutral. */
+   Idle: a compact rainbow signal continuously orbits the 1px perimeter.
+   Hover/focus: a cursor-origin rainbow bloom appears inside the button while
+   the perimeter signal becomes brighter. The button body stays neutral. */
 @property --hero-action-spark-angle {
   syntax: "<angle>";
   inherits: false;
@@ -73,6 +73,7 @@
   border-color: color-mix(in srgb, var(--foreground) 28%, transparent) !important;
 }
 
+/* Cursor-origin rainbow bloom. Pointer coordinates come from Hero.tsx. */
 .hero-actions--technical .hero-resume-action::before,
 .hero-actions--technical .hero-work-action::before {
   content: "" !important;
@@ -109,6 +110,7 @@
   transform: scale(1) !important;
 }
 
+/* Main-branch rainbow palette, constrained to a travelling perimeter arc. */
 .hero-actions--technical .hero-resume-action::after,
 .hero-actions--technical .hero-work-action::after {
   content: "" !important;
@@ -120,16 +122,21 @@
   border-radius: inherit !important;
   pointer-events: none !important;
   background: conic-gradient(
-    from calc(var(--hero-action-spark-angle) - 42deg),
+    from calc(var(--hero-action-spark-angle) - 64deg),
     transparent 0deg,
-    transparent 13deg,
-    color-mix(in srgb, var(--foreground) 26%, transparent) 25deg,
-    color-mix(in srgb, var(--foreground) 92%, white 8%) 42deg,
-    color-mix(in srgb, var(--foreground) 34%, transparent) 61deg,
-    transparent 76deg,
+    transparent 7deg,
+    #5fd3d8 18deg,
+    #75a8ff 30deg,
+    #9b7cff 42deg,
+    #e97fc7 54deg,
+    #ff8b55 66deg,
+    #f5cb62 78deg,
+    transparent 92deg,
     transparent 360deg
   ) !important;
-  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--foreground) 30%, transparent));
+  filter:
+    drop-shadow(0 0 2px rgba(117, 168, 255, 0.32))
+    drop-shadow(0 0 4px rgba(233, 127, 199, 0.12));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0) !important;
@@ -147,24 +154,12 @@
 .hero-actions--technical .hero-resume-action:focus-visible::after,
 .hero-actions--technical .hero-work-action:hover::after,
 .hero-actions--technical .hero-work-action:focus-visible::after {
-  background: conic-gradient(
-    from calc(var(--hero-action-spark-angle) - 64deg),
-    transparent 0deg,
-    transparent 7deg,
-    #59d8ff 18deg,
-    #7588ff 30deg,
-    #ad69ff 42deg,
-    #ff5db8 54deg,
-    #ff8b4a 66deg,
-    #ffd95c 78deg,
-    transparent 92deg,
-    transparent 360deg
-  ) !important;
   filter:
-    drop-shadow(0 0 3px rgba(117, 136, 255, 0.52))
-    drop-shadow(0 0 7px rgba(255, 93, 184, 0.18));
+    drop-shadow(0 0 3px rgba(117, 136, 255, 0.58))
+    drop-shadow(0 0 8px rgba(255, 93, 184, 0.24));
 }
 
+/* Phase offset keeps the two idle signals from moving in lockstep. */
 .hero-actions--technical .hero-resume-action::after {
   animation-delay: -2.9s !important;
 }
