@@ -110,6 +110,9 @@ function CollectionEntryExtension({
 function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   const [open, setOpen] = useState(false);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
+  const archiveStatus = item.items.length
+    ? `${item.items.length} ${item.items.length === 1 ? "entry" : "entries"}`
+    : "No archived entries yet";
 
   const closeCollection = () => {
     setOpen(false);
@@ -125,39 +128,35 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   return (
     <li
       className="experience-row experience-row--preview experience-row--collection"
-      tabIndex={0}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={closeCollection}
       onFocus={() => setOpen(true)}
       onBlur={onBlur}
     >
       <ExperienceMarkView mark={item.mark} />
-      <div className="experience-meta">
-        <button
-          type="button"
-          className="experience-collection-trigger"
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          <h3>{item.org}</h3>
-          <ChevronDown className="experience-collection-chevron" size={15} aria-hidden="true" />
-        </button>
-        <strong>{item.label}</strong>
-        <span>{[item.dates, item.location].filter(Boolean).join(" · ")}</span>
-      </div>
-      <div className="experience-copy">
-        <p>{item.description}</p>
-        {item.skills.length ? (
-          <ul className="project-tech">
-            {item.skills.map((skill) => (
-              <li key={skill}>{skill}</li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+
+      <button
+        type="button"
+        className="experience-collection-trigger experience-collection-trigger--row"
+        aria-expanded={open}
+        aria-controls={`${item.id}-panel`}
+        onClick={() => {
+          setOpen((value) => !value);
+          setActiveEntryId(null);
+        }}
+      >
+        <span className="experience-collection-trigger__copy">
+          <strong>{item.org}</strong>
+          <small>{archiveStatus}</small>
+        </span>
+        <span className="experience-collection-trigger__meta">
+          <span>{item.label}</span>
+          <ChevronDown className="experience-collection-chevron" size={16} aria-hidden="true" />
+        </span>
+      </button>
 
       {open ? (
-        <div className="experience-collection-panel">
+        <div className="experience-collection-panel" id={`${item.id}-panel`}>
           {item.items.length ? (
             <ul className="experience-collection-list">
               {item.items.map((entry) => {
@@ -192,9 +191,12 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
               })}
             </ul>
           ) : (
-            <p className="experience-collection-empty">
-              Selected participation will appear here as this archive grows.
-            </p>
+            <div className="experience-collection-empty" role="status">
+              <strong>Archive is ready.</strong>
+              <span>
+                Add smaller hackathon or competition entries to this collection and each one will get its own hover media and detail extension.
+              </span>
+            </div>
           )}
         </div>
       ) : null}
