@@ -95,7 +95,10 @@ export type WritingEntry = {
 
 export type ExperienceMark = { src?: string; alt?: string; fallback: string };
 
-export type ExperienceItem = {
+export type ExperiencePreviewMode = "image-and-text" | "text-only" | "image-only";
+
+export type ExperienceEntry = {
+  kind: "entry";
   id: string;
   org: string;
   label: string;
@@ -105,7 +108,35 @@ export type ExperienceItem = {
   skills: string[];
   href?: string;
   mark: ExperienceMark;
+  previewMode?: ExperiencePreviewMode;
 };
+
+export type ExperienceCollectionEntry = {
+  id: string;
+  org: string;
+  label: string;
+  dates: string;
+  location: string;
+  description: string;
+  skills: string[];
+  href?: string;
+  previewMode?: ExperiencePreviewMode;
+};
+
+export type ExperienceCollection = {
+  kind: "collection";
+  id: string;
+  org: string;
+  label: string;
+  dates: string;
+  location: string;
+  description: string;
+  skills: string[];
+  mark: ExperienceMark;
+  items: ExperienceCollectionEntry[];
+};
+
+export type ExperienceItem = ExperienceEntry | ExperienceCollection;
 
 export const profile = {
   name: "Nityant Tiwari",
@@ -391,6 +422,7 @@ export const writingEntries: WritingEntry[] = [
 
 export const experience: ExperienceItem[] = [
   {
+    kind: "entry",
     id: "genai-academy",
     org: "Google GenAI Academy / APAC GenAI Academy",
     label: "Participant",
@@ -402,6 +434,7 @@ export const experience: ExperienceItem[] = [
     mark: { fallback: "G", alt: "Google GenAI Academy" },
   },
   {
+    kind: "entry",
     id: "robocon-applied",
     org: "Robocon 2026",
     label: "Applied work",
@@ -414,6 +447,7 @@ export const experience: ExperienceItem[] = [
     mark: { fallback: "R", alt: "Robocon 2026" },
   },
   {
+    kind: "entry",
     id: "iitb-hackathon",
     org: "IIT Bombay",
     label: "Participant",
@@ -422,6 +456,19 @@ export const experience: ExperienceItem[] = [
     description: "Attended a two-day hackathon at IIT Bombay.",
     skills: ["Hackathon"],
     mark: { fallback: "IITB", alt: "IIT Bombay" },
+  },
+  {
+    kind: "collection",
+    id: "hackathons-competitions",
+    org: "Hackathons & Competitions",
+    label: "Participation archive",
+    dates: "Ongoing",
+    location: "Online + in person",
+    description:
+      "A grouped archive for hackathons and competitions worth showcasing without turning every participation into a standalone experience.",
+    skills: ["Hackathons", "Competitions"],
+    mark: { fallback: "H+C", alt: "Hackathons and competitions" },
+    items: [],
   },
 ];
 
