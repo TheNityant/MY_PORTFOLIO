@@ -1,8 +1,17 @@
-import { useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { useState, type FocusEvent } from "react";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
-import { education, experience, experienceCopy, type ExperienceMark } from "@/data/portfolio";
+import {
+  education,
+  experience,
+  experienceCopy,
+  type ExperienceCollection,
+  type ExperienceCollectionEntry,
+  type ExperienceEntry,
+  type ExperienceMark,
+  type ExperiencePreviewMode,
+} from "@/data/portfolio";
 import {
   experienceFeatureMedia,
   experiencePreviewMedia,
@@ -15,6 +24,168 @@ function ExperienceMarkView({ mark }: { mark: ExperienceMark }) {
     <div className="experience-mark" aria-hidden={!mark.alt}>
       {mark.src ? <img src={mark.src} alt={mark.alt ?? ""} /> : <span>{mark.fallback}</span>}
     </div>
+  );
+}
+
+type PreviewableExperience = ExperienceEntry | ExperienceCollectionEntry;
+
+function ExperienceHoverPreview({
+  entry,
+  previewSrc,
+}: {
+  entry: PreviewableExperience;
+  previewSrc: string;
+}) {
+  const mode: ExperiencePreviewMode = entry.previewMode ?? "image-and-text";
+  const showImage = mode !== "text-only";
+  const showText = mode !== "image-only";
+
+  return (
+    <aside
+      className={`experience-hover-preview experience-hover-preview--${mode}`}
+      aria-hidden="true"
+    >
+      {showImage ? (
+        <div className="experience-hover-preview__media">
+          <img src={previewSrc} alt="" />
+        </div>
+      ) : null}
+      {showText ? (
+        <div className="experience-hover-preview__copy">
+          <span>{entry.label}</span>
+          <strong>{entry.org}</strong>
+          <p>{entry.description}</p>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
+function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
+  const [open, setOpen] = useState(false);
+  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
+  const activeEntry = item.items.find((entry) => entry.id === activeEntryId) ?? null;
+  const activeMode: ExperiencePreviewMode = activeEntry?.previewMode ?? "image-and-text";
+  const activeFeatureMedia = activeEntry
+    ? experienceFeatureMedia[activeEntry.id] ?? fallbackExperienceFeatureMedia
+    : null;
+  const activePreviewSrc = activeEntry
+    ? experiencePreviewMedia[activeEntry.id] ?? fallbackExperiencePreview
+    : null;
+
+  const closeCollection = () => {
+    setOpen(false);
+    setActiveEntryId(null);
+  };
+
+  const onBlur = (event: FocusEvent<HTMLLIElement>) => {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+    closeCollection();
+  };
+
+  return (
+    <li
+      className="experience-row experience-row--preview experience-row--collection"
+      tabIndex={0}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={closeCollection}
+      onFocus={() => setOpen(true)}
+      onBlur={onBlur}
+    >
+      <ExperienceMarkView mark={item.mark} />
+      <div className="experience-meta">
+        <button
+          type="button"
+          className="experience-collection-trigger"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <h3>{item.org}</h3>
+          <ChevronDown className="experience-collection-chevron" size={15} aria-hidden="true" />
+        </button>
+        <strong>{item.label}</strong>
+        <span>{[item.dates, item.location].filter(Boolean).join(" · ")}</span>
+      </div>
+      <div className="experience-copy">
+        <p>{item.description}</p>
+        {item.skills.length ? (
+          <ul className="project-tech">
+            {item.skills.map((skill) => (
+              <li key={skill}>{skill}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
+      {open ? (
+        <div className="experience-collection-panel">
+          {item.items.length ? (
+            <ul className="experience-collection-list">
+              {item.items.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="experience-collection-item"
+                  tabIndex={0}
+                  onMouseEnter={() => setActiveEntryId(entry.id)}
+                  onFocus={() => setActiveEntryId(entry.id)}
+                >
+                  <div className="experience-collection-item__heading">
+                    {entry.href ? (
+                      <a href={entry.href} target="_blank" rel="noopener noreferrer">
+                        <strong>{entry.org}</strong>
+                        <ArrowUpRight size={13} aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <strong>{entry.org}</strong>
+                    )}
+                    <span>{entry.label}</span>
+                  </div>
+                  <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
+                  <p>{entry.description}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="experience-collection-empty">
+              Selected participation will appear here as this archive grows.
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {activeEntry && activeFeatureMedia && activePreviewSrc ? (
+        <aside className="experience-collection-inspector" aria-hidden="true">
+          <div className="experience-collection-inspector__feature">
+            <HoverFeatureMedia media={activeFeatureMedia} active />
+          </div>
+          <div
+            className={`experience-collection-inspector__detail experience-collection-inspector__detail--${activeMode}`}
+          >
+            {activeMode !== "text-only" ? (
+              <div className="experience-collection-inspector__thumb">
+                <img src={activePreviewSrc} alt="" />
+              </div>
+            ) : null}
+            {activeMode !== "image-only" ? (
+              <div className="experience-collection-inspector__copy">
+                <span>{activeEntry.label}</span>
+                <strong>{activeEntry.org}</strong>
+                <small>{[activeEntry.dates, activeEntry.location].filter(Boolean).join(" · ")}</small>
+                <p>{activeEntry.description}</p>
+                {activeEntry.skills.length ? (
+                  <ul className="project-tech">
+                    {activeEntry.skills.map((skill) => (
+                      <li key={skill}>{skill}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </aside>
+      ) : null}
+    </li>
   );
 }
 
@@ -32,6 +203,10 @@ export function Experience() {
         <TracingBeam>
           <ol className="experience-list">
             {experience.map((item) => {
+              if (item.kind === "collection") {
+                return <ExperienceCollectionRow key={item.id} item={item} />;
+              }
+
               const previewSrc = experiencePreviewMedia[item.id] ?? fallbackExperiencePreview;
               const featureMedia = experienceFeatureMedia[item.id] ?? fallbackExperienceFeatureMedia;
               const active = activePreview === item.id;
@@ -44,7 +219,11 @@ export function Experience() {
                   onMouseEnter={() => setActivePreview(item.id)}
                   onMouseLeave={() => setActivePreview(null)}
                   onFocus={() => setActivePreview(item.id)}
-                  onBlur={() => setActivePreview(null)}
+                  onBlur={(event) => {
+                    const nextTarget = event.relatedTarget;
+                    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+                    setActivePreview(null);
+                  }}
                 >
                   <ExperienceMarkView mark={item.mark} />
                   <div className="experience-meta">
@@ -74,16 +253,7 @@ export function Experience() {
                     <HoverFeatureMedia media={featureMedia} active={active} />
                   </aside>
 
-                  <aside className="experience-hover-preview" aria-hidden="true">
-                    <div className="experience-hover-preview__media">
-                      <img src={previewSrc} alt="" />
-                    </div>
-                    <div className="experience-hover-preview__copy">
-                      <span>{item.label}</span>
-                      <strong>{item.org}</strong>
-                      <p>{item.description}</p>
-                    </div>
-                  </aside>
+                  <ExperienceHoverPreview entry={item} previewSrc={previewSrc} />
                 </li>
               );
             })}
@@ -98,7 +268,9 @@ export function Experience() {
             <p className="education-kicker">Education</p>
             <h3 id="education-heading">{education.degree}</h3>
             <strong>{education.school}</strong>
-            <span>{education.dates} · {education.location}</span>
+            <span>
+              {education.dates} · {education.location}
+            </span>
           </div>
         </div>
       </article>
