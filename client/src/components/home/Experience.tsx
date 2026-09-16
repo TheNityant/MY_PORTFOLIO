@@ -61,17 +61,55 @@ function ExperienceHoverPreview({
   );
 }
 
+function CollectionEntryExtension({
+  entry,
+  active,
+}: {
+  entry: ExperienceCollectionEntry;
+  active: boolean;
+}) {
+  const mode: ExperiencePreviewMode = entry.previewMode ?? "image-and-text";
+  const featureMedia = experienceFeatureMedia[entry.id] ?? fallbackExperienceFeatureMedia;
+  const previewSrc = experiencePreviewMedia[entry.id] ?? fallbackExperiencePreview;
+
+  if (!active) return null;
+
+  return (
+    <aside className="experience-collection-inspector" aria-hidden="true">
+      <div className="experience-collection-inspector__feature">
+        <HoverFeatureMedia media={featureMedia} active={active} />
+      </div>
+      <div
+        className={`experience-collection-inspector__detail experience-collection-inspector__detail--${mode}`}
+      >
+        {mode !== "text-only" ? (
+          <div className="experience-collection-inspector__thumb">
+            <img src={previewSrc} alt="" />
+          </div>
+        ) : null}
+        {mode !== "image-only" ? (
+          <div className="experience-collection-inspector__copy">
+            <span>{entry.label}</span>
+            <strong>{entry.org}</strong>
+            <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
+            <p>{entry.description}</p>
+            {entry.skills.length ? (
+              <ul className="project-tech">
+                {entry.skills.map((skill) => (
+                  <li key={skill}>{skill}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </aside>
+  );
+}
+
 function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   const [open, setOpen] = useState(false);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
-  const activeEntry = item.items.find((entry) => entry.id === activeEntryId) ?? null;
-  const activeMode: ExperiencePreviewMode = activeEntry?.previewMode ?? "image-and-text";
-  const activeFeatureMedia = activeEntry
-    ? experienceFeatureMedia[activeEntry.id] ?? fallbackExperienceFeatureMedia
-    : null;
-  const activePreviewSrc = activeEntry
-    ? experiencePreviewMedia[activeEntry.id] ?? fallbackExperiencePreview
-    : null;
 
   const closeCollection = () => {
     setOpen(false);
@@ -122,29 +160,36 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
         <div className="experience-collection-panel">
           {item.items.length ? (
             <ul className="experience-collection-list">
-              {item.items.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="experience-collection-item"
-                  tabIndex={0}
-                  onMouseEnter={() => setActiveEntryId(entry.id)}
-                  onFocus={() => setActiveEntryId(entry.id)}
-                >
-                  <div className="experience-collection-item__heading">
-                    {entry.href ? (
-                      <a href={entry.href} target="_blank" rel="noopener noreferrer">
+              {item.items.map((entry) => {
+                const active = activeEntryId === entry.id;
+
+                return (
+                  <li
+                    key={entry.id}
+                    className="experience-collection-item"
+                    tabIndex={0}
+                    onMouseEnter={() => setActiveEntryId(entry.id)}
+                    onMouseLeave={() => setActiveEntryId(null)}
+                    onFocus={() => setActiveEntryId(entry.id)}
+                  >
+                    <div className="experience-collection-item__heading">
+                      {entry.href ? (
+                        <a href={entry.href} target="_blank" rel="noopener noreferrer">
+                          <strong>{entry.org}</strong>
+                          <ArrowUpRight size={13} aria-hidden="true" />
+                        </a>
+                      ) : (
                         <strong>{entry.org}</strong>
-                        <ArrowUpRight size={13} aria-hidden="true" />
-                      </a>
-                    ) : (
-                      <strong>{entry.org}</strong>
-                    )}
-                    <span>{entry.label}</span>
-                  </div>
-                  <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
-                  <p>{entry.description}</p>
-                </li>
-              ))}
+                      )}
+                      <span>{entry.label}</span>
+                    </div>
+                    <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
+                    <p>{entry.description}</p>
+
+                    <CollectionEntryExtension entry={entry} active={active} />
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="experience-collection-empty">
@@ -152,38 +197,6 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
             </p>
           )}
         </div>
-      ) : null}
-
-      {activeEntry && activeFeatureMedia && activePreviewSrc ? (
-        <aside className="experience-collection-inspector" aria-hidden="true">
-          <div className="experience-collection-inspector__feature">
-            <HoverFeatureMedia media={activeFeatureMedia} active />
-          </div>
-          <div
-            className={`experience-collection-inspector__detail experience-collection-inspector__detail--${activeMode}`}
-          >
-            {activeMode !== "text-only" ? (
-              <div className="experience-collection-inspector__thumb">
-                <img src={activePreviewSrc} alt="" />
-              </div>
-            ) : null}
-            {activeMode !== "image-only" ? (
-              <div className="experience-collection-inspector__copy">
-                <span>{activeEntry.label}</span>
-                <strong>{activeEntry.org}</strong>
-                <small>{[activeEntry.dates, activeEntry.location].filter(Boolean).join(" · ")}</small>
-                <p>{activeEntry.description}</p>
-                {activeEntry.skills.length ? (
-                  <ul className="project-tech">
-                    {activeEntry.skills.map((skill) => (
-                      <li key={skill}>{skill}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </aside>
       ) : null}
     </li>
   );
