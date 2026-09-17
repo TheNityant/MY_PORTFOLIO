@@ -10,6 +10,7 @@ export type CodingSummary = {
   topProject: string | null;
   topLanguage: string | null;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
 type WakaSummaryItem = {
@@ -43,7 +44,10 @@ const timezone = process.env.WAKATIME_TIMEZONE?.trim() || "Asia/Kolkata";
 const hoursFromSeconds = (seconds: number | null) =>
   seconds == null ? null : Math.round((seconds / 3600) * 100) / 100;
 
-const fallback = (status: Exclude<ProviderStatus, "ready">): CodingSummary => ({
+const fallback = (
+  status: Exclude<ProviderStatus, "ready">,
+  diagnostic?: string,
+): CodingSummary => ({
   provider: "wakatime",
   status,
   todaySeconds: null,
@@ -53,10 +57,10 @@ const fallback = (status: Exclude<ProviderStatus, "ready">): CodingSummary => ({
   topProject: null,
   topLanguage: null,
   updatedAt: null,
+  ...(diagnostic ? { diagnostic } : {}),
 });
 
 function basicAuthHeader(secret: string) {
-  // WakaTime expects the API key itself to be base64 encoded for Basic auth.
   return `Basic ${Buffer.from(secret).toString("base64")}`;
 }
 
@@ -76,7 +80,7 @@ async function fetchSummaries(range: "Today" | "Last 7 Days") {
   });
 
   if (!response.ok) {
-    throw new Error(`WakaTime summaries failed with ${response.status}`);
+    throw new Error(`WakaTime summaries failed with HTTP ${response.status}`);
   }
 
   return (await response.json()) as WakaSummaryResponse;
@@ -94,8 +98,13 @@ function pickTop(
   return sorted[0]?.name?.trim() || null;
 }
 
+function safeDiagnostic(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return "Unknown WakaTime provider error";
+}
+
 export async function getCodingSummary(): Promise<CodingSummary> {
-  if (!apiKey) return fallback("unconfigured");
+  if (!apiKey) return fallback("unconfigured", "WAKATIME_API_KEY is missing from this deployment");
 
   try {
     const [todayResponse, weekResponse] = await Promise.all([
@@ -141,7 +150,8 @@ export async function getCodingSummary(): Promise<CodingSummary> {
       topLanguage: pickTop(today?.languages),
       updatedAt,
     };
-  } catch {
-    return fallback("error");
+  } catch (error) {
+    console.error("WakaTime provider failure", error);
+    return fallback("error", safeDiagnostic(error));
   }
 }
