@@ -5,6 +5,7 @@ type WorkoutSummary = {
   habitTitle: string;
   userId: number;
   totalCount: number | null;
+  totalDays: number | null;
   weekCount: number | null;
   todayCompleted: boolean | null;
   recentCompletions: Array<{ date: string; completed: boolean }>;
@@ -35,6 +36,7 @@ function fallback(
     habitTitle,
     userId,
     totalCount: null,
+    totalDays: null,
     weekCount: null,
     todayCompleted: null,
     recentCompletions: [],
@@ -73,7 +75,6 @@ function supabaseHeaders(secretKey: string) {
     apikey: secretKey,
   };
 
-  // Legacy service_role keys are JWTs and may also be used as Bearer tokens.
   if (secretKey.startsWith("eyJ")) {
     headers.Authorization = `Bearer ${secretKey}`;
   }
@@ -84,6 +85,7 @@ function supabaseHeaders(secretKey: string) {
 async function fetchJson<T>(url: URL, secretKey: string): Promise<T> {
   const response = await fetch(url, {
     headers: supabaseHeaders(secretKey),
+    cache: "no-store",
     signal: AbortSignal.timeout(7_000),
   });
 
@@ -117,7 +119,10 @@ export async function GET(_request: Request) {
         userId,
         "Supabase URL or secret key is missing from this deployment",
       ),
-      { status: 200 },
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      },
     );
   }
 
@@ -135,7 +140,10 @@ export async function GET(_request: Request) {
     if (habitId == null) {
       return Response.json(
         fallback("error", habitTitle, userId, `Workout habit not found for user ${userId}`),
-        { status: 200 },
+        {
+          status: 200,
+          headers: { "Cache-Control": "no-store, max-age=0" },
+        },
       );
     }
 
@@ -150,9 +158,15 @@ export async function GET(_request: Request) {
       .filter((date): date is string => typeof date === "string")
       .sort((a, b) => b.localeCompare(a));
 
+    const uniqueCompletedDates = [...new Set(completedDates)].sort((a, b) =>
+      b.localeCompare(a),
+    );
+
     const today = dateInTimezone(new Date(), timezone);
     const cutoff = daysAgoIso(6, timezone);
-    const weekCount = completedDates.filter((date) => date >= cutoff && date <= today).length;
+    const weekCount = uniqueCompletedDates.filter(
+      (date) => date >= cutoff && date <= today,
+    ).length;
 
     const payload: WorkoutSummary = {
       provider: "habit-tracker-supabase",
@@ -162,9 +176,10 @@ export async function GET(_request: Request) {
         typeof habit?.title === "string" && habit.title.trim() ? habit.title.trim() : habitTitle,
       userId,
       totalCount: completedDates.length,
+      totalDays: uniqueCompletedDates.length,
       weekCount,
-      todayCompleted: completedDates.includes(today),
-      recentCompletions: completedDates.slice(0, 14).map((date) => ({
+      todayCompleted: uniqueCompletedDates.includes(today),
+      recentCompletions: uniqueCompletedDates.slice(0, 14).map((date) => ({
         date,
         completed: true,
       })),
@@ -173,12 +188,15 @@ export async function GET(_request: Request) {
 
     return Response.json(payload, {
       headers: {
-        "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
     console.error("Workout function failure", error);
     const diagnostic = error instanceof Error ? error.message : "Unknown workout runtime error";
-    return Response.json(fallback("error", habitTitle, userId, diagnostic), { status: 200 });
+    return Response.json(fallback("error", habitTitle, userId, diagnostic), {
+      status: 200,
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   }
 }
