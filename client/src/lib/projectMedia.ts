@@ -1,11 +1,14 @@
 const configuredBaseUrl = import.meta.env.VITE_MEDIA_BASE_URL?.trim().replace(/\/+$/, "") || "";
 
-export function projectMediaUrl(filename: string) {
-  const safeFilename = filename.replace(/^\/+/, "");
+const projectMediaPrefix = /^\/?media\/Projects\//i;
 
-  if (configuredBaseUrl) {
-    return `${configuredBaseUrl}/projects/${safeFilename}`;
+export function resolveProjectMediaSrc(src: string) {
+  const normalized = src.startsWith("/") ? src : `/${src}`;
+
+  if (!configuredBaseUrl || !projectMediaPrefix.test(src)) {
+    return normalized;
   }
 
-  return `/media/Projects/${safeFilename}`;
+  const filename = src.replace(projectMediaPrefix, "");
+  return `${configuredBaseUrl}/projects/${filename}`;
 }
