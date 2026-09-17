@@ -15,6 +15,10 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // The ShaderGradient/Three scene is intentionally lazy-loaded as its own chunk.
+    // Keep Vite's warning useful for unexpected growth elsewhere without warning on
+    // this known isolated visual bundle (~1.1 MB minified, ~280 KB gzip).
+    chunkSizeWarningLimit: 1200,
   },
   server: {
     port: 3000,
