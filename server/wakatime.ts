@@ -56,7 +56,8 @@ const fallback = (status: Exclude<ProviderStatus, "ready">): CodingSummary => ({
 });
 
 function basicAuthHeader(secret: string) {
-  return `Basic ${Buffer.from(`${secret}:`).toString("base64")}`;
+  // WakaTime expects the API key itself to be base64 encoded for Basic auth.
+  return `Basic ${Buffer.from(secret).toString("base64")}`;
 }
 
 async function fetchSummaries(range: "Today" | "Last 7 Days") {
