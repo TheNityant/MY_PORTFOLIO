@@ -1,3 +1,5 @@
+import { getCodingSummary } from "../server/wakatime.ts";
+
 type CodingErrorPayload = {
   provider: "wakatime";
   status: "error";
@@ -18,7 +20,6 @@ function diagnosticMessage(error: unknown) {
 
 export async function GET(_request: Request) {
   try {
-    const { getCodingSummary } = await import("../server/wakatime.ts");
     const coding = await getCodingSummary();
 
     return Response.json(coding, {
