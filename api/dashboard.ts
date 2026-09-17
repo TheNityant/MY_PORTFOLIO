@@ -1,6 +1,6 @@
 import { getDashboardPayload } from "../server/dashboard";
 
-export default async function handler(_request: Request) {
+export async function GET(_request: Request) {
   const payload = await getDashboardPayload();
 
   return Response.json(payload, {
