@@ -3,29 +3,29 @@ type ProviderStatus = "ready" | "unconfigured" | "error" | "stale";
 type CodingSummary = {
   provider: "wakatime";
   status: ProviderStatus;
-  todaySeconds: number | null;
-  todayHours: number | null;
-  weekSeconds: number | null;
-  weekHours: number | null;
-  topProject: string | null;
-  topLanguage: string | null;
+  totalSeconds: number | null;
+  totalHours: number | null;
+  totalText: string | null;
+  isUpToDate: boolean | null;
+  percentCalculated: number | null;
   updatedAt: string | null;
   diagnostic?: string;
 };
 
-type WakaSummaryItem = {
-  grand_total?: { total_seconds?: number };
-  projects?: Array<{ name?: string; total_seconds?: number }>;
-  languages?: Array<{ name?: string; total_seconds?: number }>;
-  range?: { end?: string };
+type WakaAllTimeResponse = {
+  data?: {
+    total_seconds?: number;
+    text?: string;
+    is_up_to_date?: boolean;
+    percent_calculated?: number;
+    range?: {
+      end?: string;
+    };
+  };
 };
 
-type WakaSummaryResponse = {
-  data?: WakaSummaryItem[];
-  cumulative_total?: { seconds?: number };
-};
-
-const WAKATIME_BASE_URL = "https://api.wakatime.com/api/v1";
+const WAKATIME_ALL_TIME_URL =
+  "https://api.wakatime.com/api/v1/users/current/all_time_since_today";
 
 function fallback(
   status: Exclude<ProviderStatus, "ready">,
@@ -34,109 +34,97 @@ function fallback(
   return {
     provider: "wakatime",
     status,
-    todaySeconds: null,
-    todayHours: null,
-    weekSeconds: null,
-    weekHours: null,
-    topProject: null,
-    topLanguage: null,
+    totalSeconds: null,
+    totalHours: null,
+    totalText: null,
+    isUpToDate: null,
+    percentCalculated: null,
     updatedAt: null,
     ...(diagnostic ? { diagnostic } : {}),
   };
 }
 
-function hoursFromSeconds(seconds: number | null) {
-  return seconds == null ? null : Math.round((seconds / 3600) * 100) / 100;
+function hoursFromSeconds(seconds: number) {
+  return Math.round((seconds / 3600) * 100) / 100;
 }
 
-function pickTop(items: Array<{ name?: string; total_seconds?: number }> | undefined) {
-  if (!Array.isArray(items) || items.length === 0) return null;
-  return (
-    [...items]
-      .filter((item) => typeof item.name === "string")
-      .sort((a, b) => (b.total_seconds ?? 0) - (a.total_seconds ?? 0))[0]
-      ?.name?.trim() || null
-  );
-}
-
-async function fetchSummaries(apiKey: string, timezone: string, range: "Today" | "Last 7 Days") {
-  const url = new URL(`${WAKATIME_BASE_URL}/users/current/summaries`);
-  url.searchParams.set("range", range);
-  url.searchParams.set("timezone", timezone);
-
-  const response = await fetch(url, {
+async function fetchAllTime(apiKey: string) {
+  const response = await fetch(WAKATIME_ALL_TIME_URL, {
     headers: {
       Accept: "application/json",
       Authorization: `Basic ${Buffer.from(apiKey).toString("base64")}`,
     },
+    cache: "no-store",
     signal: AbortSignal.timeout(7_000),
   });
 
   if (!response.ok) {
-    throw new Error(`WakaTime summaries failed with HTTP ${response.status}`);
+    throw new Error(`WakaTime all-time stats failed with HTTP ${response.status}`);
   }
 
-  return (await response.json()) as WakaSummaryResponse;
+  return (await response.json()) as WakaAllTimeResponse;
 }
 
 export async function GET(_request: Request) {
   const apiKey = process.env.WAKATIME_API_KEY?.trim();
-  const timezone = process.env.WAKATIME_TIMEZONE?.trim() || "Asia/Kolkata";
 
   if (!apiKey) {
     return Response.json(
       fallback("unconfigured", "WAKATIME_API_KEY is missing from this deployment"),
-      { status: 200 },
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      },
     );
   }
 
   try {
-    const [todayResponse, weekResponse] = await Promise.all([
-      fetchSummaries(apiKey, timezone, "Today"),
-      fetchSummaries(apiKey, timezone, "Last 7 Days"),
-    ]);
+    const response = await fetchAllTime(apiKey);
+    const data = response.data;
+    const totalSeconds = data?.total_seconds;
 
-    const today = todayResponse.data?.[0];
-    const todaySeconds =
-      typeof today?.grand_total?.total_seconds === "number"
-        ? today.grand_total.total_seconds
-        : 0;
+    if (typeof totalSeconds !== "number" || !Number.isFinite(totalSeconds)) {
+      throw new Error("WakaTime all-time response did not include total_seconds");
+    }
 
-    const weekSeconds =
-      typeof weekResponse.cumulative_total?.seconds === "number"
-        ? weekResponse.cumulative_total.seconds
-        : Array.isArray(weekResponse.data)
-          ? weekResponse.data.reduce(
-              (total, item) =>
-                total +
-                (typeof item.grand_total?.total_seconds === "number"
-                  ? item.grand_total.total_seconds
-                  : 0),
-              0,
-            )
-          : 0;
+    const isUpToDate = data?.is_up_to_date !== false;
+    const percentCalculated =
+      typeof data?.percent_calculated === "number" ? data.percent_calculated : null;
 
     const payload: CodingSummary = {
       provider: "wakatime",
-      status: "ready",
-      todaySeconds,
-      todayHours: hoursFromSeconds(todaySeconds),
-      weekSeconds,
-      weekHours: hoursFromSeconds(weekSeconds),
-      topProject: pickTop(today?.projects),
-      topLanguage: pickTop(today?.languages),
+      status: isUpToDate ? "ready" : "stale",
+      totalSeconds,
+      totalHours: hoursFromSeconds(totalSeconds),
+      totalText: typeof data?.text === "string" ? data.text : null,
+      isUpToDate,
+      percentCalculated,
       updatedAt:
-        typeof today?.range?.end === "string" ? today.range.end : new Date().toISOString(),
+        typeof data?.range?.end === "string"
+          ? data.range.end
+          : new Date().toISOString(),
+      ...(!isUpToDate
+        ? {
+            diagnostic:
+              percentCalculated == null
+                ? "WakaTime is recalculating the all-time total"
+                : `WakaTime is recalculating the all-time total (${percentCalculated}% calculated)`,
+          }
+        : {}),
     };
 
     return Response.json(payload, {
       headers: {
-        "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
     console.error("WakaTime function failure", error);
-    const diagnostic = error instanceof Error ? error.message : "Unknown WakaTime runtime error";
-    return Response.json(fallback("error", diagnostic), { status: 200 });
+    const diagnostic =
+      error instanceof Error ? error.message : "Unknown WakaTime runtime error";
+    return Response.json(fallback("error", diagnostic), {
+      status: 200,
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
   }
 }
