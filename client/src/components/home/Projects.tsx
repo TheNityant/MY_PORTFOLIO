@@ -9,6 +9,7 @@ import {
   type ProjectDomainId,
 } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { resolveProjectMediaSrc } from "@/lib/projectMedia";
 import { cn } from "@/lib/utils";
 
 function TechList({ items }: { items: readonly string[] }) {
@@ -41,8 +42,10 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }, [media, reducedMotion]);
 
   if (media.kind === "video") {
+    const src = resolveProjectMediaSrc(media.src);
+    const poster = media.poster ? resolveProjectMediaSrc(media.poster) : undefined;
+
     if (reducedMotion) {
-      const poster = media.poster;
       return (
         <div className="project-media project-media--frame">
           {poster ? <img className="project-media-asset" src={poster} alt={media.alt} /> : null}
@@ -54,11 +57,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         <video
           ref={videoRef}
           className="project-media-asset"
-          src={media.src}
-          poster={media.poster}
+          src={src}
+          poster={poster}
           muted
           loop
           playsInline
+          preload="metadata"
           aria-label={media.alt}
         />
       </div>
@@ -68,7 +72,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   if (media.kind === "image") {
     return (
       <div className="project-media project-media--frame">
-        <img className="project-media-asset" src={media.src} alt={media.alt} />
+        <img className="project-media-asset" src={resolveProjectMediaSrc(media.src)} alt={media.alt} />
       </div>
     );
   }
