@@ -1,6 +1,3 @@
-import { getSupabaseWorkoutSummary } from "../server/supabase.ts";
-import { getCodingSummary } from "../server/wakatime.ts";
-
 type CodingSummary = {
   provider: "wakatime";
   status: "ready" | "unconfigured" | "error" | "stale";
@@ -11,6 +8,7 @@ type CodingSummary = {
   topProject: string | null;
   topLanguage: string | null;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
 type WorkoutSummary = {
@@ -24,34 +22,29 @@ type WorkoutSummary = {
   todayCompleted: boolean | null;
   recentCompletions: Array<{ date: string; completed: boolean }>;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
-const codingFallback = (): CodingSummary => ({
-  provider: "wakatime",
-  status: process.env.WAKATIME_API_KEY?.trim() ? "error" : "unconfigured",
-  todaySeconds: null,
-  todayHours: null,
-  weekSeconds: null,
-  weekHours: null,
-  topProject: null,
-  topLanguage: null,
-  updatedAt: null,
-});
+function codingFallback(diagnostic: string): CodingSummary {
+  return {
+    provider: "wakatime",
+    status: process.env.WAKATIME_API_KEY?.trim() ? "error" : "unconfigured",
+    todaySeconds: null,
+    todayHours: null,
+    weekSeconds: null,
+    weekHours: null,
+    topProject: null,
+    topLanguage: null,
+    updatedAt: null,
+    diagnostic,
+  };
+}
 
-const workoutFallback = (): WorkoutSummary => {
+function workoutFallback(diagnostic: string): WorkoutSummary {
   const parsedUserId = Number(process.env.HABIT_TRACKER_USER_ID ?? "7");
-  const configured = Boolean(
-    (process.env.HABIT_TRACKER_SUPABASE_URL?.trim() || process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim()) &&
-      (
-        process.env.HABIT_TRACKER_SUPABASE_SECRET_KEY?.trim() ||
-        process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-        process.env.HABIT_TRACKER_WORKOUT_API_TOKEN?.trim()
-      ),
-  );
-
   return {
     provider: "habit-tracker-supabase",
-    status: configured ? "error" : "unconfigured",
+    status: "error",
     habitId: null,
     habitTitle: process.env.HABIT_TRACKER_WORKOUT_TITLE?.trim() || "Workout",
     userId: Number.isFinite(parsedUserId) ? parsedUserId : 7,
@@ -60,29 +53,46 @@ const workoutFallback = (): WorkoutSummary => {
     todayCompleted: null,
     recentCompletions: [],
     updatedAt: null,
+    diagnostic,
   };
-};
-
-async function loadCoding(): Promise<CodingSummary> {
-  try {
-    return await getCodingSummary();
-  } catch (error) {
-    console.error("Dashboard WakaTime provider failure", error);
-    return codingFallback();
-  }
 }
 
-async function loadWorkouts(): Promise<WorkoutSummary> {
-  try {
-    return await getSupabaseWorkoutSummary();
-  } catch (error) {
-    console.error("Dashboard workout provider failure", error);
-    return workoutFallback();
-  }
+async function fetchProvider<T>(url: URL): Promise<T> {
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Provider route returned HTTP ${response.status}`);
+  return (await response.json()) as T;
 }
 
-export async function GET(_request: Request) {
-  const [coding, workouts] = await Promise.all([loadCoding(), loadWorkouts()]);
+export async function GET(request: Request) {
+  const base = new URL(request.url);
+  const codingUrl = new URL("/api/coding", base);
+  const workoutsUrl = new URL("/api/workouts", base);
+
+  const [codingResult, workoutResult] = await Promise.allSettled([
+    fetchProvider<CodingSummary>(codingUrl),
+    fetchProvider<WorkoutSummary>(workoutsUrl),
+  ]);
+
+  const coding =
+    codingResult.status === "fulfilled"
+      ? codingResult.value
+      : codingFallback(
+          codingResult.reason instanceof Error
+            ? codingResult.reason.message
+            : "Dashboard could not load WakaTime",
+        );
+
+  const workouts =
+    workoutResult.status === "fulfilled"
+      ? workoutResult.value
+      : workoutFallback(
+          workoutResult.reason instanceof Error
+            ? workoutResult.reason.message
+            : "Dashboard could not load workouts",
+        );
 
   return Response.json(
     {
