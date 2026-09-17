@@ -1,3 +1,5 @@
+import { portfolioAsset } from "@/lib/portfolioAssets";
+
 export type SocialIconName = "mail" | "github" | "linkedin";
 
 export type SocialLink = {
@@ -147,7 +149,7 @@ export const profile = {
   taglineEmphasis: "backend systems",
   taglineTail: "with AI/ML engineering.",
   portraitAlt: "Nityant Tiwari",
-  portraitSrc: null as string | null,
+  portraitSrc: portfolioAsset("Profile PIC", "PORTRAIT.png"),
   email: "nityant.tiwari2404@gmail.com",
   githubHref: "https://github.com/TheNityant",
   githubHandle: "TheNityant",
@@ -299,7 +301,7 @@ export const projects: Project[] = [
       "A backend for handling user authentication and login, built with a modern stack.",
     technologies: ["Frontend", "Java", "Spring Boot", "PostgreSQL"],
     status: "Completed",
-    media: { kind: "video", src: "media/Projects/Authenticator.mp4", alt: "Media frame for the Authenticator." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "Authenticator.mp4"), alt: "Media frame for the Authenticator." },
   },
   {
     id: "habit-tracker",
@@ -310,7 +312,7 @@ export const projects: Project[] = [
     technologies: ["Flutter", "Spring Boot", "PostgreSQL", "Gemini"],
     href: "https://github.com/TheNityant/HABIT_TRACKER-Full-Stack-app",
     hrefLabel: "Repository",
-    media: { kind: "video", src: "/media/Projects/FINAL_HB.mp4", alt: "Media frame for Habit Tracker." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "FINAL_HB.mp4"), alt: "Media frame for Habit Tracker." },
   },
   {
     id: "llm-visualizer",
@@ -322,7 +324,7 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/LLM_Visualizer",
     hrefLabel: "Repository",
     status: "In progress",
-    media: { kind: "video", src: "media/Projects/LLM_V.mp4", alt: "Media frame for LLM Visualizer." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "LLM_VISUALIZER.mp4"), alt: "Media frame for LLM Visualizer." },
   },
   {
     id: "genezap",
@@ -332,7 +334,7 @@ export const projects: Project[] = [
       "Experimental offline genomic-analysis pipeline combining species profiling, ML resistance prediction, CGR/CNN-style analysis, and CARD-based validation.",
     technologies: ["Python", "TensorFlow", "scikit-learn", "OpenCV"],
     status: "Experimental",
-    media: { kind: "video", src: "media/Projects/Gene_zap.mp4", alt: "Media frame for GeneZap." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "Gene_Zap.mp4"), alt: "Media frame for GeneZap." },
   },
   {
     id: "robotic-hand",
@@ -344,7 +346,7 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/ROBTOTIC_HAND_S100",
     hrefLabel: "Repository",
     status: "Earlier work",
-    media: { kind: "none", alt: "Media frame for Robotic Hand S100." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "ROB_HAN_FINAL.mp4"), alt: "Media frame for Robotic Hand S100." },
   },
   {
     id: "robocon-2026",
@@ -441,7 +443,7 @@ export const experience: ExperienceItem[] = [
     description:
       "Worked through Google Cloud / GenAI codelabs covering a Coffee Barista Agent and a BigQuery MCP agent.",
     skills: ["Google Cloud", "GenAI", "Agents"],
-    mark: { fallback: "G", alt: "Google GenAI Academy" },
+    mark: { src: portfolioAsset("EXPERIENCE AND BLOGS", "gen-ai-academy.png"), fallback: "G", alt: "Google GenAI Academy" },
   },
   {
     kind: "entry",
@@ -454,7 +456,7 @@ export const experience: ExperienceItem[] = [
       "STM32 and ESP-class control, sensors, motors, servos, and mechanism integration for a competition robot.",
     skills: ["STM32", "ESP32", "Embedded C"],
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
-    mark: { fallback: "R", alt: "Robocon 2026" },
+    mark: { src: portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg"), fallback: "R", alt: "Robocon 2026" },
   },
   {
     kind: "entry",

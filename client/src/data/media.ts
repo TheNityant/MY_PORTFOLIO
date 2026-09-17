@@ -1,16 +1,18 @@
+import { portfolioAsset } from "@/lib/portfolioAssets";
+
 export type HoverFeatureMedia =
   | { kind: "image"; src: string }
   | { kind: "video"; src: string; poster?: string };
 
 export const experiencePreviewMedia: Record<string, string> = {
-  "genai-academy": "/media/experience/genai-academy.svg",
-  "robocon-applied": "/media/experience/robocon-applied.svg",
+  "genai-academy": portfolioAsset("EXPERIENCE AND BLOGS", "gen-ai-academy.png"),
+  "robocon-applied": portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg"),
   "iitb-hackathon": "/media/experience/iitb-hackathon.svg",
 };
 
 export const experienceFeatureMedia: Record<string, HoverFeatureMedia> = {
-  "genai-academy": { kind: "image", src: "/media/experience/genai-academy.svg" },
-  "robocon-applied": { kind: "image", src: "/media/experience/robocon-applied.svg" },
+  "genai-academy": { kind: "image", src: portfolioAsset("EXPERIENCE AND BLOGS", "gen-ai-academy.png") },
+  "robocon-applied": { kind: "image", src: portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg") },
   "iitb-hackathon": { kind: "image", src: "/media/experience/iitb-hackathon.svg" },
 };
 
