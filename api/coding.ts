@@ -1,6 +1,6 @@
 import { getCodingSummary } from "../server/wakatime";
 
-export default async function handler(_request: Request) {
+export async function GET(_request: Request) {
   const coding = await getCodingSummary();
 
   return Response.json(coding, {
