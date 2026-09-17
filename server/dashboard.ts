@@ -1,3 +1,5 @@
+import { getCodingSummary, type CodingSummary } from "./wakatime";
+
 export type ProviderStatus = "ready" | "unconfigured" | "error";
 
 export type WorkoutSummary = {
@@ -15,12 +17,7 @@ export type WorkoutSummary = {
 export type DashboardPayload = {
   generatedAt: string;
   workouts: WorkoutSummary;
-  coding: {
-    provider: "wakatime";
-    status: "unconfigured";
-    todayHours: null;
-    weekHours: null;
-  };
+  coding: CodingSummary;
   music: {
     provider: "spotify";
     status: "unconfigured";
@@ -119,17 +116,15 @@ export async function getWorkoutSummary(): Promise<WorkoutSummary> {
 }
 
 export async function getDashboardPayload(): Promise<DashboardPayload> {
-  const workouts = await getWorkoutSummary();
+  const [workouts, coding] = await Promise.all([
+    getWorkoutSummary(),
+    getCodingSummary(),
+  ]);
 
   return {
     generatedAt: new Date().toISOString(),
     workouts,
-    coding: {
-      provider: "wakatime",
-      status: "unconfigured",
-      todayHours: null,
-      weekHours: null,
-    },
+    coding,
     music: {
       provider: "spotify",
       status: "unconfigured",
