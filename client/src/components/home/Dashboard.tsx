@@ -17,12 +17,20 @@ import {
 
 export function Dashboard() {
   const { data } = useDashboardData();
+
   const liveCodingSeconds =
     data?.coding.status === "ready" ? data.coding.todaySeconds : null;
   const codingMetric =
     liveCodingSeconds == null
       ? formatMetric(metrics.codingHours)
       : formatCodingDuration(liveCodingSeconds);
+
+  const liveWorkoutCount =
+    data?.workouts.status === "ready" ? data.workouts.totalCount : null;
+  const workoutMetric =
+    liveWorkoutCount == null
+      ? formatMetric(metrics.workouts)
+      : String(liveWorkoutCount);
 
   return (
     <DashboardCursorProvider>
@@ -65,7 +73,16 @@ export function Dashboard() {
             cursorKind="dumbbell"
             className="dashboard-item--metric"
           >
-            <p className="tile-metric-value">{formatMetric(metrics.workouts)}</p>
+            <p
+              className="tile-metric-value"
+              title={
+                data?.workouts.status === "ready"
+                  ? `${data.workouts.weekCount ?? 0} in the last 7 days`
+                  : undefined
+              }
+            >
+              {workoutMetric}
+            </p>
           </DashboardCard>
 
           <DashboardCard
