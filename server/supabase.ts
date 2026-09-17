@@ -11,6 +11,7 @@ export type SupabaseWorkoutSummary = {
   todayCompleted: boolean | null;
   recentCompletions: Array<{ date: string; completed: boolean }>;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
 type HabitRow = {
@@ -23,17 +24,24 @@ type CompletionRow = {
   completed_date?: string;
 };
 
-const supabaseUrl = process.env.HABIT_TRACKER_SUPABASE_URL?.trim();
+const supabaseUrl =
+  process.env.HABIT_TRACKER_SUPABASE_URL?.trim() ||
+  process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim();
+
 const supabaseSecretKey =
   process.env.HABIT_TRACKER_SUPABASE_SECRET_KEY?.trim() ||
-  process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim();
+  process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+  process.env.HABIT_TRACKER_WORKOUT_API_TOKEN?.trim();
 
 const parsedUserId = Number(process.env.HABIT_TRACKER_USER_ID ?? "7");
 const userId = Number.isFinite(parsedUserId) ? parsedUserId : 7;
 const workoutTitle = process.env.HABIT_TRACKER_WORKOUT_TITLE?.trim() || "Workout";
 const timezone = process.env.HABIT_TRACKER_TIMEZONE?.trim() || "Asia/Kolkata";
 
-const fallback = (status: Exclude<SupabaseWorkoutStatus, "ready">): SupabaseWorkoutSummary => ({
+const fallback = (
+  status: Exclude<SupabaseWorkoutStatus, "ready">,
+  diagnostic?: string,
+): SupabaseWorkoutSummary => ({
   provider: "habit-tracker-supabase",
   status,
   habitId: null,
@@ -44,6 +52,7 @@ const fallback = (status: Exclude<SupabaseWorkoutStatus, "ready">): SupabaseWork
   todayCompleted: null,
   recentCompletions: [],
   updatedAt: null,
+  ...(diagnostic ? { diagnostic } : {}),
 });
 
 function localDateString(date = new Date()) {
@@ -81,15 +90,21 @@ async function fetchJson<T>(url: URL): Promise<T> {
   });
 
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(`Supabase request failed with ${response.status}${body ? `: ${body}` : ""}`);
+    throw new Error(`Supabase request failed with HTTP ${response.status}`);
   }
 
   return (await response.json()) as T;
 }
 
+function safeDiagnostic(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return "Unknown Supabase provider error";
+}
+
 export async function getSupabaseWorkoutSummary(): Promise<SupabaseWorkoutSummary> {
-  if (!supabaseUrl || !supabaseSecretKey) return fallback("unconfigured");
+  if (!supabaseUrl || !supabaseSecretKey) {
+    return fallback("unconfigured", "Supabase URL or secret key is missing from this deployment");
+  }
 
   try {
     const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
@@ -102,7 +117,9 @@ export async function getSupabaseWorkoutSummary(): Promise<SupabaseWorkoutSummar
     const habit = habits[0];
     const habitId = typeof habit?.habit_id === "number" ? habit.habit_id : null;
 
-    if (habitId == null) return fallback("error");
+    if (habitId == null) {
+      return fallback("error", `Workout habit not found for user ${userId}`);
+    }
 
     const completionsUrl = new URL("/rest/v1/habit_completed_dates", supabaseUrl);
     completionsUrl.searchParams.set("select", "completed_date");
@@ -139,7 +156,8 @@ export async function getSupabaseWorkoutSummary(): Promise<SupabaseWorkoutSummar
       })),
       updatedAt: new Date().toISOString(),
     };
-  } catch {
-    return fallback("error");
+  } catch (error) {
+    console.error("Habit Tracker Supabase provider failure", error);
+    return fallback("error", safeDiagnostic(error));
   }
 }
