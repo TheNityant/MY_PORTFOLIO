@@ -6,7 +6,11 @@ import { GitHubActivity } from "@/components/home/GitHubActivity";
 import { Globe } from "@/components/home/Globe";
 import { ScratchReveal } from "@/components/home/ScratchReveal";
 import { CoreStackTools, ToolsMarquee } from "@/components/home/ToolsMarquee";
-import { formatCodingDuration, useDashboardData } from "@/hooks/useDashboardData";
+import {
+  formatCodingDuration,
+  formatWorkoutDays,
+  useDashboardData,
+} from "@/hooks/useDashboardData";
 import {
   dashboardCopy,
   dashboardFeature,
@@ -19,18 +23,29 @@ export function Dashboard() {
   const { data } = useDashboardData();
 
   const liveCodingSeconds =
-    data?.coding.status === "ready" ? data.coding.todaySeconds : null;
+    data?.coding.status === "ready" || data?.coding.status === "stale"
+      ? data.coding.totalSeconds
+      : null;
   const codingMetric =
     liveCodingSeconds == null
       ? formatMetric(metrics.codingHours)
       : formatCodingDuration(liveCodingSeconds);
 
-  const liveWorkoutCount =
-    data?.workouts.status === "ready" ? data.workouts.totalCount : null;
+  const liveWorkoutDays =
+    data?.workouts.status === "ready" ? data.workouts.totalDays : null;
   const workoutMetric =
-    liveWorkoutCount == null
+    liveWorkoutDays == null
       ? formatMetric(metrics.workouts)
-      : String(liveWorkoutCount);
+      : formatWorkoutDays(liveWorkoutDays);
+
+  const codingTooltip =
+    data?.coding.status === "stale"
+      ? data.coding.percentCalculated == null
+        ? "All-time WakaTime total · refreshing"
+        : `All-time WakaTime total · ${data.coding.percentCalculated}% calculated`
+      : data?.coding.status === "ready"
+        ? "All-time WakaTime total"
+        : undefined;
 
   return (
     <DashboardCursorProvider>
@@ -77,7 +92,7 @@ export function Dashboard() {
               className="tile-metric-value"
               title={
                 data?.workouts.status === "ready"
-                  ? `${data.workouts.weekCount ?? 0} in the last 7 days`
+                  ? `${data.workouts.weekCount ?? 0} workout days in the last 7 days`
                   : undefined
               }
             >
@@ -92,14 +107,7 @@ export function Dashboard() {
             cursorKind="clock"
             className="dashboard-item--metric"
           >
-            <p
-              className="tile-metric-value"
-              title={
-                data?.coding.status === "ready"
-                  ? [data.coding.topProject, data.coding.topLanguage].filter(Boolean).join(" · ") || undefined
-                  : undefined
-              }
-            >
+            <p className="tile-metric-value" title={codingTooltip}>
               {codingMetric}
             </p>
           </DashboardCard>
