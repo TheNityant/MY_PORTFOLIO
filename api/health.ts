@@ -1,9 +1,7 @@
-export default {
-  async fetch() {
-    return Response.json({
-      ok: true,
-      service: "portfolio-api",
-      timestamp: new Date().toISOString(),
-    });
-  },
-};
+export default async function handler(_request: Request) {
+  return Response.json({
+    ok: true,
+    service: "portfolio-api",
+    timestamp: new Date().toISOString(),
+  });
+}
