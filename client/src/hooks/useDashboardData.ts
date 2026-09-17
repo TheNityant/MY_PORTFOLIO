@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 type CodingSummary = {
   provider: "wakatime";
   status: "ready" | "unconfigured" | "error" | "stale";
-  todaySeconds: number | null;
-  todayHours: number | null;
-  weekSeconds: number | null;
-  weekHours: number | null;
-  topProject: string | null;
-  topLanguage: string | null;
+  totalSeconds: number | null;
+  totalHours: number | null;
+  totalText: string | null;
+  isUpToDate: boolean | null;
+  percentCalculated: number | null;
   updatedAt: string | null;
   diagnostic?: string;
 };
@@ -20,6 +19,7 @@ type WorkoutSummary = {
   habitTitle: string;
   userId: number;
   totalCount: number | null;
+  totalDays: number | null;
   weekCount: number | null;
   todayCompleted: boolean | null;
   recentCompletions: Array<{ date: string; completed: boolean }>;
@@ -36,12 +36,11 @@ type DashboardData = {
 const codingFallback: CodingSummary = {
   provider: "wakatime",
   status: "error",
-  todaySeconds: null,
-  todayHours: null,
-  weekSeconds: null,
-  weekHours: null,
-  topProject: null,
-  topLanguage: null,
+  totalSeconds: null,
+  totalHours: null,
+  totalText: null,
+  isUpToDate: null,
+  percentCalculated: null,
   updatedAt: null,
 };
 
@@ -52,6 +51,7 @@ const workoutFallback: WorkoutSummary = {
   habitTitle: "Workout",
   userId: 7,
   totalCount: null,
+  totalDays: null,
   weekCount: null,
   todayCompleted: null,
   recentCompletions: [],
@@ -61,6 +61,7 @@ const workoutFallback: WorkoutSummary = {
 async function fetchJson<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(path, {
     signal,
+    cache: "no-store",
     headers: { Accept: "application/json" },
   });
   if (!response.ok) throw new Error(`${path} failed: ${response.status}`);
@@ -121,4 +122,9 @@ export function formatCodingDuration(seconds: number | null | undefined) {
   if (hours <= 0) return `${minutes}m`;
   if (minutes === 0) return `${hours}h`;
   return `${hours}h ${minutes}m`;
+}
+
+export function formatWorkoutDays(days: number | null | undefined) {
+  if (typeof days !== "number" || !Number.isFinite(days) || days < 0) return "—";
+  return `${days} ${days === 1 ? "day" : "days"}`;
 }
