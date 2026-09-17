@@ -1,4 +1,4 @@
-export default async function handler(_request: Request) {
+export async function GET(_request: Request) {
   const wakatimeConfigured = Boolean(process.env.WAKATIME_API_KEY?.trim());
   const workoutSupabaseConfigured = Boolean(
     process.env.HABIT_TRACKER_SUPABASE_URL?.trim() &&
