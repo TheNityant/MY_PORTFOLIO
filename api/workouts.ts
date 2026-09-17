@@ -1,6 +1,6 @@
 import { getWorkoutSummary } from "../server/dashboard";
 
-export default async function handler(_request: Request) {
+export async function GET(_request: Request) {
   const workouts = await getWorkoutSummary();
 
   return Response.json(workouts, {
