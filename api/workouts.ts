@@ -1,3 +1,5 @@
+import { getSupabaseWorkoutSummary } from "../server/supabase.ts";
+
 type WorkoutErrorPayload = {
   provider: "habit-tracker-supabase";
   status: "error";
@@ -19,7 +21,6 @@ function diagnosticMessage(error: unknown) {
 
 export async function GET(_request: Request) {
   try {
-    const { getSupabaseWorkoutSummary } = await import("../server/supabase.ts");
     const workouts = await getSupabaseWorkoutSummary();
 
     return Response.json(workouts, {
