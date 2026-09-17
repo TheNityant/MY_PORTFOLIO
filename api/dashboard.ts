@@ -1,3 +1,6 @@
+import { getSupabaseWorkoutSummary } from "../server/supabase.ts";
+import { getCodingSummary } from "../server/wakatime.ts";
+
 type CodingSummary = {
   provider: "wakatime";
   status: "ready" | "unconfigured" | "error" | "stale";
@@ -38,10 +41,11 @@ const codingFallback = (): CodingSummary => ({
 const workoutFallback = (): WorkoutSummary => {
   const parsedUserId = Number(process.env.HABIT_TRACKER_USER_ID ?? "7");
   const configured = Boolean(
-    process.env.HABIT_TRACKER_SUPABASE_URL?.trim() &&
+    (process.env.HABIT_TRACKER_SUPABASE_URL?.trim() || process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim()) &&
       (
         process.env.HABIT_TRACKER_SUPABASE_SECRET_KEY?.trim() ||
-        process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim()
+        process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+        process.env.HABIT_TRACKER_WORKOUT_API_TOKEN?.trim()
       ),
   );
 
@@ -61,7 +65,6 @@ const workoutFallback = (): WorkoutSummary => {
 
 async function loadCoding(): Promise<CodingSummary> {
   try {
-    const { getCodingSummary } = await import("../server/wakatime.ts");
     return await getCodingSummary();
   } catch (error) {
     console.error("Dashboard WakaTime provider failure", error);
@@ -71,7 +74,6 @@ async function loadCoding(): Promise<CodingSummary> {
 
 async function loadWorkouts(): Promise<WorkoutSummary> {
   try {
-    const { getSupabaseWorkoutSummary } = await import("../server/supabase.ts");
     return await getSupabaseWorkoutSummary();
   } catch (error) {
     console.error("Dashboard workout provider failure", error);
