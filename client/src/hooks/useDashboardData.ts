@@ -12,8 +12,22 @@ type CodingSummary = {
   updatedAt: string | null;
 };
 
+type WorkoutSummary = {
+  provider: "habit-tracker-supabase";
+  status: "ready" | "unconfigured" | "error";
+  habitId: number | null;
+  habitTitle: string;
+  userId: number;
+  totalCount: number | null;
+  weekCount: number | null;
+  todayCompleted: boolean | null;
+  recentCompletions: Array<{ date: string; completed: boolean }>;
+  updatedAt: string | null;
+};
+
 type DashboardData = {
   generatedAt: string;
+  workouts: WorkoutSummary;
   coding: CodingSummary;
 };
 
