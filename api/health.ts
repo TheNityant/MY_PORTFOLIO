@@ -1,11 +1,19 @@
 export async function GET(_request: Request) {
   const hasWakatimeKey = Boolean(process.env.WAKATIME_API_KEY?.trim());
-  const hasSupabaseUrl = Boolean(process.env.HABIT_TRACKER_SUPABASE_URL?.trim());
+
+  const hasSupabaseUrl = Boolean(
+    process.env.HABIT_TRACKER_SUPABASE_URL?.trim() ||
+      process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim(),
+  );
+
   const hasSupabaseSecretKey = Boolean(
     process.env.HABIT_TRACKER_SUPABASE_SECRET_KEY?.trim(),
   );
   const hasSupabaseServiceRoleKey = Boolean(
     process.env.HABIT_TRACKER_SUPABASE_SERVICE_ROLE_KEY?.trim(),
+  );
+  const hasLegacyWorkoutToken = Boolean(
+    process.env.HABIT_TRACKER_WORKOUT_API_TOKEN?.trim(),
   );
 
   return Response.json({
@@ -19,15 +27,18 @@ export async function GET(_request: Request) {
     providers: {
       wakatimeConfigured: hasWakatimeKey,
       workoutSupabaseConfigured:
-        hasSupabaseUrl && (hasSupabaseSecretKey || hasSupabaseServiceRoleKey),
+        hasSupabaseUrl &&
+        (hasSupabaseSecretKey || hasSupabaseServiceRoleKey || hasLegacyWorkoutToken),
       workoutUserIdConfigured: Boolean(process.env.HABIT_TRACKER_USER_ID?.trim()),
       workoutTitleConfigured: Boolean(process.env.HABIT_TRACKER_WORKOUT_TITLE?.trim()),
       timezoneConfigured: Boolean(process.env.HABIT_TRACKER_TIMEZONE?.trim()),
     },
     envPresence: {
-      habitTrackerSupabaseUrl: hasSupabaseUrl,
+      habitTrackerSupabaseUrl: Boolean(process.env.HABIT_TRACKER_SUPABASE_URL?.trim()),
       habitTrackerSupabaseSecretKey: hasSupabaseSecretKey,
       habitTrackerSupabaseServiceRoleKey: hasSupabaseServiceRoleKey,
+      legacyWorkoutApiUrl: Boolean(process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim()),
+      legacyWorkoutApiToken: hasLegacyWorkoutToken,
     },
   });
 }
