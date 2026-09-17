@@ -6,6 +6,7 @@ import { GitHubActivity } from "@/components/home/GitHubActivity";
 import { Globe } from "@/components/home/Globe";
 import { ScratchReveal } from "@/components/home/ScratchReveal";
 import { CoreStackTools, ToolsMarquee } from "@/components/home/ToolsMarquee";
+import { formatCodingDuration, useDashboardData } from "@/hooks/useDashboardData";
 import {
   dashboardCopy,
   dashboardFeature,
@@ -15,6 +16,14 @@ import {
 } from "@/data/portfolio";
 
 export function Dashboard() {
+  const { data } = useDashboardData();
+  const liveCodingSeconds =
+    data?.coding.status === "ready" ? data.coding.todaySeconds : null;
+  const codingMetric =
+    liveCodingSeconds == null
+      ? formatMetric(metrics.codingHours)
+      : formatCodingDuration(liveCodingSeconds);
+
   return (
     <DashboardCursorProvider>
       <section className="dashboard-section dashboard-section--cascade" id="dashboard" aria-labelledby="dashboard-heading">
@@ -66,7 +75,16 @@ export function Dashboard() {
             cursorKind="clock"
             className="dashboard-item--metric"
           >
-            <p className="tile-metric-value">{formatMetric(metrics.codingHours)}</p>
+            <p
+              className="tile-metric-value"
+              title={
+                data?.coding.status === "ready"
+                  ? [data.coding.topProject, data.coding.topLanguage].filter(Boolean).join(" · ") || undefined
+                  : undefined
+              }
+            >
+              {codingMetric}
+            </p>
           </DashboardCard>
 
           <DashboardCard
