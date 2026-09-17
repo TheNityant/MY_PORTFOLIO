@@ -3,6 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getDashboardPayload, getWorkoutSummary } from "./dashboard";
+import { getCodingSummary } from "./wakatime";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +31,13 @@ async function startServer() {
     res.json(payload);
   });
 
+  app.get("/api/coding", async (_req, res) => {
+    const coding = await getCodingSummary();
+
+    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
+    res.json(coding);
+  });
+
   app.get("/api/workouts", async (_req, res) => {
     const workouts = await getWorkoutSummary();
 
@@ -50,7 +58,8 @@ async function startServer() {
     res.sendFile(path.join(staticPath, "index.html"));
   });
 
-  const port = Number(process.env.PORT) || 3000;
+  const defaultPort = process.env.NODE_ENV === "production" ? 3000 : 3001;
+  const port = Number(process.env.PORT) || defaultPort;
 
   server.listen(port, () => {
     console.log(`Portfolio server running on http://localhost:${port}/`);
