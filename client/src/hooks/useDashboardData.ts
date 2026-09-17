@@ -10,6 +10,7 @@ type CodingSummary = {
   topProject: string | null;
   topLanguage: string | null;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
 type WorkoutSummary = {
@@ -23,6 +24,7 @@ type WorkoutSummary = {
   todayCompleted: boolean | null;
   recentCompletions: Array<{ date: string; completed: boolean }>;
   updatedAt: string | null;
+  diagnostic?: string;
 };
 
 type DashboardData = {
@@ -30,6 +32,40 @@ type DashboardData = {
   workouts: WorkoutSummary;
   coding: CodingSummary;
 };
+
+const codingFallback: CodingSummary = {
+  provider: "wakatime",
+  status: "error",
+  todaySeconds: null,
+  todayHours: null,
+  weekSeconds: null,
+  weekHours: null,
+  topProject: null,
+  topLanguage: null,
+  updatedAt: null,
+};
+
+const workoutFallback: WorkoutSummary = {
+  provider: "habit-tracker-supabase",
+  status: "error",
+  habitId: null,
+  habitTitle: "Workout",
+  userId: 7,
+  totalCount: null,
+  weekCount: null,
+  todayCompleted: null,
+  recentCompletions: [],
+  updatedAt: null,
+};
+
+async function fetchJson<T>(path: string, signal: AbortSignal): Promise<T> {
+  const response = await fetch(path, {
+    signal,
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`${path} failed: ${response.status}`);
+  return (await response.json()) as T;
+}
 
 export function useDashboardData(refreshMs = 60_000) {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -40,24 +76,26 @@ export function useDashboardData(refreshMs = 60_000) {
     const controller = new AbortController();
 
     const load = async () => {
-      try {
-        const response = await fetch("/api/dashboard", {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-        });
+      const [codingResult, workoutResult] = await Promise.allSettled([
+        fetchJson<CodingSummary>("/api/coding", controller.signal),
+        fetchJson<WorkoutSummary>("/api/workouts", controller.signal),
+      ]);
 
-        if (!response.ok) throw new Error(`Dashboard request failed: ${response.status}`);
+      if (!active) return;
 
-        const payload = (await response.json()) as DashboardData;
-        if (!active) return;
+      const coding =
+        codingResult.status === "fulfilled" ? codingResult.value : codingFallback;
+      const workouts =
+        workoutResult.status === "fulfilled" ? workoutResult.value : workoutFallback;
 
-        setData(payload);
-        setFailed(false);
-      } catch (error) {
-        if (!active) return;
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setFailed(true);
-      }
+      setData({
+        generatedAt: new Date().toISOString(),
+        coding,
+        workouts,
+      });
+      setFailed(
+        codingResult.status === "rejected" && workoutResult.status === "rejected",
+      );
     };
 
     void load();
