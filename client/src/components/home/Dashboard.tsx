@@ -32,7 +32,9 @@ export function Dashboard() {
       : formatCodingDuration(liveCodingSeconds);
 
   const liveWorkoutDays =
-    data?.workouts.status === "ready" ? data.workouts.totalDays : null;
+    data?.workouts.status === "ready"
+      ? (data.workouts.totalDays ?? data.workouts.totalCount)
+      : null;
   const workoutMetric =
     liveWorkoutDays == null
       ? formatMetric(metrics.workouts)
