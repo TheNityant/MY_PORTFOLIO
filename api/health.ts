@@ -16,6 +16,17 @@ export async function GET(_request: Request) {
     process.env.HABIT_TRACKER_WORKOUT_API_TOKEN?.trim(),
   );
 
+  const hasPortfolioSupabaseUrl = Boolean(
+    process.env.PORTFOLIO_SUPABASE_URL?.trim() ||
+      process.env.VITE_SUPABASE_URL?.trim(),
+  );
+  const hasPortfolioSupabaseSecretKey = Boolean(
+    process.env.PORTFOLIO_SUPABASE_SECRET_KEY?.trim(),
+  );
+  const hasPortfolioSupabaseServiceRoleKey = Boolean(
+    process.env.PORTFOLIO_SUPABASE_SERVICE_ROLE_KEY?.trim(),
+  );
+
   return Response.json({
     ok: true,
     service: "portfolio-api",
@@ -32,6 +43,9 @@ export async function GET(_request: Request) {
       workoutUserIdConfigured: Boolean(process.env.HABIT_TRACKER_USER_ID?.trim()),
       workoutTitleConfigured: Boolean(process.env.HABIT_TRACKER_WORKOUT_TITLE?.trim()),
       timezoneConfigured: Boolean(process.env.HABIT_TRACKER_TIMEZONE?.trim()),
+      portfolioStorageConfigured:
+        hasPortfolioSupabaseUrl &&
+        (hasPortfolioSupabaseSecretKey || hasPortfolioSupabaseServiceRoleKey),
     },
     envPresence: {
       habitTrackerSupabaseUrl: Boolean(process.env.HABIT_TRACKER_SUPABASE_URL?.trim()),
@@ -39,6 +53,9 @@ export async function GET(_request: Request) {
       habitTrackerSupabaseServiceRoleKey: hasSupabaseServiceRoleKey,
       legacyWorkoutApiUrl: Boolean(process.env.HABIT_TRACKER_WORKOUT_API_URL?.trim()),
       legacyWorkoutApiToken: hasLegacyWorkoutToken,
+      portfolioSupabaseUrl: hasPortfolioSupabaseUrl,
+      portfolioSupabaseSecretKey: hasPortfolioSupabaseSecretKey,
+      portfolioSupabaseServiceRoleKey: hasPortfolioSupabaseServiceRoleKey,
     },
   });
 }
