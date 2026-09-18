@@ -25,11 +25,23 @@ function TechList({ items }: { items: readonly string[] }) {
 function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
   const { media } = project;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const isCarousel = media.kind === "video-carousel";
+  const carouselVideos = isCarousel ? media.videos : [];
+  const safeSlideIndex =
+    carouselVideos.length === 0 ? 0 : Math.min(slideIndex, carouselVideos.length - 1);
+  const activeCarouselVideo = isCarousel ? carouselVideos[safeSlideIndex] : undefined;
 
   useEffect(() => {
-    if (media.kind !== "video" || reducedMotion) return;
+    setSlideIndex(0);
+  }, [project.id]);
+
+  useEffect(() => {
+    if ((media.kind !== "video" && media.kind !== "video-carousel") || reducedMotion) return;
     const video = videoRef.current;
     if (!video) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) video.play().catch(() => undefined);
@@ -37,9 +49,85 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       },
       { threshold: 0.45 },
     );
+
     observer.observe(video);
     return () => observer.disconnect();
-  }, [media, reducedMotion]);
+  }, [media, reducedMotion, safeSlideIndex]);
+
+  if (media.kind === "video-carousel") {
+    if (!activeCarouselVideo) {
+      return (
+        <div
+          className="project-media project-media--frame project-media--empty"
+          role="img"
+          aria-label={media.alt}
+        />
+      );
+    }
+
+    const src = resolveProjectMediaSrc(activeCarouselVideo.src);
+    const poster = activeCarouselVideo.poster
+      ? resolveProjectMediaSrc(activeCarouselVideo.poster)
+      : undefined;
+
+    const goToSlide = (nextIndex: number) => {
+      if (!carouselVideos.length) return;
+      const normalized =
+        (nextIndex + carouselVideos.length) % carouselVideos.length;
+      setSlideIndex(normalized);
+    };
+
+    return (
+      <div className="project-media project-media--frame project-media--carousel">
+        <video
+          key={src}
+          ref={videoRef}
+          className="project-media-asset project-media-asset--contain"
+          src={src}
+          poster={poster}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label={activeCarouselVideo.label ?? media.alt}
+        />
+
+        {carouselVideos.length > 1 ? (
+          <div className="project-media-carousel-controls" aria-label="Robocon demo video selector">
+            <button
+              type="button"
+              className="project-media-carousel-button"
+              aria-label="Previous Robocon video"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                goToSlide(safeSlideIndex - 1);
+              }}
+            >
+              <ArrowLeft size={15} aria-hidden="true" />
+            </button>
+
+            <span className="project-media-carousel-count" aria-live="polite">
+              {safeSlideIndex + 1} / {carouselVideos.length}
+            </span>
+
+            <button
+              type="button"
+              className="project-media-carousel-button"
+              aria-label="Next Robocon video"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                goToSlide(safeSlideIndex + 1);
+              }}
+            >
+              <ArrowRight size={15} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   if (media.kind === "video") {
     const src = resolveProjectMediaSrc(media.src);
@@ -52,6 +140,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         </div>
       );
     }
+
     return (
       <div className="project-media project-media--frame">
         <video
@@ -80,7 +169,13 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   return <div className="project-media project-media--frame project-media--empty" role="img" aria-label={media.alt} />;
 }
 
-function ProjectContent({ project }: { project: Project }) {
+function ProjectContent({
+  project,
+  explicitLink = false,
+}: {
+  project: Project;
+  explicitLink?: boolean;
+}) {
   return (
     <div className="project-body">
       <div className="project-card-top">
@@ -92,12 +187,37 @@ function ProjectContent({ project }: { project: Project }) {
         <p>{project.description}</p>
       </div>
       <TechList items={project.technologies} />
-      {project.href ? <span className="project-action">{project.hrefLabel ?? "Repository"}</span> : null}
+      {project.href ? (
+        explicitLink ? (
+          <a
+            className="project-action project-action--link"
+            href={project.href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {project.hrefLabel ?? "Repository"}
+            <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
+        ) : (
+          <span className="project-action">{project.hrefLabel ?? "Repository"}</span>
+        )
+      ) : null}
     </div>
   );
 }
 
 function ProjectCard({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+  const hasInteractiveMedia = project.media.kind === "video-carousel";
+
+  if (hasInteractiveMedia) {
+    return (
+      <article className="project-card project-card--featured">
+        <ProjectMedia project={project} reducedMotion={reducedMotion} />
+        <ProjectContent project={project} explicitLink />
+      </article>
+    );
+  }
+
   const inner = (
     <>
       <ProjectMedia project={project} reducedMotion={reducedMotion} />
