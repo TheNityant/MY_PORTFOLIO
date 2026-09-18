@@ -3,7 +3,8 @@ import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GET as getCoding } from "../api/coding.ts";
-import { GET as getHealth } from "../api/health.ts";\nimport { GET as getResume } from "../api/resume.ts";
+import { GET as getHealth } from "../api/health.ts";
+import { GET as getHackathonCertificates } from "../api/hackathon-certificates.ts";\nimport { GET as getResume } from "../api/resume.ts";
 import { GET as getWorkouts } from "../api/workouts.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +36,8 @@ async function startServer() {
   app.disable("x-powered-by");
   app.use(express.json({ limit: "256kb" }));
 
-  app.get("/api/health", apiRoute(getHealth));\n  app.get("/api/resume", apiRoute(getResume));
+  app.get("/api/health", apiRoute(getHealth));
+  app.get("/api/hackathon-certificates", apiRoute(getHackathonCertificates));\n  app.get("/api/resume", apiRoute(getResume));
   app.get("/api/coding", apiRoute(getCoding));
   app.get("/api/workouts", apiRoute(getWorkouts));
 
