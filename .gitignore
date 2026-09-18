@@ -110,6 +110,6 @@ temp/
 
 # Large local portfolio demos. Keep these local until they are moved to a CDN/blob store
 # or intentionally tracked with Git LFS. Small posters/images can still live in Git.
-client/public/media/projects/*.mp4
-client/public/media/projects/*.mov
-client/public/media/projects/*.webm
+client/public/media/[Pp]rojects/*.mp4
+client/public/media/[Pp]rojects/*.mov
+client/public/media/[Pp]rojects/*.webm
