@@ -173,7 +173,7 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
             label: "Certificate",
             dates: "",
             location: "",
-            description: `Credential archived for ${title}. Open the original certificate PDF for the verified record.`,
+            description: `${title} — certificate-backed hackathon/competition entry. Open the original PDF to view the verified credential.`,
             skills: ["Hackathon", "Competition"],
             href: file.url,
             previewMode: "text-only",
@@ -244,9 +244,9 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
 
       {open ? (
         <div className="experience-collection-panel" id={`${item.id}-panel`}>
-          {item.items.length ? (
+          {collectionEntries.length ? (
             <ul className="experience-collection-list">
-              {item.items.map((entry) => {
+              {collectionEntries.map((entry) => {
                 const active = activeEntryId === entry.id;
 
                 return (
