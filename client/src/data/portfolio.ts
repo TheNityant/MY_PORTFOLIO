@@ -33,7 +33,12 @@ export type ProjectDomain = {
 export type ProjectMedia =
   | { kind: "none"; alt: string }
   | { kind: "image"; src: string; alt: string }
-  | { kind: "video"; src: string; poster?: string; alt: string };
+  | { kind: "video"; src: string; poster?: string; alt: string }
+  | {
+      kind: "video-carousel";
+      alt: string;
+      videos: Array<{ src: string; poster?: string; label?: string }>;
+    };
 
 export type Project = {
   id: string;
@@ -358,7 +363,20 @@ export const projects: Project[] = [
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
     hrefLabel: "Repository",
     status: "Applied work",
-    media: { kind: "none", alt: "Media frame for the Robocon 2026 bot." },
+    media: {
+      kind: "video-carousel",
+      alt: "Robocon 2026 bot demo videos.",
+      videos: [
+        {
+          src: portfolioAsset("PROJECT", "VID-20260502-WA0000.mp4"),
+          label: "Robocon demo 1",
+        },
+        {
+          src: portfolioAsset("PROJECT", "VID_20260623_232751.mp4"),
+          label: "Robocon demo 2",
+        },
+      ],
+    },
   },
 ];
 
