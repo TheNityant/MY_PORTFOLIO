@@ -1,65 +1,37 @@
-# Portfolio media slots
+# Portfolio media
 
-Everything in this folder is served directly from the site root. Example:
+The portfolio uses two media sources:
 
-- `client/public/media/experience/genai-academy.svg`
-- becomes `/media/experience/genai-academy.svg` in React.
+- Small repository assets under `client/public/` for lightweight SVG/WebP/JPG files.
+- Public Supabase Storage buckets for project videos and larger portfolio media.
 
-## Experience hover images
+## Project videos
 
-The current mapping lives in:
+Project videos are defined in `client/src/data/portfolio.ts`.
 
-`client/src/data/media.ts`
-
-Current slots:
-
-- `genai-academy` -> `/media/experience/genai-academy.svg`
-- `robocon-applied` -> `/media/experience/robocon-applied.svg`
-- `iitb-hackathon` -> `/media/experience/iitb-hackathon.svg`
-
-When you add a real PNG/JPG/WebP, put it in `client/public/media/experience/` and change only the matching path in `client/src/data/media.ts`.
-
-Example:
+Use the shared helper:
 
 ```ts
-"robocon-applied": "/media/experience/robocon-team.webp",
+portfolioAsset("PROJECT", "example.mp4")
 ```
 
-## Writing hover images
+The helper in `client/src/lib/portfolioAssets.ts` builds the public Supabase Storage URL. It reads `VITE_SUPABASE_URL` when configured and otherwise uses the current Portfolio Supabase project URL.
 
-Current slot:
+Keep the Supabase object filename exactly identical to the filename passed to `portfolioAsset`; Storage paths are case-sensitive.
 
-- `llm-engineering-notebook` -> `/media/writing/llm-engineering-notebook.svg`
+Do not commit large MP4/MOV/WebM project demos to Git. Local copies under `client/public/media/projects/` or `client/public/media/Projects/` are ignored.
 
-Add real writing/notebook artwork under `client/public/media/writing/` and update `client/src/data/media.ts`.
+## Experience and writing assets
 
-## Project media
+Lightweight fallback SVGs remain in:
 
-Put project screenshots/videos under:
-
-`client/public/media/projects/`
-
-Then edit the matching project object in `client/src/data/portfolio.ts`.
-
-Image example:
-
-```ts
-media: {
-  kind: "image",
-  src: "/media/projects/habit-tracker.webp",
-  alt: "Habit Tracker dashboard",
-},
+```text
+client/public/media/experience/
+client/public/media/writing/
 ```
 
-Video example:
+Real portfolio images can also use `portfolioAsset(...)` from public Supabase buckets.
 
-```ts
-media: {
-  kind: "video",
-  src: "/media/projects/habit-tracker.mp4",
-  poster: "/media/projects/habit-tracker-poster.webp",
-  alt: "Habit Tracker product demo",
-},
-```
+## Naming
 
-Prefer WebP for screenshots and compressed MP4/WebM for short demos. Keep filenames lowercase with hyphens.
+Prefer short, stable filenames. Storage paths are case-sensitive, so renaming an uploaded object also requires updating its matching source entry.
