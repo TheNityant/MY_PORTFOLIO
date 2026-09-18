@@ -140,35 +140,7 @@ export async function GET(_request: Request) {
     let habitId = configuredWorkoutHabitId;
     let resolvedHabitTitle = habitTitle;
 
-    if (habitId != null) {
-      const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
-      habitUrl.searchParams.set("select", "habit_id,title,user_id");
-      habitUrl.searchParams.set("habit_id", `eq.${habitId}`);
-      habitUrl.searchParams.set("user_id", `eq.${userId}`);
-      habitUrl.searchParams.set("limit", "1");
-
-      const habits = await fetchJson<HabitRow[]>(habitUrl, supabaseSecretKey);
-      const habit = habits[0];
-
-      if (!habit) {
-        return Response.json(
-          fallback(
-            "error",
-            habitTitle,
-            userId,
-            `Workout habit ${habitId} not found for user ${userId}`,
-          ),
-          {
-            status: 200,
-            headers: { "Cache-Control": "no-store, max-age=0" },
-          },
-        );
-      }
-
-      if (typeof habit.title === "string" && habit.title.trim()) {
-        resolvedHabitTitle = habit.title.trim();
-      }
-    } else {
+    if (habitId == null) {
       const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
       habitUrl.searchParams.set("select", "habit_id,title,user_id");
       habitUrl.searchParams.set("user_id", `eq.${userId}`);
@@ -202,7 +174,8 @@ export async function GET(_request: Request) {
     const rows = await fetchJson<CompletionRow[]>(completionsUrl, supabaseSecretKey);
     const completedDates = rows
       .map((row) => row.completed_date)
-      .filter((date): date is string => typeof date === "string")
+      .filter((date): date is string => typeof date === "string" && date.length >= 10)
+      .map((date) => date.slice(0, 10))
       .sort((a, b) => b.localeCompare(a));
 
     const uniqueCompletedDates = [...new Set(completedDates)].sort((a, b) =>
