@@ -1664,3 +1664,119 @@ input:focus-visible {
 @layer base {
   * { @apply border-border; }
 }
+
+
+/* Project domain rail -----------------------------------------------------
+   The desktop labels used to be absolutely positioned over the project cards.
+   Reserve a real column for them so Backend / Full Stack / AI-ML / Robotics
+   never disappear behind the media or description cards. */
+@media (min-width: 960px) {
+  .projects-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 12rem);
+    column-gap: 1.15rem;
+  }
+
+  .project-story-rail {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0.35rem;
+  }
+
+  .project-story-item {
+    width: 100%;
+    min-width: 0;
+    gap: 0.65rem;
+  }
+
+  .project-story-label {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: calc(100% - 1.15rem);
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    transform: none;
+    opacity: 0.58;
+    pointer-events: none;
+    color: var(--foreground);
+    font-size: 0.7rem;
+    line-height: 1.2;
+    text-align: right;
+    text-wrap: balance;
+    transition: opacity 140ms ease;
+  }
+
+  .project-story-item--active .project-story-label,
+  .project-story-item:hover .project-story-label,
+  .project-story-item:focus-visible .project-story-label {
+    opacity: 1;
+  }
+
+  .project-story-bar {
+    flex: 0 0 auto;
+  }
+}
+
+/* Mid-size screens keep the domain chooser above the cards instead of
+   squeezing a side rail into the project media. */
+@media (min-width: 700px) and (max-width: 959px) {
+  .projects-stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "rail"
+      "pager"
+      "pair";
+    row-gap: 0.9rem;
+  }
+
+  .project-story-rail {
+    position: static;
+    top: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.7rem;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .project-story-item {
+    width: auto;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    padding: 0.22rem 0.35rem;
+  }
+
+  .project-story-label {
+    position: static;
+    display: inline;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: nowrap;
+    transform: none;
+    opacity: 0.62;
+    color: var(--foreground);
+    font-size: 0.68rem;
+  }
+
+  .project-story-item--active .project-story-label,
+  .project-story-item:hover .project-story-label,
+  .project-story-item:focus-visible .project-story-label {
+    opacity: 1;
+  }
+
+  .project-story-bar {
+    width: 1.25rem;
+    height: 0.18rem;
+  }
+
+  .project-story-item--active .project-story-bar {
+    width: 1.9rem;
+    height: 0.22rem;
+  }
+}
