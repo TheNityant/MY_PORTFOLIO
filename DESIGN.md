@@ -10,7 +10,7 @@ It focuses on the content systems that are expected to change often:
 - Writing and experience hover media
 - The small lower hover-preview card
 
-For broader content notes, `PORTFOLIO_CONTENT_GUIDE.md` can still be used. This file documents the actual implementation paths and data contracts.
+This file documents the current implementation paths and data contracts.
 
 ---
 
