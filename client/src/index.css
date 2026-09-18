@@ -1841,3 +1841,68 @@ input:focus-visible {
     grid-column: 1;
   }
 }
+
+
+/* Project video carousel -------------------------------------------------- */
+.project-media--carousel {
+  isolation: isolate;
+}
+
+.project-media-asset--contain {
+  object-fit: contain;
+  object-position: center;
+  background: #050607;
+}
+
+.project-media-carousel-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 0.65rem;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.42rem;
+  transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, white 18%, transparent);
+  border-radius: 999px;
+  background: rgba(6, 8, 10, 0.78);
+  color: white;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(10px);
+}
+
+.project-media-carousel-button {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  flex: 0 0 1.8rem;
+  border-radius: 999px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.project-media-carousel-button:hover,
+.project-media-carousel-button:focus-visible {
+  background: rgba(255, 255, 255, 0.17);
+  transform: scale(1.04);
+}
+
+.project-media-carousel-count {
+  min-width: 2.35rem;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.project-action--link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+}
