@@ -1,4 +1,4 @@
-import { useState, type FocusEvent } from "react";
+import { useEffect, useState, type FocusEvent } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
@@ -28,6 +28,36 @@ function ExperienceMarkView({ mark }: { mark: ExperienceMark }) {
 }
 
 type PreviewableExperience = ExperienceEntry | ExperienceCollectionEntry;
+
+type HackathonCertificateFile = {
+  name: string;
+  objectPath: string;
+  url: string;
+};
+
+type HackathonCertificateResponse = {
+  ok: boolean;
+  status: "ready" | "unconfigured" | "error";
+  count?: number;
+  files: HackathonCertificateFile[];
+  diagnostic?: string;
+};
+
+function certificateTitle(filename: string) {
+  return filename
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function certificateId(filename: string) {
+  return certificateTitle(filename)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 
 function ExperienceHoverPreview({
   entry,
@@ -110,9 +140,66 @@ function CollectionEntryExtension({
 function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   const [open, setOpen] = useState(false);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
-  const archiveStatus = item.items.length
-    ? `${item.items.length} ${item.items.length === 1 ? "entry" : "entries"}`
-    : "No archived entries yet";
+  const [certificateEntries, setCertificateEntries] = useState<ExperienceCollectionEntry[]>([]);
+  const [certificateStatus, setCertificateStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+
+  useEffect(() => {
+    if (item.id !== "hackathons-competitions" || item.items.length) return;
+
+    const controller = new AbortController();
+    setCertificateStatus("loading");
+
+    void fetch("/api/hackathon-certificates", {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Certificate archive failed: ${response.status}`);
+        return (await response.json()) as HackathonCertificateResponse;
+      })
+      .then((payload) => {
+        if (!payload.ok || payload.status !== "ready") {
+          throw new Error(payload.diagnostic || "Certificate archive is unavailable");
+        }
+
+        const entries = payload.files.map<ExperienceCollectionEntry>((file) => {
+          const title = certificateTitle(file.name);
+          return {
+            id: certificateId(file.name) || file.name,
+            org: title,
+            label: "Certificate",
+            dates: "",
+            location: "",
+            description: `Credential archived for ${title}. Open the original certificate PDF for the verified record.`,
+            skills: ["Hackathon", "Competition"],
+            href: file.url,
+            previewMode: "text-only",
+          };
+        });
+
+        setCertificateEntries(entries);
+        setCertificateStatus("ready");
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Hackathon certificate archive failure", error);
+        setCertificateStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [item.id, item.items.length]);
+
+  const collectionEntries = item.items.length ? item.items : certificateEntries;
+  const archiveStatus = collectionEntries.length
+    ? `${collectionEntries.length} ${collectionEntries.length === 1 ? "entry" : "entries"}`
+    : certificateStatus === "loading"
+      ? "Loading certificates…"
+      : certificateStatus === "error"
+        ? "Certificates unavailable"
+        : "No archived entries yet";
 
   const closeCollection = () => {
     setOpen(false);
@@ -192,9 +279,17 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
             </ul>
           ) : (
             <div className="experience-collection-empty" role="status">
-              <strong>Archive is ready.</strong>
+              <strong>
+                {certificateStatus === "loading"
+                  ? "Loading certificate archive…"
+                  : certificateStatus === "error"
+                    ? "Certificate archive unavailable."
+                    : "No certificates found."}
+              </strong>
               <span>
-                Add smaller hackathon or competition entries to this collection and each one will get its own hover media and detail extension.
+                {certificateStatus === "error"
+                  ? "The portfolio could not read the Supabase Hackathon Certificates folder."
+                  : "PDF certificates placed in the configured Supabase folder will appear here automatically."}
               </span>
             </div>
           )}
