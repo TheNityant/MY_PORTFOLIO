@@ -7,9 +7,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { portfolioAsset } from "@/lib/portfolioAssets";
 
-const RESUME_HREF =
-  import.meta.env.VITE_RESUME_URL?.trim() ||
-  portfolioAsset("Profile PIC", "Nityan Tiwari Resume.pdf");
+const RESUME_HREF = import.meta.env.VITE_RESUME_URL?.trim() || "/api/resume";
 
 type HeroStatus = {
   label: "Available" | "Away";
