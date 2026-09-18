@@ -5,8 +5,11 @@ import type { SocialIconName } from "@/data/portfolio";
 import { profile, visibleSocials } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { portfolioAsset } from "@/lib/portfolioAssets";
 
-const RESUME_HREF = import.meta.env.VITE_RESUME_URL?.trim() || "/resume.pdf";
+const RESUME_HREF =
+  import.meta.env.VITE_RESUME_URL?.trim() ||
+  portfolioAsset("Profile PIC", "Nityan Tiwari Resume.pdf");
 
 type HeroStatus = {
   label: "Available" | "Away";
