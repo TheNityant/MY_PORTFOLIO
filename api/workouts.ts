@@ -111,6 +111,16 @@ export async function GET(_request: Request) {
   const habitTitle = process.env.HABIT_TRACKER_WORKOUT_TITLE?.trim() || "Workout";
   const timezone = process.env.HABIT_TRACKER_TIMEZONE?.trim() || "Asia/Kolkata";
 
+  // This portfolio belongs to the Habit Tracker user whose Workout habit is id 17.
+  // Keep it overridable so a future database migration does not require a code edit.
+  const parsedWorkoutHabitId = Number(
+    process.env.HABIT_TRACKER_WORKOUT_HABIT_ID ?? "17",
+  );
+  const configuredWorkoutHabitId =
+    Number.isInteger(parsedWorkoutHabitId) && parsedWorkoutHabitId > 0
+      ? parsedWorkoutHabitId
+      : null;
+
   if (!supabaseUrl || !supabaseSecretKey) {
     return Response.json(
       fallback(
@@ -127,24 +137,61 @@ export async function GET(_request: Request) {
   }
 
   try {
-    const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
-    habitUrl.searchParams.set("select", "habit_id,title,user_id");
-    habitUrl.searchParams.set("user_id", `eq.${userId}`);
-    habitUrl.searchParams.set("title", `eq.${habitTitle}`);
-    habitUrl.searchParams.set("limit", "1");
+    let habitId = configuredWorkoutHabitId;
+    let resolvedHabitTitle = habitTitle;
 
-    const habits = await fetchJson<HabitRow[]>(habitUrl, supabaseSecretKey);
-    const habit = habits[0];
-    const habitId = typeof habit?.habit_id === "number" ? habit.habit_id : null;
+    if (habitId != null) {
+      const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
+      habitUrl.searchParams.set("select", "habit_id,title,user_id");
+      habitUrl.searchParams.set("habit_id", `eq.${habitId}`);
+      habitUrl.searchParams.set("user_id", `eq.${userId}`);
+      habitUrl.searchParams.set("limit", "1");
 
-    if (habitId == null) {
-      return Response.json(
-        fallback("error", habitTitle, userId, `Workout habit not found for user ${userId}`),
-        {
-          status: 200,
-          headers: { "Cache-Control": "no-store, max-age=0" },
-        },
-      );
+      const habits = await fetchJson<HabitRow[]>(habitUrl, supabaseSecretKey);
+      const habit = habits[0];
+
+      if (!habit) {
+        return Response.json(
+          fallback(
+            "error",
+            habitTitle,
+            userId,
+            `Workout habit ${habitId} not found for user ${userId}`,
+          ),
+          {
+            status: 200,
+            headers: { "Cache-Control": "no-store, max-age=0" },
+          },
+        );
+      }
+
+      if (typeof habit.title === "string" && habit.title.trim()) {
+        resolvedHabitTitle = habit.title.trim();
+      }
+    } else {
+      const habitUrl = new URL("/rest/v1/habits", supabaseUrl);
+      habitUrl.searchParams.set("select", "habit_id,title,user_id");
+      habitUrl.searchParams.set("user_id", `eq.${userId}`);
+      habitUrl.searchParams.set("title", `eq.${habitTitle}`);
+      habitUrl.searchParams.set("limit", "1");
+
+      const habits = await fetchJson<HabitRow[]>(habitUrl, supabaseSecretKey);
+      const habit = habits[0];
+      habitId = typeof habit?.habit_id === "number" ? habit.habit_id : null;
+
+      if (habitId == null) {
+        return Response.json(
+          fallback("error", habitTitle, userId, `Workout habit not found for user ${userId}`),
+          {
+            status: 200,
+            headers: { "Cache-Control": "no-store, max-age=0" },
+          },
+        );
+      }
+
+      if (typeof habit?.title === "string" && habit.title.trim()) {
+        resolvedHabitTitle = habit.title.trim();
+      }
     }
 
     const completionsUrl = new URL("/rest/v1/habit_completed_dates", supabaseUrl);
@@ -172,8 +219,7 @@ export async function GET(_request: Request) {
       provider: "habit-tracker-supabase",
       status: "ready",
       habitId,
-      habitTitle:
-        typeof habit?.title === "string" && habit.title.trim() ? habit.title.trim() : habitTitle,
+      habitTitle: resolvedHabitTitle,
       userId,
       totalCount: completedDates.length,
       totalDays: uniqueCompletedDates.length,
