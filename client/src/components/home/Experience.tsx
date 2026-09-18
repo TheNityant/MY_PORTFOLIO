@@ -1,4 +1,4 @@
-import { useEffect, useState, type FocusEvent } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
@@ -91,52 +91,6 @@ function ExperienceHoverPreview({
   );
 }
 
-function CollectionEntryExtension({
-  entry,
-  active,
-}: {
-  entry: ExperienceCollectionEntry;
-  active: boolean;
-}) {
-  const mode: ExperiencePreviewMode = entry.previewMode ?? "image-and-text";
-  const featureMedia = experienceFeatureMedia[entry.id] ?? fallbackExperienceFeatureMedia;
-  const previewSrc = experiencePreviewMedia[entry.id] ?? fallbackExperiencePreview;
-
-  if (!active) return null;
-
-  return (
-    <aside className="experience-collection-inspector" aria-hidden="true">
-      <div className="experience-collection-inspector__feature">
-        <HoverFeatureMedia media={featureMedia} active={active} />
-      </div>
-      <div
-        className={`experience-collection-inspector__detail experience-collection-inspector__detail--${mode}`}
-      >
-        {mode !== "text-only" ? (
-          <div className="experience-collection-inspector__thumb">
-            <img src={previewSrc} alt="" />
-          </div>
-        ) : null}
-        {mode !== "image-only" ? (
-          <div className="experience-collection-inspector__copy">
-            <span>{entry.label}</span>
-            <strong>{entry.org}</strong>
-            <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
-            <p>{entry.description}</p>
-            {entry.skills.length ? (
-              <ul className="project-tech">
-                {entry.skills.map((skill) => (
-                  <li key={skill}>{skill}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </aside>
-  );
-}
-
 function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   const [open, setOpen] = useState(false);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
@@ -167,21 +121,27 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
 
         const entries = payload.files.map<ExperienceCollectionEntry>((file) => {
           const title = certificateTitle(file.name);
+
           return {
             id: certificateId(file.name) || file.name,
             org: title,
-            label: "Certificate",
+            label: "Hackathon / Competition",
             dates: "",
             location: "",
-            description: `${title} — certificate-backed hackathon/competition entry. Open the original PDF to view the verified credential.`,
+            description:
+              `${title} — certificate-backed participation record. This entry is linked to the original credential stored in the portfolio archive.`,
             skills: ["Hackathon", "Competition"],
             href: file.url,
-            previewMode: "text-only",
+            previewMode: "image-and-text",
           };
         });
 
         setCertificateEntries(entries);
         setCertificateStatus("ready");
+
+        if (entries.length) {
+          setActiveEntryId((current) => current ?? entries[0].id);
+        }
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
@@ -193,32 +153,23 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   }, [item.id, item.items.length]);
 
   const collectionEntries = item.items.length ? item.items : certificateEntries;
-  const archiveStatus = collectionEntries.length
-    ? `${collectionEntries.length} ${collectionEntries.length === 1 ? "entry" : "entries"}`
-    : certificateStatus === "loading"
-      ? "Loading certificates…"
-      : certificateStatus === "error"
-        ? "Certificates unavailable"
-        : "No archived entries yet";
 
-  const closeCollection = () => {
-    setOpen(false);
-    setActiveEntryId(null);
-  };
+  useEffect(() => {
+    if (!collectionEntries.length) return;
+    setActiveEntryId((current) =>
+      current && collectionEntries.some((entry) => entry.id === current)
+        ? current
+        : collectionEntries[0].id,
+    );
+  }, [collectionEntries]);
 
-  const onBlur = (event: FocusEvent<HTMLLIElement>) => {
-    const nextTarget = event.relatedTarget;
-    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-    closeCollection();
+  const toggleCollection = () => {
+    setOpen((value) => !value);
   };
 
   return (
     <li
-      className="experience-row experience-row--preview experience-row--collection"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={closeCollection}
-      onFocus={() => setOpen(true)}
-      onBlur={onBlur}
+      className={`experience-row experience-row--collection${open ? " experience-row--collection-open" : ""}`}
     >
       <ExperienceMarkView mark={item.mark} />
 
@@ -227,52 +178,103 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
         className="experience-collection-trigger experience-collection-trigger--row"
         aria-expanded={open}
         aria-controls={`${item.id}-panel`}
-        onClick={() => {
-          setOpen((value) => !value);
-          setActiveEntryId(null);
-        }}
+        onClick={toggleCollection}
       >
         <span className="experience-collection-trigger__copy">
           <strong>{item.org}</strong>
-          <small>{archiveStatus}</small>
+          <small>Certificates, event context, and participation records</small>
         </span>
         <span className="experience-collection-trigger__meta">
-          <span>{item.label}</span>
+          <span>{open ? "Hide archive" : "Explore archive"}</span>
           <ChevronDown className="experience-collection-chevron" size={16} aria-hidden="true" />
         </span>
       </button>
 
       {open ? (
         <div className="experience-collection-panel" id={`${item.id}-panel`}>
+          <div className="experience-collection-intro">
+            <span>Hackathons & competitions</span>
+            <strong>Selected participation archive</strong>
+            <p>
+              Certificate-backed events are presented as full experience cards. Select a card to
+              keep it focused; the archive stays open until you explicitly close it.
+            </p>
+          </div>
+
           {collectionEntries.length ? (
             <ul className="experience-collection-list">
               {collectionEntries.map((entry) => {
                 const active = activeEntryId === entry.id;
+                const certificateHref = entry.href ?? "";
 
                 return (
                   <li
                     key={entry.id}
-                    className="experience-collection-item"
-                    tabIndex={0}
-                    onMouseEnter={() => setActiveEntryId(entry.id)}
-                    onMouseLeave={() => setActiveEntryId(null)}
-                    onFocus={() => setActiveEntryId(entry.id)}
+                    className={`experience-collection-item${active ? " experience-collection-item--active" : ""}`}
                   >
-                    <div className="experience-collection-item__heading">
-                      {entry.href ? (
-                        <a href={entry.href} target="_blank" rel="noopener noreferrer">
-                          <strong>{entry.org}</strong>
-                          <ArrowUpRight size={13} aria-hidden="true" />
-                        </a>
-                      ) : (
-                        <strong>{entry.org}</strong>
-                      )}
-                      <span>{entry.label}</span>
-                    </div>
-                    <small>{[entry.dates, entry.location].filter(Boolean).join(" · ")}</small>
-                    <p>{entry.description}</p>
+                    <button
+                      type="button"
+                      className="experience-collection-item__focus"
+                      aria-pressed={active}
+                      onClick={() => setActiveEntryId(entry.id)}
+                    >
+                      <span className="sr-only">
+                        {active ? "Selected" : "Select"} {entry.org}
+                      </span>
+                    </button>
 
-                    <CollectionEntryExtension entry={entry} active={active} />
+                    <div className="experience-collection-item__content">
+                      <div className="experience-collection-item__heading">
+                        <div>
+                          <span>{entry.label}</span>
+                          <h3>{entry.org}</h3>
+                        </div>
+                        {active ? <small className="experience-collection-item__selected">Focused</small> : null}
+                      </div>
+
+                      {[entry.dates, entry.location].some(Boolean) ? (
+                        <small className="experience-collection-item__meta">
+                          {[entry.dates, entry.location].filter(Boolean).join(" · ")}
+                        </small>
+                      ) : null}
+
+                      <p>{entry.description}</p>
+
+                      {entry.skills.length ? (
+                        <ul className="project-tech">
+                          {entry.skills.map((skill) => (
+                            <li key={skill}>{skill}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+
+                      {certificateHref ? (
+                        <a
+                          className="experience-collection-certificate-link"
+                          href={certificateHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View certificate
+                          <ArrowUpRight size={14} aria-hidden="true" />
+                        </a>
+                      ) : null}
+                    </div>
+
+                    <div className="experience-collection-certificate">
+                      {certificateHref ? (
+                        <iframe
+                          src={`${certificateHref}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                          title={`${entry.org} certificate preview`}
+                          loading="lazy"
+                          tabIndex={-1}
+                        />
+                      ) : (
+                        <div className="experience-collection-certificate__empty">
+                          Certificate preview unavailable
+                        </div>
+                      )}
+                    </div>
                   </li>
                 );
               })}
