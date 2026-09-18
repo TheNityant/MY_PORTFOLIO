@@ -130,7 +130,7 @@ export function Projects() {
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 700px)");
+    const media = window.matchMedia("(min-width: 960px)");
     const update = () => setVertical(media.matches);
     update();
     media.addEventListener("change", update);
