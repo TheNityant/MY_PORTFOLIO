@@ -1665,47 +1665,66 @@ input:focus-visible {
   * { @apply border-border; }
 }
 
-
 /* Project domain rail -----------------------------------------------------
-   The desktop labels used to be absolutely positioned over the project cards.
-   Reserve a real column for them so Backend / Full Stack / AI-ML / Robotics
-   never disappear behind the media or description cards. */
-@media (min-width: 960px) {
+   Keep the original project-card width. On wide desktop the category label
+   opens to the RIGHT of the thin rail, never back over the project video/card.
+   On narrower screens the selector moves above the cards so no media width is
+   sacrificed. */
+@media (min-width: 1280px) {
   .projects-stage {
-    grid-template-columns: minmax(0, 1fr) minmax(10.5rem, 12rem);
-    column-gap: 1.15rem;
+    grid-template-columns: minmax(0, 1fr) 2.75rem;
+    grid-template-areas:
+      "pager rail"
+      "pair rail";
+    column-gap: 0.85rem;
+    align-items: stretch;
+    overflow: visible;
   }
 
   .project-story-rail {
-    width: 100%;
-    min-width: 0;
-    padding-left: 0.35rem;
+    grid-area: rail;
+    position: sticky;
+    top: 5.75rem;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    overflow: visible;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.7rem;
+    min-height: 12rem;
+    align-self: start;
   }
 
   .project-story-item {
+    position: relative;
     width: 100%;
-    min-width: 0;
-    gap: 0.65rem;
+    justify-content: flex-end;
+    overflow: visible;
   }
 
   .project-story-label {
-    position: static;
-    display: block;
-    width: auto;
+    position: absolute;
+    left: calc(100% + 0.55rem);
+    right: auto;
+    top: 50%;
+    width: max-content;
+    max-width: 7rem;
     height: auto;
-    max-width: calc(100% - 1.15rem);
     overflow: visible;
     clip: auto;
     white-space: normal;
-    transform: none;
-    opacity: 0.58;
+    transform: translateY(-50%);
+    opacity: 0;
     pointer-events: none;
     color: var(--foreground);
     font-size: 0.7rem;
+    font-weight: 600;
     line-height: 1.2;
-    text-align: right;
+    text-align: left;
     text-wrap: balance;
     transition: opacity 140ms ease;
+    z-index: 5;
   }
 
   .project-story-item--active .project-story-label,
@@ -1716,12 +1735,36 @@ input:focus-visible {
 
   .project-story-bar {
     flex: 0 0 auto;
+    width: 0.22rem;
+    height: 1.85rem;
+  }
+
+  .project-story-item--active .project-story-bar {
+    width: 0.32rem;
+    height: 2.85rem;
+  }
+
+  .projects-pager { grid-area: pager; }
+
+  .projects-pair {
+    grid-area: pair;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem;
+  }
+
+  .projects-pair--single {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .projects-pair--single .project-card:only-child {
+    grid-column: 1;
   }
 }
 
-/* Mid-size screens keep the domain chooser above the cards instead of
-   squeezing a side rail into the project media. */
-@media (min-width: 700px) and (max-width: 959px) {
+/* At laptop/tablet widths the category chooser sits above the project pair.
+   This preserves the full two-card video size rather than reserving a wide
+   sidebar just for labels. */
+@media (min-width: 700px) and (max-width: 1279px) {
   .projects-stage {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -1734,16 +1777,18 @@ input:focus-visible {
   .project-story-rail {
     position: static;
     top: auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
     flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 0.45rem 0.7rem;
-    min-height: 0;
-    width: 100%;
   }
 
   .project-story-item {
+    position: relative;
     width: auto;
     justify-content: flex-start;
     gap: 0.4rem;
@@ -1778,5 +1823,21 @@ input:focus-visible {
   .project-story-item--active .project-story-bar {
     width: 1.9rem;
     height: 0.22rem;
+  }
+
+  .projects-pager { grid-area: pager; }
+
+  .projects-pair {
+    grid-area: pair;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem;
+  }
+
+  .projects-pair--single {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .projects-pair--single .project-card:only-child {
+    grid-column: 1;
   }
 }
