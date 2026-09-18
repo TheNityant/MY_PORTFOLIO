@@ -291,7 +291,7 @@ export const projects: Project[] = [
       "Statistical analysis platform in development, combining a modern frontend with a Python analytics stack.",
     technologies: ["Frontend", "Python", "Statistics"],
     status: "In development",
-    media: { kind: "video", src: "media/Projects/statforge_analytics_long_authenticator_style.mp4", alt: "Media frame for the Statistical Analysis Platform." },
+    media: { kind: "video", src: portfolioAsset("PROJECT", "statforge_analytics_long_authenticator_style.mp4"), alt: "Media frame for the Statistical Analysis Platform." },
   },
   {
     id: "Backend_Authenticator",
