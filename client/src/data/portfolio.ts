@@ -478,14 +478,18 @@ export const experience: ExperienceItem[] = [
   },
   {
     kind: "entry",
-    id: "iitb-hackathon",
-    org: "IIT Bombay",
+    id: "iitd-hackathon",
+    org: "IIT Delhi",
     label: "Participant",
     dates: "",
     location: "Delhi",
-    description: "Attended a two-day hackathon at IIT Bombay.",
+    description: "Attended a hackathon at IIT Delhi.",
     skills: ["Hackathon"],
-    mark: { fallback: "IITB", alt: "IIT Bombay" },
+    mark: {
+      src: portfolioAsset("EXPERIENCE AND BLOGS", "IIT Delhi.png"),
+      fallback: "IITD",
+      alt: "IIT Delhi",
+    },
   },
   {
     kind: "collection",
