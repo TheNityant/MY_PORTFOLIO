@@ -486,7 +486,7 @@ export const experience: ExperienceItem[] = [
     description: "Attended a hackathon at IIT Delhi.",
     skills: ["Hackathon"],
     mark: {
-      src: portfolioAsset("EXPERIENCE AND BLOGS", "IIT Delhi.png"),
+      src: portfolioAsset("EXPERIENCE AND BLOGS", "IIT_DELHI.png"),
       fallback: "IITD",
       alt: "IIT Delhi",
     },
