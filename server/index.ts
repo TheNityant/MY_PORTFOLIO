@@ -1,12 +1,32 @@
-import express from "express";
-import { createServer } from "http";
-import path from "path";
-import { fileURLToPath } from "url";
-import { getDashboardPayload, getWorkoutSummary } from "./dashboard";
-import { getCodingSummary } from "./wakatime";
+import express, { type RequestHandler } from "express";
+import { createServer } from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { GET as getCoding } from "../api/coding.ts";
+import { GET as getHealth } from "../api/health.ts";
+import { GET as getWorkouts } from "../api/workouts.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+type ApiHandler = (request: Request) => Response | Promise<Response>;
+
+function apiRoute(handler: ApiHandler): RequestHandler {
+  return async (_req, res, next) => {
+    try {
+      const response = await handler(new Request("http://127.0.0.1/"));
+
+      res.status(response.status);
+      response.headers.forEach((value, key) => {
+        res.setHeader(key, value);
+      });
+
+      res.send(await response.text());
+    } catch (error) {
+      next(error);
+    }
+  };
+}
 
 async function startServer() {
   const app = express();
@@ -15,37 +35,10 @@ async function startServer() {
   app.disable("x-powered-by");
   app.use(express.json({ limit: "256kb" }));
 
-  app.get("/api/health", (_req, res) => {
-    res.json({
-      ok: true,
-      service: "portfolio-api",
-      timestamp: new Date().toISOString(),
-    });
-  });
+  app.get("/api/health", apiRoute(getHealth));
+  app.get("/api/coding", apiRoute(getCoding));
+  app.get("/api/workouts", apiRoute(getWorkouts));
 
-  app.get("/api/dashboard", async (_req, res) => {
-    const payload = await getDashboardPayload();
-
-    // The dashboard is allowed to be slightly stale if an upstream provider is slow.
-    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
-    res.json(payload);
-  });
-
-  app.get("/api/coding", async (_req, res) => {
-    const coding = await getCodingSummary();
-
-    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
-    res.json(coding);
-  });
-
-  app.get("/api/workouts", async (_req, res) => {
-    const workouts = await getWorkoutSummary();
-
-    res.setHeader("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
-    res.json(workouts);
-  });
-
-  // Serve static files from dist/public in production.
   const staticPath =
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
@@ -53,7 +46,6 @@ async function startServer() {
 
   app.use(express.static(staticPath));
 
-  // Handle client-side routing after API routes.
   app.get("*", (_req, res) => {
     res.sendFile(path.join(staticPath, "index.html"));
   });
