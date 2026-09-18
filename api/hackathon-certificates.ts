@@ -28,10 +28,80 @@ function publicObjectUrl(baseUrl: string, bucket: string, objectPath: string) {
   const encodedBucket = encodeURIComponent(bucket);
   const encodedPath = objectPath
     .split("/")
+    .filter(Boolean)
     .map((segment) => encodeURIComponent(segment))
     .join("/");
 
   return `${baseUrl.replace(/\/+$/, "")}/storage/v1/object/public/${encodedBucket}/${encodedPath}`;
+}
+
+function normalizePrefix(prefix: string) {
+  return prefix.trim().replace(/^\/+|\/+$/g, "");
+}
+
+function joinObjectPath(prefix: string, name: string) {
+  const cleanPrefix = normalizePrefix(prefix);
+  const cleanName = name.replace(/^\/+/, "");
+  return cleanPrefix ? `${cleanPrefix}/${cleanName}` : cleanName;
+}
+
+async function listObjects(
+  baseUrl: string,
+  bucket: string,
+  prefix: string,
+  secretKey: string,
+) {
+  const listUrl =
+    `${baseUrl.replace(/\/+$/, "")}/storage/v1/object/list/${encodeURIComponent(bucket)}`;
+
+  const response = await fetch(listUrl, {
+    method: "POST",
+    headers: storageHeaders(secretKey),
+    body: JSON.stringify({
+      prefix,
+      limit: 1000,
+      offset: 0,
+      sortBy: { column: "name", order: "asc" },
+    }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(7_000),
+  });
+
+  if (!response.ok) {
+    const body = (await response.text()).slice(0, 300);
+    throw new Error(
+      `Supabase Storage list failed with HTTP ${response.status}${body ? `: ${body}` : ""}`,
+    );
+  }
+
+  return (await response.json()) as StorageObject[];
+}
+
+function isPdf(row: StorageObject) {
+  return typeof row.name === "string" && row.name.toLowerCase().endsWith(".pdf");
+}
+
+function isFolder(row: StorageObject) {
+  return typeof row.name === "string" && row.id == null && row.metadata == null;
+}
+
+function fileRecord(
+  row: StorageObject,
+  prefix: string,
+  baseUrl: string,
+  bucket: string,
+) {
+  const name = row.name as string;
+  const objectPath = joinObjectPath(prefix, name);
+
+  return {
+    name,
+    objectPath,
+    url: publicObjectUrl(baseUrl, bucket, objectPath),
+    size: row.metadata?.size ?? null,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
+  };
 }
 
 export async function GET(_request: Request) {
@@ -46,7 +116,7 @@ export async function GET(_request: Request) {
 
   const bucket =
     process.env.PORTFOLIO_EXPERIENCE_BUCKET?.trim() || DEFAULT_BUCKET;
-  const prefix =
+  const configuredPrefix =
     process.env.PORTFOLIO_HACKATHON_CERTIFICATES_PREFIX?.trim() || DEFAULT_PREFIX;
 
   if (!secretKey) {
@@ -57,7 +127,7 @@ export async function GET(_request: Request) {
         diagnostic:
           "Portfolio Supabase server credential is missing. Add PORTFOLIO_SUPABASE_SECRET_KEY (preferred) or PORTFOLIO_SUPABASE_SERVICE_ROLE_KEY to this Vercel deployment so the server can list Storage objects.",
         bucket,
-        prefix,
+        prefix: configuredPrefix,
         files: [],
       },
       { status: 200, headers: { "Cache-Control": "no-store, max-age=0" } },
@@ -65,58 +135,94 @@ export async function GET(_request: Request) {
   }
 
   try {
-    const listUrl =
-      `${baseUrl.replace(/\/+$/, "")}/storage/v1/object/list/${encodeURIComponent(bucket)}`;
+    const normalizedConfiguredPrefix = normalizePrefix(configuredPrefix);
 
-    const response = await fetch(listUrl, {
-      method: "POST",
-      headers: storageHeaders(secretKey),
-      body: JSON.stringify({
-        prefix,
-        limit: 100,
-        offset: 0,
-        sortBy: { column: "name", order: "asc" },
-      }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(7_000),
-    });
+    // First try the configured folder exactly as supplied.
+    const directRows = await listObjects(
+      baseUrl,
+      bucket,
+      normalizedConfiguredPrefix,
+      secretKey,
+    );
 
-    if (!response.ok) {
-      const body = (await response.text()).slice(0, 300);
-      throw new Error(
-        `Supabase Storage list failed with HTTP ${response.status}${body ? `: ${body}` : ""}`,
+    let resolvedPrefix = normalizedConfiguredPrefix;
+    let rows = directRows;
+    const discoveredFolders = new Set<string>();
+
+    // If Supabase returns no PDFs, inspect the bucket root. This makes the
+    // integration resilient to case/spelling differences such as
+    // "Hackathon certificates" vs "Hackathon Certificates".
+    if (!rows.some(isPdf)) {
+      const rootRows = await listObjects(baseUrl, bucket, "", secretKey);
+
+      for (const row of rootRows) {
+        if (isFolder(row) && row.name) discoveredFolders.add(row.name);
+      }
+
+      const likelyFolders = [...discoveredFolders].filter((name) =>
+        /hackathon|competition|certificate/i.test(name),
       );
+
+      const candidates = [
+        normalizedConfiguredPrefix,
+        ...likelyFolders,
+      ].filter((value, index, values) => value && values.indexOf(value) === index);
+
+      for (const candidate of candidates) {
+        const variants = [normalizePrefix(candidate), `${normalizePrefix(candidate)}/`];
+
+        for (const variant of variants) {
+          const candidateRows = await listObjects(baseUrl, bucket, variant, secretKey);
+          if (candidateRows.some(isPdf)) {
+            resolvedPrefix = normalizePrefix(candidate);
+            rows = candidateRows;
+            break;
+          }
+        }
+
+        if (rows.some(isPdf)) break;
+      }
     }
 
-    const rows = (await response.json()) as StorageObject[];
-    const files = rows
-      .filter(
-        (row) =>
-          typeof row.name === "string" &&
-          row.name.toLowerCase().endsWith(".pdf"),
-      )
-      .map((row) => {
-        const name = row.name as string;
-        const objectPath = `${prefix}/${name}`;
+    // One more level of recursion handles an accidental extra folder such as
+    // "Hackathon Certificates/2026".
+    if (!rows.some(isPdf)) {
+      const parentRows = await listObjects(baseUrl, bucket, resolvedPrefix, secretKey);
+      const childFolders = parentRows
+        .filter(isFolder)
+        .map((row) => row.name as string);
 
-        return {
-          name,
-          objectPath,
-          url: publicObjectUrl(baseUrl, bucket, objectPath),
-          size: row.metadata?.size ?? null,
-          createdAt: row.created_at ?? null,
-          updatedAt: row.updated_at ?? null,
-        };
-      });
+      for (const child of childFolders) {
+        const childPrefix = joinObjectPath(resolvedPrefix, child);
+        const childRows = await listObjects(baseUrl, bucket, childPrefix, secretKey);
+        if (childRows.some(isPdf)) {
+          resolvedPrefix = childPrefix;
+          rows = childRows;
+          break;
+        }
+      }
+    }
+
+    const files = rows
+      .filter(isPdf)
+      .map((row) => fileRecord(row, resolvedPrefix, baseUrl, bucket));
 
     return Response.json(
       {
         ok: true,
         status: "ready",
         bucket,
-        prefix,
+        prefix: configuredPrefix,
+        resolvedPrefix,
         count: files.length,
         files,
+        ...(files.length === 0
+          ? {
+              diagnostic:
+                "Storage access works, but no PDFs were found at the configured path or discovered Hackathon/Certificate folders.",
+              discoveredFolders: [...discoveredFolders],
+            }
+          : {}),
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } },
     );
@@ -130,7 +236,7 @@ export async function GET(_request: Request) {
         status: "error",
         diagnostic,
         bucket,
-        prefix,
+        prefix: configuredPrefix,
         files: [],
       },
       { status: 200, headers: { "Cache-Control": "no-store, max-age=0" } },
