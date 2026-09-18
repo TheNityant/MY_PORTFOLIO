@@ -55,7 +55,7 @@ export async function GET(_request: Request) {
         ok: false,
         status: "unconfigured",
         diagnostic:
-          "PORTFOLIO_SUPABASE_SECRET_KEY is missing; the server cannot list Storage objects.",
+          "Portfolio Supabase server credential is missing. Add PORTFOLIO_SUPABASE_SECRET_KEY (preferred) or PORTFOLIO_SUPABASE_SERVICE_ROLE_KEY to this Vercel deployment so the server can list Storage objects.",
         bucket,
         prefix,
         files: [],
