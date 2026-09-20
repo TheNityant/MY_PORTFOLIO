@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
+import { useFinePointer } from "@/hooks/useFinePointer";
 import {
   education,
   experience,
@@ -92,6 +93,7 @@ function ExperienceHoverPreview({
 }
 
 function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
+  const finePointer = useFinePointer();
   const [open, setOpen] = useState(false);
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
   const [certificateEntries, setCertificateEntries] = useState<ExperienceCollectionEntry[]>([]);
@@ -261,20 +263,22 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
                       ) : null}
                     </div>
 
-                    <div className="experience-collection-certificate">
-                      {certificateHref ? (
-                        <iframe
-                          src={`${certificateHref}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                          title={`${entry.org} certificate preview`}
-                          loading="lazy"
-                          tabIndex={-1}
-                        />
-                      ) : (
-                        <div className="experience-collection-certificate__empty">
-                          Certificate preview unavailable
-                        </div>
-                      )}
-                    </div>
+                    {finePointer ? (
+                      <div className="experience-collection-certificate">
+                        {certificateHref ? (
+                          <iframe
+                            src={`${certificateHref}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                            title={`${entry.org} certificate preview`}
+                            loading="lazy"
+                            tabIndex={-1}
+                          />
+                        ) : (
+                          <div className="experience-collection-certificate__empty">
+                            Certificate preview unavailable
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </li>
                 );
               })}
