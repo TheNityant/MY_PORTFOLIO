@@ -28,6 +28,9 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const [slideIndex, setSlideIndex] = useState(0);
   const [nearViewport, setNearViewport] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const mediaDebug =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("mediaDebug");
 
   const isCarousel = media.kind === "video-carousel";
   const carouselVideos = isCarousel ? media.videos : [];
@@ -46,8 +49,35 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     setVideoReady(false);
   }, [safeSlideIndex]);
 
+  const debugVideoEvent = (eventName: string) => {
+    if (!mediaDebug) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const buffered =
+      video.buffered.length > 0
+        ? {
+            start: Number(video.buffered.start(0).toFixed(2)),
+            end: Number(video.buffered.end(video.buffered.length - 1).toFixed(2)),
+          }
+        : null;
+
+    console.info(`[project-video:${project.id}] ${eventName}`, {
+      msSinceNavigation: Math.round(performance.now()),
+      readyState: video.readyState,
+      networkState: video.networkState,
+      duration: Number.isFinite(video.duration) ? Number(video.duration.toFixed(2)) : null,
+      currentTime: Number(video.currentTime.toFixed(2)),
+      videoWidth: video.videoWidth,
+      videoHeight: video.videoHeight,
+      buffered,
+      currentSrc: video.currentSrc,
+    });
+  };
+
   const reportReady = () => {
     setVideoReady(true);
+    debugVideoEvent("ready");
   };
 
   useEffect(() => {
@@ -148,8 +178,14 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "metadata"}
+          onLoadStart={() => debugVideoEvent("loadstart")}
+          onLoadedMetadata={() => debugVideoEvent("loadedmetadata")}
           onLoadedData={reportReady}
           onCanPlay={reportReady}
+          onPlaying={() => debugVideoEvent("playing")}
+          onWaiting={() => debugVideoEvent("waiting")}
+          onStalled={() => debugVideoEvent("stalled")}
+          onError={() => debugVideoEvent("error")}
           aria-label={activeCarouselVideo.label ?? media.alt}
         />
 
@@ -219,8 +255,14 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "metadata"}
+          onLoadStart={() => debugVideoEvent("loadstart")}
+          onLoadedMetadata={() => debugVideoEvent("loadedmetadata")}
           onLoadedData={reportReady}
           onCanPlay={reportReady}
+          onPlaying={() => debugVideoEvent("playing")}
+          onWaiting={() => debugVideoEvent("waiting")}
+          onStalled={() => debugVideoEvent("stalled")}
+          onError={() => debugVideoEvent("error")}
           aria-label={media.alt}
         />
       </div>
