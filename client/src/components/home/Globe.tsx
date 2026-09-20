@@ -12,7 +12,6 @@ const THETA_MIN = 0.12;
 const THETA_MAX = 0.55;
 const INERTIA_DECAY = 0.92;
 const SPRING = 0.14;
-const DPR = 2;
 const MUMBAI = {
   lat: profile.locationLat,
   lng: profile.locationLng,
@@ -74,17 +73,22 @@ export function Globe({ className }: { className?: string }) {
 
     let width = canvas.offsetWidth;
     let frameId = 0;
+    let idleTimer = 0;
+    let visible = true;
     const isDark = theme === "dark";
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const dpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.25 : 2);
+    const mapSamples = coarsePointer ? 12000 : 22000;
 
     const globe = createGlobe(canvas, {
-      devicePixelRatio: DPR,
-      width: Math.max(1, width * DPR),
-      height: Math.max(1, width * DPR),
+      devicePixelRatio: dpr,
+      width: Math.max(1, width * dpr),
+      height: Math.max(1, width * dpr),
       phi: phiRef.current,
       theta: thetaRef.current,
       dark: isDark ? 1 : 0,
       diffuse: isDark ? 0.5 : 0.62,
-      mapSamples: 22000,
+      mapSamples,
       mapBrightness: isDark ? 1.2 : 1.35,
       baseColor: (isDark ? [0.8, 0.9, 1.2] : [0.96, 0.97, 0.99]) as [number, number, number],
       markerColor: [1, 1, 1],
@@ -97,13 +101,13 @@ export function Globe({ className }: { className?: string }) {
       const ctx = overlay.getContext("2d");
       if (!ctx || width <= 0) return;
 
-      const renderSize = Math.max(1, width * DPR);
+      const renderSize = Math.max(1, width * dpr);
       if (overlay.width !== renderSize || overlay.height !== renderSize) {
         overlay.width = renderSize;
         overlay.height = renderSize;
       }
 
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, width);
 
       const projected = projectSpherePoint(MUMBAI_VECTOR, phi, theta);
@@ -137,7 +141,21 @@ export function Globe({ className }: { className?: string }) {
     };
     window.addEventListener("resize", onResize);
 
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      { rootMargin: "240px 0px" },
+    );
+    visibilityObserver.observe(canvas);
+
     const tick = () => {
+      if (!visible || document.hidden) {
+        idleTimer = window.setTimeout(() => {
+          frameId = requestAnimationFrame(tick);
+        }, 250);
+        return;
+      }
       if (pointerId.current === null && !reducedMotion) {
         phiRef.current += PHI_IDLE;
       }
@@ -156,7 +174,7 @@ export function Globe({ className }: { className?: string }) {
       );
       dragTheta.current *= 0.82;
 
-      const renderWidth = Math.max(1, width * DPR);
+      const renderWidth = Math.max(1, width * dpr);
       const renderPhi = phiRef.current + dragPhi.current;
       const renderTheta = thetaRef.current;
 
@@ -175,12 +193,15 @@ export function Globe({ className }: { className?: string }) {
 
     return () => {
       cancelAnimationFrame(frameId);
+      window.clearTimeout(idleTimer);
+      visibilityObserver.disconnect();
       globe.destroy();
       window.removeEventListener("resize", onResize);
     };
   }, [reducedMotion, theme]);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     pointerId.current = event.pointerId;
     lastPointer.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
