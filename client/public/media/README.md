@@ -34,4 +34,13 @@ Real portfolio images can also use `portfolioAsset(...)` from public Supabase bu
 
 ## Naming
 
-Prefer short, stable filenames. Storage paths are case-sensitive, so renaming an uploaded object also requires updating its matching source entry.
+Storage paths are case-sensitive, so the filename passed to `portfolioAsset(...)` must exactly match the uploaded object.
+
+For production videos, prefer versioned filenames when the media changes, for example:
+
+```text
+Authenticator-v2.mp4
+Authenticator-v3.mp4
+```
+
+Versioned URLs avoid stale browser/CDN copies when long-lived cache metadata is used. Do not overwrite a long-cached object in place unless you intentionally want clients to keep revalidating the same URL.
