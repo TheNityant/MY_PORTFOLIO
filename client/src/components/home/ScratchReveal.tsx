@@ -31,7 +31,8 @@ export function ScratchReveal() {
     if (!canvas || !stage) return;
 
     const rect = stage.getBoundingClientRect();
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const dpr = Math.min(coarsePointer ? 1 : 2, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
     canvas.style.width = `${rect.width}px`;
@@ -88,12 +89,17 @@ export function ScratchReveal() {
     if (!canvas || !ctx || complete) return;
 
     const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    const pixelStride = coarsePointer ? 16 : 4;
+    let sampledPixels = 0;
     let clearPixels = 0;
-    for (let i = 3; i < pixels.length; i += 4) {
+
+    for (let i = 3; i < pixels.length; i += pixelStride) {
+      sampledPixels += 1;
       if (pixels[i] === 0) clearPixels += 1;
     }
 
-    if (clearPixels / (pixels.length / 4) >= COMPLETE_THRESHOLD) {
+    if (sampledPixels > 0 && clearPixels / sampledPixels >= COMPLETE_THRESHOLD) {
       setComplete(true);
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
