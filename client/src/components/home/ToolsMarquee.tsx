@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import type { CSSProperties } from "react";
 import { coreStackTools, tools, type ToolMark } from "@/data/portfolio";
+import { useFinePointer } from "@/hooks/useFinePointer";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
@@ -66,13 +67,15 @@ function ToolLogoGroup({ toolsToRender, duplicate = false }: { toolsToRender: To
 
 export function ToolsMarquee() {
   const reducedMotion = usePrefersReducedMotion();
+  const finePointer = useFinePointer();
+  const animate = finePointer && !reducedMotion;
   const logoTools = tools.filter((tool) => Boolean(tool.icon));
 
   return (
     <div className="tools-marquee tools-marquee--logos" aria-label="Tools and technologies">
-      <div className={cn("tools-track", reducedMotion && "tools-track--static")}>
+      <div className={cn("tools-track", !animate && "tools-track--static")}>
         <ToolLogoGroup toolsToRender={logoTools} />
-        {!reducedMotion ? <ToolLogoGroup toolsToRender={logoTools} duplicate /> : null}
+        {animate ? <ToolLogoGroup toolsToRender={logoTools} duplicate /> : null}
       </div>
     </div>
   );
