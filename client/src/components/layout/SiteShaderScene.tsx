@@ -10,8 +10,10 @@ export default function SiteShaderScene() {
   return (
     <ShaderGradientCanvas
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
-      pixelDensity={1}
+      pixelDensity={0.8}
       fov={45}
+      preserveDrawingBuffer={false}
+      powerPreference="high-performance"
     >
       {theme === "dark" ? (
         <ShaderGradient
