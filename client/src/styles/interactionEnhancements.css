@@ -895,3 +895,50 @@
     font-size: 0.76rem;
   }
 }
+
+
+/* Project media loading ---------------------------------------------------
+   Keep the card visually stable while the MP4 buffers. The actual fix is to
+   avoid restarting the media request; this is only the visual handoff. */
+.project-media-asset {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.project-media-asset--ready,
+.project-media img.project-media-asset {
+  opacity: 1;
+}
+
+.project-media--loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 34%,
+      color-mix(in srgb, var(--foreground) 7%, transparent) 46%,
+      transparent 58%
+    ),
+    color-mix(in srgb, var(--foreground) 4%, var(--background));
+  background-size: 220% 100%;
+  animation: project-media-buffer 1.15s ease-in-out infinite;
+}
+
+@keyframes project-media-buffer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-media--loading::before {
+    animation: none;
+  }
+
+  .project-media-asset {
+    transition: none;
+  }
+}
