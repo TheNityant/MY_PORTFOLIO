@@ -26,6 +26,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const { media } = project;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   const isCarousel = media.kind === "video-carousel";
   const carouselVideos = isCarousel ? media.videos : [];
@@ -35,6 +36,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
 
   useEffect(() => {
     setSlideIndex(0);
+    setShouldLoadVideo(false);
   }, [project.id]);
 
   useEffect(() => {
@@ -42,17 +44,53 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const video = videoRef.current;
     if (!video) return;
 
-    const observer = new IntersectionObserver(
+    const preloadObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoadVideo(true);
+        preloadObserver.disconnect();
+      },
+      {
+        rootMargin: "1000px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    preloadObserver.observe(video);
+    return () => preloadObserver.disconnect();
+  }, [media.kind, reducedMotion]);
+
+  useEffect(() => {
+    if (!shouldLoadVideo || reducedMotion) return;
+    videoRef.current?.load();
+  }, [shouldLoadVideo, reducedMotion, safeSlideIndex]);
+
+  useEffect(() => {
+    if (
+      (media.kind !== "video" && media.kind !== "video-carousel") ||
+      reducedMotion ||
+      !shouldLoadVideo
+    ) {
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    const playbackObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) video.play().catch(() => undefined);
         else video.pause();
       },
-      { threshold: 0.45 },
+      { threshold: 0.25 },
     );
 
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [media, reducedMotion, safeSlideIndex]);
+    playbackObserver.observe(video);
+    return () => {
+      playbackObserver.disconnect();
+      video.pause();
+    };
+  }, [media.kind, reducedMotion, safeSlideIndex, shouldLoadVideo]);
 
   if (media.kind === "video-carousel") {
     if (!activeCarouselVideo) {
@@ -83,12 +121,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           key={src}
           ref={videoRef}
           className="project-media-asset project-media-asset--contain"
-          src={src}
+          src={shouldLoadVideo ? src : undefined}
           poster={poster}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={shouldLoadVideo ? "auto" : "none"}
           aria-label={activeCarouselVideo.label ?? media.alt}
         />
 
@@ -146,12 +184,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         <video
           ref={videoRef}
           className="project-media-asset"
-          src={src}
+          src={shouldLoadVideo ? src : undefined}
           poster={poster}
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={shouldLoadVideo ? "auto" : "none"}
           aria-label={media.alt}
         />
       </div>
