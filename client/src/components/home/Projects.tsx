@@ -22,48 +22,11 @@ function TechList({ items }: { items: readonly string[] }) {
   );
 }
 
-function canEagerLoadProjectMedia() {
-  const connection = (
-    navigator as Navigator & {
-      connection?: {
-        saveData?: boolean;
-        effectiveType?: string;
-      };
-    }
-  ).connection;
-
-  if (connection?.saveData) return false;
-  return !["slow-2g", "2g"].includes(connection?.effectiveType ?? "");
-}
-
-function scheduleWhenIdle(task: () => void) {
-  const browser = window as Window & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-    cancelIdleCallback?: (handle: number) => void;
-  };
-
-  if (browser.requestIdleCallback) {
-    const handle = browser.requestIdleCallback(task, { timeout: 1800 });
-    return () => browser.cancelIdleCallback?.(handle);
-  }
-
-  const handle = window.setTimeout(task, 1100);
-  return () => window.clearTimeout(handle);
-}
-
-function ProjectMedia({
-  project,
-  reducedMotion,
-  eagerLoad = false,
-}: {
-  project: Project;
-  reducedMotion: boolean;
-  eagerLoad?: boolean;
-}) {
+function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
   const { media } = project;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [shouldLoadVideo, setShouldLoadVideo] = useState(eagerLoad);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   const isCarousel = media.kind === "video-carousel";
   const carouselVideos = isCarousel ? media.videos : [];
@@ -73,12 +36,8 @@ function ProjectMedia({
 
   useEffect(() => {
     setSlideIndex(0);
-    setShouldLoadVideo(eagerLoad);
-  }, [project.id, eagerLoad]);
-
-  useEffect(() => {
-    if (eagerLoad) setShouldLoadVideo(true);
-  }, [eagerLoad]);
+    setShouldLoadVideo(false);
+  }, [project.id]);
 
   useEffect(() => {
     if ((media.kind !== "video" && media.kind !== "video-carousel") || reducedMotion) return;
@@ -92,7 +51,7 @@ function ProjectMedia({
         preloadObserver.disconnect();
       },
       {
-        rootMargin: "1000px 0px",
+        rootMargin: "700px 0px",
         threshold: 0.01,
       },
     );
@@ -285,21 +244,13 @@ function ProjectContent({
   );
 }
 
-function ProjectCard({
-  project,
-  reducedMotion,
-  eagerLoad,
-}: {
-  project: Project;
-  reducedMotion: boolean;
-  eagerLoad: boolean;
-}) {
+function ProjectCard({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
   const hasInteractiveMedia = project.media.kind === "video-carousel";
 
   if (hasInteractiveMedia) {
     return (
       <article className="project-card project-card--featured">
-        <ProjectMedia project={project} reducedMotion={reducedMotion} eagerLoad={eagerLoad} />
+        <ProjectMedia project={project} reducedMotion={reducedMotion} />
         <ProjectContent project={project} explicitLink />
       </article>
     );
@@ -307,7 +258,7 @@ function ProjectCard({
 
   const inner = (
     <>
-      <ProjectMedia project={project} reducedMotion={reducedMotion} eagerLoad={eagerLoad} />
+      <ProjectMedia project={project} reducedMotion={reducedMotion} />
       <ProjectContent project={project} />
     </>
   );
@@ -327,7 +278,6 @@ export function Projects() {
   const [domain, setDomain] = useState<ProjectDomainId>(defaultProjectDomain);
   const [page, setPage] = useState(0);
   const [vertical, setVertical] = useState(false);
-  const [preloadVisibleProjects, setPreloadVisibleProjects] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const domains = useMemo(() => visibleProjectDomains(), []);
@@ -345,19 +295,7 @@ export function Projects() {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (reducedMotion || !canEagerLoadProjectMedia()) return;
-    return scheduleWhenIdle(() => setPreloadVisibleProjects(true));
-  }, [reducedMotion]);
-
-  const enableImmediateProjectPreload = () => {
-    if (!reducedMotion && canEagerLoadProjectMedia()) {
-      setPreloadVisibleProjects(true);
-    }
-  };
-
   const selectDomain = (id: ProjectDomainId, index?: number) => {
-    enableImmediateProjectPreload();
     setDomain(id);
     setPage(0);
     if (index !== undefined) tabRefs.current[index]?.focus();
@@ -420,10 +358,7 @@ export function Projects() {
               className="projects-pager-btn"
               aria-label={`Previous projects in ${activeDomain.label}`}
               disabled={safePage === 0}
-              onClick={() => {
-                enableImmediateProjectPreload();
-                setPage((value) => Math.max(0, value - 1));
-              }}
+              onClick={() => setPage((value) => Math.max(0, value - 1))}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
@@ -435,10 +370,7 @@ export function Projects() {
               className="projects-pager-btn"
               aria-label={`Next projects in ${activeDomain.label}`}
               disabled={safePage >= pageCount - 1}
-              onClick={() => {
-                enableImmediateProjectPreload();
-                setPage((value) => Math.min(pageCount - 1, value + 1));
-              }}
+              onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
             >
               <ArrowRight size={16} aria-hidden="true" />
             </button>
@@ -456,12 +388,7 @@ export function Projects() {
           key={`${domain}-${safePage}`}
         >
           {visible.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              reducedMotion={reducedMotion}
-              eagerLoad={preloadVisibleProjects}
-            />
+            <ProjectCard key={project.id} project={project} reducedMotion={reducedMotion} />
           ))}
         </div>
       </div>
