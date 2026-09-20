@@ -49,18 +49,136 @@ function useRichAtmosphereAvailable() {
   return available;
 }
 
+function useDeferredShaderMount(enabled: boolean) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      setReady(false);
+      return;
+    }
+
+    let cancelled = false;
+    let idleHandle: number | null = null;
+    let timeoutHandle: number | null = null;
+
+    const schedule = () => {
+      const browser = window as Window & {
+        requestIdleCallback?: (
+          callback: () => void,
+          options?: { timeout: number },
+        ) => number;
+        cancelIdleCallback?: (handle: number) => void;
+      };
+
+      const mount = () => {
+        if (!cancelled) setReady(true);
+      };
+
+      if (browser.requestIdleCallback) {
+        idleHandle = browser.requestIdleCallback(mount, { timeout: 1800 });
+      } else {
+        timeoutHandle = window.setTimeout(mount, 900);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      schedule();
+    } else {
+      window.addEventListener("load", schedule, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", schedule);
+      if (timeoutHandle !== null) window.clearTimeout(timeoutHandle);
+      if (idleHandle !== null) {
+        (window as Window & { cancelIdleCallback?: (handle: number) => void })
+          .cancelIdleCallback?.(idleHandle);
+      }
+    };
+  }, [enabled]);
+
+  return ready;
+}
+
+function useMediaPressure() {
+  const [mediaPressure, setMediaPressure] = useState(false);
+
+  useEffect(() => {
+    const visibility = new Map<Element, boolean>();
+
+    const publish = () => {
+      for (const element of Array.from(visibility.keys())) {
+        if (!document.contains(element)) visibility.delete(element);
+      }
+      setMediaPressure(Array.from(visibility.values()).some(Boolean));
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          visibility.set(entry.target, entry.isIntersecting);
+        }
+        publish();
+      },
+      {
+        rootMargin: "240px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    const observeVideos = (root: ParentNode) => {
+      root.querySelectorAll("video").forEach((video) => {
+        if (visibility.has(video)) return;
+        visibility.set(video, false);
+        observer.observe(video);
+      });
+    };
+
+    observeVideos(document);
+
+    const mutationObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of Array.from(record.addedNodes)) {
+          if (!(node instanceof Element)) continue;
+          if (node.matches("video")) {
+            visibility.set(node, false);
+            observer.observe(node);
+          }
+          observeVideos(node);
+        }
+      }
+      publish();
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+      observer.disconnect();
+    };
+  }, []);
+
+  return mediaPressure;
+}
+
 export function SiteAtmosphere() {
   const richAtmosphereAvailable = useRichAtmosphereAvailable();
   const reducedMotion = usePrefersReducedMotion();
+  const mediaPressure = useMediaPressure();
+  const shaderReady = useDeferredShaderMount(
+    richAtmosphereAvailable && !reducedMotion,
+  );
 
   return (
     <div className="site-atmosphere" aria-hidden="true">
       <div className="site-atmosphere__fallback" />
-      {richAtmosphereAvailable && !reducedMotion ? (
+      {shaderReady ? (
         <SiteShaderBoundary>
           <Suspense fallback={null}>
             <div className="site-atmosphere__shader">
-              <SiteShaderScene />
+              <SiteShaderScene mediaPressure={mediaPressure} />
             </div>
           </Suspense>
         </SiteShaderBoundary>
