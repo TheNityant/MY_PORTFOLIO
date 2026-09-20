@@ -27,6 +27,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const videoRef = useRef<HTMLVideoElement>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const isCarousel = media.kind === "video-carousel";
   const carouselVideos = isCarousel ? media.videos : [];
@@ -37,7 +38,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   useEffect(() => {
     setSlideIndex(0);
     setShouldLoadVideo(false);
+    setVideoReady(false);
   }, [project.id]);
+
+  useEffect(() => {
+    setVideoReady(false);
+  }, [safeSlideIndex]);
 
   useEffect(() => {
     if ((media.kind !== "video" && media.kind !== "video-carousel") || reducedMotion) return;
@@ -61,11 +67,6 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }, [media.kind, reducedMotion]);
 
   useEffect(() => {
-    if (!shouldLoadVideo || reducedMotion) return;
-    videoRef.current?.load();
-  }, [shouldLoadVideo, reducedMotion, safeSlideIndex]);
-
-  useEffect(() => {
     if (
       (media.kind !== "video" && media.kind !== "video-carousel") ||
       reducedMotion ||
@@ -82,7 +83,10 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         if (entry.isIntersecting) video.play().catch(() => undefined);
         else video.pause();
       },
-      { threshold: 0.25 },
+      {
+        rootMargin: "80px 0px",
+        threshold: 0.05,
+      },
     );
 
     playbackObserver.observe(video);
@@ -116,17 +120,30 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     };
 
     return (
-      <div className="project-media project-media--frame project-media--carousel">
+      <div
+        className={cn(
+          "project-media",
+          "project-media--frame",
+          "project-media--carousel",
+          shouldLoadVideo && !videoReady && "project-media--loading",
+        )}
+      >
         <video
           key={src}
           ref={videoRef}
-          className="project-media-asset project-media-asset--contain"
+          className={cn(
+            "project-media-asset",
+            "project-media-asset--contain",
+            videoReady && "project-media-asset--ready",
+          )}
           src={shouldLoadVideo ? src : undefined}
           poster={poster}
           muted
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "none"}
+          onLoadedData={() => setVideoReady(true)}
+          onCanPlay={() => setVideoReady(true)}
           aria-label={activeCarouselVideo.label ?? media.alt}
         />
 
@@ -180,16 +197,24 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     }
 
     return (
-      <div className="project-media project-media--frame">
+      <div
+        className={cn(
+          "project-media",
+          "project-media--frame",
+          shouldLoadVideo && !videoReady && "project-media--loading",
+        )}
+      >
         <video
           ref={videoRef}
-          className="project-media-asset"
+          className={cn("project-media-asset", videoReady && "project-media-asset--ready")}
           src={shouldLoadVideo ? src : undefined}
           poster={poster}
           muted
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "none"}
+          onLoadedData={() => setVideoReady(true)}
+          onCanPlay={() => setVideoReady(true)}
           aria-label={media.alt}
         />
       </div>
