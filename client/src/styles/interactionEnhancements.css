@@ -661,3 +661,237 @@
     max-height: 70vh;
   }
 }
+
+
+/* Mobile-first interaction and performance polish -------------------------
+   Phones use the static site atmosphere, larger touch targets, visible
+   project-domain tabs, and lighter translucent surfaces. */
+@media (max-width: 699px) {
+  .site-header {
+    width: 100%;
+    gap: 0.4rem;
+    padding: 0.68rem 0.8rem;
+  }
+
+  .wordmark {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .main-nav {
+    gap: 0.2rem;
+    margin-left: auto;
+  }
+
+  .nav-link {
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.55rem;
+  }
+
+  .nav-link-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .header-tools {
+    gap: 0.15rem;
+  }
+
+  .header-tools .header-tool {
+    min-width: 2.35rem;
+    min-height: 2.35rem;
+    justify-content: center;
+    padding: 0.3rem;
+  }
+
+  .header-github {
+    display: none !important;
+  }
+
+  .hero-actions.hero-actions--technical {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: min(100%, 22rem);
+    gap: 0.7rem;
+    margin-inline: auto;
+  }
+
+  .hero-actions--technical .hero-divider {
+    display: none;
+  }
+
+  .hero-actions--technical .hero-resume-action,
+  .hero-actions--technical .hero-work-action {
+    min-height: 2.75rem;
+    justify-content: center;
+    padding-inline: 0.8rem;
+  }
+
+  .hero-actions--technical .hero-resume-action {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .hero-actions--technical .hero-work-action {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .hero-actions--technical .social-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .hero-actions--technical .social-actions a {
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .project-story-rail {
+    width: calc(100% + 0.25rem);
+    max-width: 100%;
+    gap: 0.4rem;
+    padding: 0.05rem 0 0.4rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .project-story-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .project-story-item {
+    flex: 0 0 auto;
+    min-height: 2.5rem;
+    gap: 0;
+    padding: 0.48rem 0.72rem;
+    scroll-snap-align: start;
+    border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--background) 72%, transparent);
+  }
+
+  .project-story-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    color: var(--muted-foreground);
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .project-story-bar {
+    display: none;
+  }
+
+  .project-story-item--active {
+    border-color: color-mix(in srgb, var(--foreground) 28%, transparent);
+    background: color-mix(in srgb, var(--foreground) 9%, var(--background));
+  }
+
+  .project-story-item--active .project-story-label {
+    color: var(--foreground);
+  }
+
+  .projects-pager-btn,
+  .project-media-carousel-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  .project-body {
+    padding: 1rem;
+  }
+
+  .project-copy p {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .project-tech li {
+    padding: 0.24rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .globe-stage {
+    cursor: default;
+    touch-action: pan-y;
+  }
+
+  .experience-collection-item {
+    min-height: 0;
+    padding: 0.9rem;
+  }
+
+  .experience-collection-item--active {
+    transform: none;
+  }
+
+  .experience-collection-list {
+    max-height: min(36rem, 72svh);
+    padding-right: 0.1rem;
+  }
+
+  .dark .dashboard-item-frame,
+  .dark .dashboard-tile,
+  .dark .project-card,
+  .dark .writing-card,
+  .dark .experience-card {
+    background: rgba(8, 11, 14, 0.92);
+    backdrop-filter: none;
+  }
+
+  :root:not(.dark) .dashboard-item-frame,
+  :root:not(.dark) .dashboard-tile,
+  :root:not(.dark) .project-card,
+  :root:not(.dark) .writing-card,
+  :root:not(.dark) .experience-card {
+    background: rgba(250, 250, 248, 0.95);
+    backdrop-filter: none;
+  }
+
+  .site-header {
+    backdrop-filter: blur(10px);
+  }
+}
+
+@media (max-width: 360px) {
+  .site-header {
+    padding-inline: 0.6rem;
+  }
+
+  .wordmark {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .nav-link,
+  .header-tools .header-tool {
+    min-width: 2.15rem;
+    min-height: 2.15rem;
+  }
+
+  .hero-actions.hero-actions--technical {
+    gap: 0.55rem;
+  }
+
+  .hero-actions--technical .hero-resume-action,
+  .hero-actions--technical .hero-work-action {
+    padding-inline: 0.55rem;
+    font-size: 0.76rem;
+  }
+}
