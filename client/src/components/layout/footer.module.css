@@ -203,3 +203,18 @@
     gap: 0.55rem;
   }
 }
+
+
+@media (max-width: 699px), (hover: none) and (pointer: coarse) {
+  .wave {
+    animation: none;
+  }
+
+  .footer::after {
+    filter: blur(28px);
+  }
+
+  .contactButton {
+    box-shadow: none;
+  }
+}
