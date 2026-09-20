@@ -22,11 +22,22 @@ function TechList({ items }: { items: readonly string[] }) {
   );
 }
 
-function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectMedia({
+  project,
+  reducedMotion,
+  loadAllowed,
+  onReady,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  loadAllowed: boolean;
+  onReady?: () => void;
+}) {
   const { media } = project;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const readyReportedRef = useRef(false);
   const [slideIndex, setSlideIndex] = useState(0);
-  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const [nearViewport, setNearViewport] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
   const isCarousel = media.kind === "video-carousel";
@@ -34,16 +45,25 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const safeSlideIndex =
     carouselVideos.length === 0 ? 0 : Math.min(slideIndex, carouselVideos.length - 1);
   const activeCarouselVideo = isCarousel ? carouselVideos[safeSlideIndex] : undefined;
+  const shouldLoadVideo = loadAllowed && nearViewport;
 
   useEffect(() => {
     setSlideIndex(0);
-    setShouldLoadVideo(false);
+    setNearViewport(false);
     setVideoReady(false);
+    readyReportedRef.current = false;
   }, [project.id]);
 
   useEffect(() => {
     setVideoReady(false);
   }, [safeSlideIndex]);
+
+  const reportReady = () => {
+    setVideoReady(true);
+    if (readyReportedRef.current) return;
+    readyReportedRef.current = true;
+    onReady?.();
+  };
 
   useEffect(() => {
     if ((media.kind !== "video" && media.kind !== "video-carousel") || reducedMotion) return;
@@ -53,7 +73,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const preloadObserver = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-        setShouldLoadVideo(true);
+        setNearViewport(true);
         preloadObserver.disconnect();
       },
       {
@@ -142,8 +162,8 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "none"}
-          onLoadedData={() => setVideoReady(true)}
-          onCanPlay={() => setVideoReady(true)}
+          onLoadedData={reportReady}
+          onCanPlay={reportReady}
           aria-label={activeCarouselVideo.label ?? media.alt}
         />
 
@@ -213,8 +233,8 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           loop
           playsInline
           preload={shouldLoadVideo ? "auto" : "none"}
-          onLoadedData={() => setVideoReady(true)}
-          onCanPlay={() => setVideoReady(true)}
+          onLoadedData={reportReady}
+          onCanPlay={reportReady}
           aria-label={media.alt}
         />
       </div>
@@ -269,13 +289,28 @@ function ProjectContent({
   );
 }
 
-function ProjectCard({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectCard({
+  project,
+  reducedMotion,
+  loadAllowed,
+  onMediaReady,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  loadAllowed: boolean;
+  onMediaReady?: () => void;
+}) {
   const hasInteractiveMedia = project.media.kind === "video-carousel";
 
   if (hasInteractiveMedia) {
     return (
       <article className="project-card project-card--featured">
-        <ProjectMedia project={project} reducedMotion={reducedMotion} />
+        <ProjectMedia
+          project={project}
+          reducedMotion={reducedMotion}
+          loadAllowed={loadAllowed}
+          onReady={onMediaReady}
+        />
         <ProjectContent project={project} explicitLink />
       </article>
     );
@@ -283,7 +318,12 @@ function ProjectCard({ project, reducedMotion }: { project: Project; reducedMoti
 
   const inner = (
     <>
-      <ProjectMedia project={project} reducedMotion={reducedMotion} />
+      <ProjectMedia
+          project={project}
+          reducedMotion={reducedMotion}
+          loadAllowed={loadAllowed}
+          onReady={onMediaReady}
+        />
       <ProjectContent project={project} />
     </>
   );
@@ -303,6 +343,7 @@ export function Projects() {
   const [domain, setDomain] = useState<ProjectDomainId>(defaultProjectDomain);
   const [page, setPage] = useState(0);
   const [vertical, setVertical] = useState(false);
+  const [firstMediaReady, setFirstMediaReady] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const domains = useMemo(() => visibleProjectDomains(), []);
@@ -311,6 +352,12 @@ export function Projects() {
   const safePage = Math.min(page, pageCount - 1);
   const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
+  const firstProjectHasVideo =
+    visible[0]?.media.kind === "video" || visible[0]?.media.kind === "video-carousel";
+
+  useEffect(() => {
+    setFirstMediaReady(false);
+  }, [domain, safePage]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1280px)");
@@ -412,8 +459,14 @@ export function Projects() {
           )}
           key={`${domain}-${safePage}`}
         >
-          {visible.map((project) => (
-            <ProjectCard key={project.id} project={project} reducedMotion={reducedMotion} />
+          {visible.map((project, index) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              reducedMotion={reducedMotion}
+              loadAllowed={index === 0 || !firstProjectHasVideo || firstMediaReady}
+              onMediaReady={index === 0 ? () => setFirstMediaReady(true) : undefined}
+            />
           ))}
         </div>
       </div>
