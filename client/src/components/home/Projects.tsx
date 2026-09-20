@@ -343,6 +343,7 @@ export function Projects() {
   const [domain, setDomain] = useState<ProjectDomainId>(defaultProjectDomain);
   const [page, setPage] = useState(0);
   const [vertical, setVertical] = useState(false);
+  const [multiColumn, setMultiColumn] = useState(false);
   const [firstMediaReady, setFirstMediaReady] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -360,11 +361,21 @@ export function Projects() {
   }, [domain, safePage]);
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 1280px)");
-    const update = () => setVertical(media.matches);
+    const verticalMedia = window.matchMedia("(min-width: 1280px)");
+    const multiColumnMedia = window.matchMedia("(min-width: 700px)");
+    const update = () => {
+      setVertical(verticalMedia.matches);
+      setMultiColumn(multiColumnMedia.matches);
+    };
+
     update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    verticalMedia.addEventListener("change", update);
+    multiColumnMedia.addEventListener("change", update);
+
+    return () => {
+      verticalMedia.removeEventListener("change", update);
+      multiColumnMedia.removeEventListener("change", update);
+    };
   }, []);
 
   const selectDomain = (id: ProjectDomainId, index?: number) => {
@@ -464,7 +475,12 @@ export function Projects() {
               key={project.id}
               project={project}
               reducedMotion={reducedMotion}
-              loadAllowed={index === 0 || !firstProjectHasVideo || firstMediaReady}
+              loadAllowed={
+                index === 0 ||
+                !multiColumn ||
+                !firstProjectHasVideo ||
+                firstMediaReady
+              }
               onMediaReady={index === 0 ? () => setFirstMediaReady(true) : undefined}
             />
           ))}
