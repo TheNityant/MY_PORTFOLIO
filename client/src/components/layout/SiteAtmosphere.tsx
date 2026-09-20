@@ -1,4 +1,5 @@
 import { Component, Suspense, lazy, useEffect, useState, type ReactNode } from "react";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const SiteShaderScene = lazy(() => import("./SiteShaderScene"));
 
@@ -19,27 +20,43 @@ class SiteShaderBoundary extends Component<{ children: ReactNode }, { failed: bo
   }
 }
 
-function useWebGLAvailable() {
+function useRichAtmosphereAvailable() {
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
-    const hasWebGL = Boolean(
-      window.WebGLRenderingContext ||
-        (window as typeof window & { WebGL2RenderingContext?: unknown }).WebGL2RenderingContext,
-    );
-    setAvailable(hasWebGL);
+    const media = window.matchMedia("(min-width: 768px) and (pointer: fine)");
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          saveData?: boolean;
+        };
+      }
+    ).connection;
+
+    const update = () => {
+      const hasWebGL = Boolean(
+        window.WebGLRenderingContext ||
+          (window as typeof window & { WebGL2RenderingContext?: unknown }).WebGL2RenderingContext,
+      );
+      setAvailable(hasWebGL && media.matches && !connection?.saveData);
+    };
+
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
   }, []);
 
   return available;
 }
 
 export function SiteAtmosphere() {
-  const webGLAvailable = useWebGLAvailable();
+  const richAtmosphereAvailable = useRichAtmosphereAvailable();
+  const reducedMotion = usePrefersReducedMotion();
 
   return (
     <div className="site-atmosphere" aria-hidden="true">
       <div className="site-atmosphere__fallback" />
-      {webGLAvailable ? (
+      {richAtmosphereAvailable && !reducedMotion ? (
         <SiteShaderBoundary>
           <Suspense fallback={null}>
             <div className="site-atmosphere__shader">
