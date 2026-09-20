@@ -865,7 +865,9 @@
   }
 
   .site-header {
-    backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--background) 96%, transparent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
@@ -939,6 +941,74 @@
   }
 
   .project-media-asset {
+    transition: none;
+  }
+}
+
+
+/* Android / touch performance ---------------------------------------------
+   Preserve the visual design while removing continuous GPU-heavy effects that
+   add little value on phones. Chrome Android also benefits from skipping
+   below-fold paint/layout work until a section approaches the viewport. */
+@media (max-width: 699px), (hover: none) and (pointer: coarse) {
+  .hero-live-status,
+  .hero-actions--technical .hero-resume-action,
+  .hero-actions--technical .hero-work-action {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .hero-live-status::before,
+  .hero-live-status__ping,
+  .hero-actions--technical .hero-resume-action::after,
+  .hero-actions--technical .hero-work-action::after,
+  .dashboard-section--cascade .dashboard-item,
+  .scratch-reward-pulse,
+  .projects-pair--animate {
+    animation: none !important;
+  }
+
+  .hero-actions--technical .hero-resume-action::after,
+  .hero-actions--technical .hero-work-action::after {
+    --hero-action-spark-angle: 38deg;
+    filter: none !important;
+  }
+
+  .tools-track {
+    animation: none !important;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.9rem;
+  }
+
+  .tools-marquee {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .project-media--loading::before {
+    animation: none;
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--foreground) 3%, transparent),
+        color-mix(in srgb, var(--foreground) 7%, transparent)
+      ),
+      color-mix(in srgb, var(--foreground) 4%, var(--background));
+  }
+
+  .projects-section,
+  .writing-section,
+  .experience-section,
+  .site-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
+  }
+
+  .experience-row--preview,
+  .writing-preview-card--interactive,
+  .dashboard-item-frame--interactive {
     transition: none;
   }
 }
