@@ -77,8 +77,10 @@ export function Globe({ className }: { className?: string }) {
     let visible = true;
     const isDark = theme === "dark";
     const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-    const dpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1.25 : 2);
-    const mapSamples = coarsePointer ? 12000 : 22000;
+    const dpr = Math.min(window.devicePixelRatio || 1, coarsePointer ? 1 : 2);
+    const mapSamples = coarsePointer ? 8000 : 22000;
+    const minFrameInterval = coarsePointer ? 66 : 0;
+    let lastRender = 0;
 
     const globe = createGlobe(canvas, {
       devicePixelRatio: dpr,
@@ -149,13 +151,20 @@ export function Globe({ className }: { className?: string }) {
     );
     visibilityObserver.observe(canvas);
 
-    const tick = () => {
+    const tick = (timestamp = performance.now()) => {
       if (!visible || document.hidden) {
         idleTimer = window.setTimeout(() => {
           frameId = requestAnimationFrame(tick);
         }, 250);
         return;
       }
+
+      if (minFrameInterval && timestamp - lastRender < minFrameInterval) {
+        frameId = requestAnimationFrame(tick);
+        return;
+      }
+      lastRender = timestamp;
+
       if (pointerId.current === null && !reducedMotion) {
         phiRef.current += PHI_IDLE;
       }
