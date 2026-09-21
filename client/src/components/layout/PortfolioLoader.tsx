@@ -8,6 +8,7 @@ import {
 } from "@/data/portfolio";
 import {
   canAggressivelyWarmProjectMedia,
+  primeProjectVideo,
   projectVideoSources,
   warmProjectVideo,
 } from "@/lib/projectVideoPool";
@@ -58,6 +59,24 @@ function getWarmupTasks(onMediaReady: () => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
   const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
   const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
+  const secondaryCarouselSources = new Set(
+    projects.flatMap((project) =>
+      project.media.kind === "video-carousel"
+        ? project.media.videos
+            .slice(1)
+            .map((video) => projectVideoSources({
+              ...project,
+              media: {
+                kind: "video-carousel",
+                alt: project.media.alt,
+                videos: [video],
+              },
+            })[0])
+            .filter((src): src is string => Boolean(src))
+        : [],
+    ),
+  );
+  const blockingSources = allSources.filter((src) => !secondaryCarouselSources.has(src));
   const aggressiveMediaWarmup = canAggressivelyWarmProjectMedia();
 
   const imageSources = new Set<string>();
@@ -76,7 +95,7 @@ function getWarmupTasks(onMediaReady: () => void) {
   // Every project video enters the browser's media queue in the same turn.
   // On capable desktop connections we ask all of them for playable buffering;
   // constrained/mobile connections keep the existing lighter behavior.
-  const videoTasks = allSources.map((src) => {
+  const videoTasks = blockingSources.map((src) => {
     const mode =
       aggressiveMediaWarmup || initialSources.has(src) ? "auto" : "metadata";
 
@@ -92,8 +111,9 @@ function getWarmupTasks(onMediaReady: () => void) {
 
   return {
     tasks,
-    mediaTotal: allSources.length,
+    mediaTotal: blockingSources.length,
     aggressiveMediaWarmup,
+    secondaryCarouselSources: Array.from(secondaryCarouselSources),
   };
 }
 
@@ -170,13 +190,26 @@ export function PortfolioLoader({
         return result.value !== false;
       });
 
-      if (allProjectMediaReady) startReveal();
+      if (allProjectMediaReady) {
+        // Secondary carousel clips should never hold the portfolio hostage.
+        // Start a deeper background prime right as the primary experience is
+        // ready, so a later slide switch can reuse already-buffered/decoded media.
+        for (const src of warmup.secondaryCarouselSources) {
+          void primeProjectVideo(src, 8);
+        }
+        startReveal();
+      }
     });
 
     // A broken/blocked media asset must never trap someone on the loading
     // screen forever. This is an emergency fallback, not the normal reveal
     // path.
-    const emergencyTimer = window.setTimeout(startReveal, EMERGENCY_REVEAL_MS);
+    const emergencyTimer = window.setTimeout(() => {
+      for (const src of warmup.secondaryCarouselSources) {
+        void primeProjectVideo(src, 8);
+      }
+      startReveal();
+    }, EMERGENCY_REVEAL_MS);
 
     return () => {
       disposed = true;
