@@ -12,8 +12,7 @@ import {
   warmProjectVideo,
 } from "@/lib/projectVideoPool";
 
-const MIN_VISIBLE_MS = 5200;
-const MAX_VISIBLE_MS = 8000;
+const EMERGENCY_REVEAL_MS = 60000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -55,7 +54,7 @@ async function preloadImage(src: string) {
   });
 }
 
-function getWarmupTasks(onMediaSettled: (ready: boolean) => void) {
+function getWarmupTasks(onMediaReady: () => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
   const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
   const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
@@ -83,13 +82,10 @@ function getWarmupTasks(onMediaSettled: (ready: boolean) => void) {
 
     return warmProjectVideo(src, mode)
       .then((ready) => {
-        onMediaSettled(ready);
+        if (ready) onMediaReady();
         return ready;
       })
-      .catch(() => {
-        onMediaSettled(false);
-        return false;
-      });
+      .catch(() => false);
   });
 
   tasks.push(...videoTasks);
@@ -122,7 +118,6 @@ export function PortfolioLoader({
     }
 
     loaderPlayedForThisDocument = true;
-    const startedAt = performance.now();
     let disposed = false;
     let completedTasks = 0;
 
@@ -140,7 +135,7 @@ export function PortfolioLoader({
 
     const markTaskDone = () => {
       completedTasks += 1;
-      const taskProgress = Math.min(94, 7 + (completedTasks / totalTasks) * 87);
+      const taskProgress = Math.min(96, 4 + (completedTasks / totalTasks) * 92);
       setProgress((current) => Math.max(current, taskProgress));
     };
 
@@ -164,25 +159,28 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    const minimumTimer = window.setTimeout(() => {
-      void Promise.allSettled(trackedTasks).then(() => startReveal());
-    }, MIN_VISIBLE_MS);
+    // Reveal as soon as the real warmup work is finished. There is no
+    // artificial minimum duration anymore, and we no longer reveal at 6/8 or
+    // 7/8 simply because an eight-second timer expired.
+    void Promise.allSettled(trackedTasks).then((results) => {
+      if (disposed) return;
 
-    const safetyTimer = window.setTimeout(startReveal, MAX_VISIBLE_MS);
+      const allProjectMediaReady = results.every((result) => {
+        if (result.status !== "fulfilled") return false;
+        return result.value !== false;
+      });
 
-    // Time contributes only to the visual interpolation; the media counter is
-    // tied to actual media readiness/metadata events from the persistent pool.
-    const progressTimer = window.setInterval(() => {
-      const elapsed = performance.now() - startedAt;
-      const timeProgress = Math.min(89, 7 + (elapsed / MIN_VISIBLE_MS) * 70);
-      setProgress((current) => Math.max(current, timeProgress));
-    }, 160);
+      if (allProjectMediaReady) startReveal();
+    });
+
+    // A broken/blocked media asset must never trap someone on the loading
+    // screen forever. This is an emergency fallback, not the normal reveal
+    // path.
+    const emergencyTimer = window.setTimeout(startReveal, EMERGENCY_REVEAL_MS);
 
     return () => {
       disposed = true;
-      window.clearTimeout(minimumTimer);
-      window.clearTimeout(safetyTimer);
-      window.clearInterval(progressTimer);
+      window.clearTimeout(emergencyTimer);
       document.documentElement.classList.remove("portfolio-is-loading");
     };
   }, [onReveal]);
@@ -193,8 +191,8 @@ export function PortfolioLoader({
     progress < 24
       ? "Booting the interface"
       : mediaTotal > 0 && mediaSettled < mediaTotal
-        ? "Preloading project media"
-        : "Synchronizing the experience";
+        ? "Buffering project media"
+        : "Finalizing the experience";
 
   return (
     <div
@@ -217,7 +215,7 @@ export function PortfolioLoader({
 
         <div className="portfolio-loader__media" aria-hidden="true">
           <div className="portfolio-loader__media-head">
-            <span>{aggressiveWarmup ? "Persistent media pool" : "Media warm-up"}</span>
+            <span>{aggressiveWarmup ? "Playable media pool" : "Media warm-up"}</span>
             <strong>
               {mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}
             </strong>
@@ -243,7 +241,7 @@ export function PortfolioLoader({
 
         <div className="portfolio-loader__meta" aria-hidden="true">
           <span>{String(Math.round(progress)).padStart(2, "0")}</span>
-          <span>{aggressiveWarmup ? "Media resident" : "Loading"}</span>
+          <span>{progress >= 100 ? "Ready" : "Preparing"}</span>
         </div>
       </div>
     </div>
