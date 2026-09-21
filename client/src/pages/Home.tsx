@@ -7,11 +7,14 @@ import { WritingSection } from "@/components/home/WritingSection";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { PortfolioLoader } from "@/components/layout/PortfolioLoader";
 import { SiteAtmosphere } from "@/components/layout/SiteAtmosphere";
 
 export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
+  const revealPortfolio = useCallback(() => setRevealed(true), []);
   const toggleSearch = useCallback(() => setSearchOpen((open) => !open), []);
 
   useEffect(() => {
@@ -42,18 +45,23 @@ export default function Home() {
   }, [closeSearch]);
 
   return (
-    <div className="site-shell">
-      <SiteAtmosphere />
-      <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
-      <div className="page-column">
-        <Hero />
-        <Dashboard />
-        <Projects />
-        <WritingSection />
-        <Experience />
-        <Footer />
+    <>
+      <PortfolioLoader onReveal={revealPortfolio} />
+      <div
+        className={`site-shell ${revealed ? "site-shell--revealed" : "site-shell--preparing"}`}
+      >
+        <SiteAtmosphere />
+        <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
+        <div className="page-column">
+          <Hero />
+          <Dashboard />
+          <Projects />
+          <WritingSection />
+          <Experience />
+          <Footer />
+        </div>
+        <CommandPalette open={searchOpen} onClose={closeSearch} />
       </div>
-      <CommandPalette open={searchOpen} onClose={closeSearch} />
-    </div>
+    </>
   );
 }
