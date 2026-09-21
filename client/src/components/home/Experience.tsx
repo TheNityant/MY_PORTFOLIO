@@ -23,7 +23,11 @@ import {
 function ExperienceMarkView({ mark }: { mark: ExperienceMark }) {
   return (
     <div className="experience-mark" aria-hidden={!mark.alt}>
-      {mark.src ? <img src={mark.src} alt={mark.alt ?? ""} /> : <span>{mark.fallback}</span>}
+      {mark.src ? (
+        <img src={mark.src} alt={mark.alt ?? ""} loading="lazy" decoding="async" />
+      ) : (
+        <span>{mark.fallback}</span>
+      )}
     </div>
   );
 }
@@ -63,9 +67,11 @@ function certificateId(filename: string) {
 function ExperienceHoverPreview({
   entry,
   previewSrc,
+  active,
 }: {
   entry: PreviewableExperience;
   previewSrc: string;
+  active: boolean;
 }) {
   const mode: ExperiencePreviewMode = entry.previewMode ?? "image-and-text";
   const showImage = mode !== "text-only";
@@ -78,7 +84,7 @@ function ExperienceHoverPreview({
     >
       {showImage ? (
         <div className="experience-hover-preview__media">
-          <img src={previewSrc} alt="" />
+          {active ? <img src={previewSrc} alt="" decoding="async" /> : null}
         </div>
       ) : null}
       {showText ? (
@@ -102,7 +108,7 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
   >("idle");
 
   useEffect(() => {
-    if (item.id !== "hackathons-competitions" || item.items.length) return;
+    if (!open || item.id !== "hackathons-competitions" || item.items.length) return;
 
     const controller = new AbortController();
     setCertificateStatus("loading");
@@ -152,7 +158,7 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
       });
 
     return () => controller.abort();
-  }, [item.id, item.items.length]);
+  }, [item.id, item.items.length, open]);
 
   const collectionEntries = item.items.length ? item.items : certificateEntries;
 
@@ -366,10 +372,10 @@ export function Experience() {
                   </div>
 
                   <aside className="experience-feature-preview" aria-hidden="true">
-                    <HoverFeatureMedia media={featureMedia} active={active} />
+                    {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
                   </aside>
 
-                  <ExperienceHoverPreview entry={item} previewSrc={previewSrc} />
+                  <ExperienceHoverPreview entry={item} previewSrc={previewSrc} active={active} />
                 </li>
               );
             })}
