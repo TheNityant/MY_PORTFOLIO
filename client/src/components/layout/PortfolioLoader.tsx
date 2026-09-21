@@ -5,29 +5,20 @@ import {
   profile,
   projects,
   projectsForDomain,
-  type Project,
 } from "@/data/portfolio";
-import { resolveProjectMediaSrc } from "@/lib/projectMedia";
+import {
+  canAggressivelyWarmProjectMedia,
+  projectVideoSources,
+  warmProjectVideo,
+} from "@/lib/projectVideoPool";
 
-const MIN_VISIBLE_MS = 4800;
+const MIN_VISIBLE_MS = 5200;
 const MAX_VISIBLE_MS = 8000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
 
 type LoaderPhase = "loading" | "leaving" | "done";
-
-function projectVideoSources(project: Project) {
-  if (project.media.kind === "video") {
-    return [resolveProjectMediaSrc(project.media.src)];
-  }
-
-  if (project.media.kind === "video-carousel") {
-    return project.media.videos.map((video) => resolveProjectMediaSrc(video.src));
-  }
-
-  return [];
-}
 
 function waitForWindowLoad() {
   if (document.readyState === "complete") return Promise.resolve();
@@ -64,47 +55,11 @@ async function preloadImage(src: string) {
   });
 }
 
-function warmVideo(
-  src: string,
-  mode: "metadata" | "auto",
-  timeoutMs: number,
-) {
-  return new Promise<void>((resolve) => {
-    const video = document.createElement("video");
-    let settled = false;
-
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeout);
-      video.removeEventListener(targetEvent, finish);
-      video.removeEventListener("error", finish);
-
-      // Let the browser keep any reusable response/cache state, while avoiding
-      // detached media elements continuing to consume decode resources.
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
-      resolve();
-    };
-
-    const targetEvent = mode === "auto" ? "canplay" : "loadedmetadata";
-    const timeout = window.setTimeout(finish, timeoutMs);
-
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = mode;
-    video.src = src;
-    video.addEventListener(targetEvent, finish, { once: true });
-    video.addEventListener("error", finish, { once: true });
-    video.load();
-  });
-}
-
-function getWarmupTasks() {
+function getWarmupTasks(onMediaSettled: (ready: boolean) => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
   const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
   const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
+  const aggressiveMediaWarmup = canAggressivelyWarmProjectMedia();
 
   const imageSources = new Set<string>();
   if (profile.portraitSrc) imageSources.add(profile.portraitSrc);
@@ -119,20 +74,31 @@ function getWarmupTasks() {
     ...Array.from(imageSources).map((src) => preloadImage(src)),
   ];
 
-  // The initially visible project pair gets real buffering time while the
-  // loader is on-screen. Remaining project videos warm their container/index
-  // metadata so later category switches do not begin completely cold.
-  for (const src of allSources) {
-    tasks.push(
-      warmVideo(
-        src,
-        initialSources.has(src) ? "auto" : "metadata",
-        initialSources.has(src) ? 6200 : 4200,
-      ),
-    );
-  }
+  // Every project video enters the browser's media queue in the same turn.
+  // On capable desktop connections we ask all of them for playable buffering;
+  // constrained/mobile connections keep the existing lighter behavior.
+  const videoTasks = allSources.map((src) => {
+    const mode =
+      aggressiveMediaWarmup || initialSources.has(src) ? "auto" : "metadata";
 
-  return tasks;
+    return warmProjectVideo(src, mode)
+      .then((ready) => {
+        onMediaSettled(ready);
+        return ready;
+      })
+      .catch(() => {
+        onMediaSettled(false);
+        return false;
+      });
+  });
+
+  tasks.push(...videoTasks);
+
+  return {
+    tasks,
+    mediaTotal: allSources.length,
+    aggressiveMediaWarmup,
+  };
 }
 
 export function PortfolioLoader({
@@ -144,6 +110,9 @@ export function PortfolioLoader({
     loaderPlayedForThisDocument ? "done" : "loading",
   );
   const [progress, setProgress] = useState(loaderPlayedForThisDocument ? 100 : 4);
+  const [mediaSettled, setMediaSettled] = useState(0);
+  const [mediaTotal, setMediaTotal] = useState(0);
+  const [aggressiveWarmup, setAggressiveWarmup] = useState(false);
   const revealStartedRef = useRef(loaderPlayedForThisDocument);
 
   useEffect(() => {
@@ -159,16 +128,23 @@ export function PortfolioLoader({
 
     document.documentElement.classList.add("portfolio-is-loading");
 
-    const tasks = getWarmupTasks();
-    const totalTasks = Math.max(1, tasks.length);
+    const warmup = getWarmupTasks(() => {
+      if (disposed) return;
+      setMediaSettled((current) => Math.min(warmup.mediaTotal, current + 1));
+    });
+
+    setMediaTotal(warmup.mediaTotal);
+    setAggressiveWarmup(warmup.aggressiveMediaWarmup);
+
+    const totalTasks = Math.max(1, warmup.tasks.length);
 
     const markTaskDone = () => {
       completedTasks += 1;
-      const taskProgress = Math.min(92, 8 + (completedTasks / totalTasks) * 84);
+      const taskProgress = Math.min(94, 7 + (completedTasks / totalTasks) * 87);
       setProgress((current) => Math.max(current, taskProgress));
     };
 
-    const trackedTasks = tasks.map((task) =>
+    const trackedTasks = warmup.tasks.map((task) =>
       Promise.resolve(task)
         .catch(() => undefined)
         .finally(markTaskDone),
@@ -194,11 +170,11 @@ export function PortfolioLoader({
 
     const safetyTimer = window.setTimeout(startReveal, MAX_VISIBLE_MS);
 
-    // Smooth the progress line between actual readiness milestones without
-    // pretending that the full video payloads are downloaded.
+    // Time contributes only to the visual interpolation; the media counter is
+    // tied to actual media readiness/metadata events from the persistent pool.
     const progressTimer = window.setInterval(() => {
       const elapsed = performance.now() - startedAt;
-      const timeProgress = Math.min(88, 8 + (elapsed / MIN_VISIBLE_MS) * 72);
+      const timeProgress = Math.min(89, 7 + (elapsed / MIN_VISIBLE_MS) * 70);
       setProgress((current) => Math.max(current, timeProgress));
     }, 160);
 
@@ -214,11 +190,11 @@ export function PortfolioLoader({
   if (phase === "done") return null;
 
   const status =
-    progress < 42
-      ? "Preparing interface"
-      : progress < 78
-        ? "Warming project media"
-        : "Finishing the experience";
+    progress < 24
+      ? "Booting the interface"
+      : mediaTotal > 0 && mediaSettled < mediaTotal
+        ? "Preloading project media"
+        : "Synchronizing the experience";
 
   return (
     <div
@@ -231,12 +207,34 @@ export function PortfolioLoader({
 
       <div className="portfolio-loader__content">
         <div className="portfolio-loader__mark" aria-hidden="true">
-          NT
+          <span>NT</span>
         </div>
 
         <div className="portfolio-loader__identity">
           <span>NITYANT / PORTFOLIO</span>
           <strong>{status}</strong>
+        </div>
+
+        <div className="portfolio-loader__media" aria-hidden="true">
+          <div className="portfolio-loader__media-head">
+            <span>{aggressiveWarmup ? "Persistent media pool" : "Media warm-up"}</span>
+            <strong>
+              {mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}
+            </strong>
+          </div>
+
+          <div className="portfolio-loader__media-nodes">
+            {Array.from({ length: Math.max(1, mediaTotal) }, (_, index) => (
+              <span
+                key={index}
+                className={
+                  index < mediaSettled
+                    ? "portfolio-loader__media-node portfolio-loader__media-node--ready"
+                    : "portfolio-loader__media-node"
+                }
+              />
+            ))}
+          </div>
         </div>
 
         <div className="portfolio-loader__progress" aria-hidden="true">
@@ -245,7 +243,7 @@ export function PortfolioLoader({
 
         <div className="portfolio-loader__meta" aria-hidden="true">
           <span>{String(Math.round(progress)).padStart(2, "0")}</span>
-          <span>Loading</span>
+          <span>{aggressiveWarmup ? "Media resident" : "Loading"}</span>
         </div>
       </div>
     </div>
