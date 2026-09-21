@@ -49,9 +49,18 @@ function TechList({ items }: { items: readonly string[] }) {
   );
 }
 
-function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectMedia({
+  project,
+  reducedMotion,
+  intentWarm,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  intentWarm: boolean;
+}) {
   const { media } = project;
   const videoRef = useRef<HTMLVideoElement>(null);
+  const autoLoadRequestedRef = useRef(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [nearViewport, setNearViewport] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
@@ -64,16 +73,18 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const safeSlideIndex =
     carouselVideos.length === 0 ? 0 : Math.min(slideIndex, carouselVideos.length - 1);
   const activeCarouselVideo = isCarousel ? carouselVideos[safeSlideIndex] : undefined;
-  const shouldLoadVideo = nearViewport;
+  const shouldLoadVideo = nearViewport || intentWarm;
 
   useEffect(() => {
     setSlideIndex(0);
     setNearViewport(false);
     setVideoReady(false);
+    autoLoadRequestedRef.current = false;
   }, [project.id]);
 
   useEffect(() => {
     setVideoReady(false);
+    autoLoadRequestedRef.current = false;
   }, [safeSlideIndex]);
 
   const debugVideoEvent = (eventName: string) => {
@@ -116,15 +127,6 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const preloadObserver = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-
-        // The element starts in metadata mode. Explicitly upgrade the media
-        // request as it approaches the viewport so Chromium does not keep the
-        // resource at metadata-only priority until play() is called.
-        if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
-          video.preload = "auto";
-          video.load();
-        }
-
         setNearViewport(true);
         preloadObserver.disconnect();
       },
@@ -137,6 +139,29 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     preloadObserver.observe(video);
     return () => preloadObserver.disconnect();
   }, [media.kind, reducedMotion]);
+
+
+  useEffect(() => {
+    if (
+      reducedMotion ||
+      !shouldLoadVideo ||
+      (media.kind !== "video" && media.kind !== "video-carousel")
+    ) {
+      return;
+    }
+
+    const video = videoRef.current;
+    if (!video || autoLoadRequestedRef.current) return;
+
+    autoLoadRequestedRef.current = true;
+    video.preload = "auto";
+
+    // load() is intentional here: it runs once when we promote the element
+    // from metadata-only to full buffering, rather than on every render.
+    if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+      video.load();
+    }
+  }, [media.kind, reducedMotion, safeSlideIndex, shouldLoadVideo]);
 
   useEffect(() => {
     if (
@@ -353,13 +378,21 @@ function ProjectContent({
   );
 }
 
-function ProjectCard({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectCard({
+  project,
+  reducedMotion,
+  intentWarm,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  intentWarm: boolean;
+}) {
   const hasInteractiveMedia = project.media.kind === "video-carousel";
 
   if (hasInteractiveMedia) {
     return (
       <article className="project-card project-card--featured">
-        <ProjectMedia project={project} reducedMotion={reducedMotion} />
+        <ProjectMedia project={project} reducedMotion={reducedMotion} intentWarm={intentWarm} />
         <ProjectContent project={project} explicitLink />
       </article>
     );
@@ -367,7 +400,7 @@ function ProjectCard({ project, reducedMotion }: { project: Project; reducedMoti
 
   const inner = (
     <>
-      <ProjectMedia project={project} reducedMotion={reducedMotion} />
+      <ProjectMedia project={project} reducedMotion={reducedMotion} intentWarm={intentWarm} />
       <ProjectContent project={project} />
     </>
   );
@@ -387,6 +420,7 @@ export function Projects() {
   const [domain, setDomain] = useState<ProjectDomainId>(defaultProjectDomain);
   const [page, setPage] = useState(0);
   const [vertical, setVertical] = useState(false);
+  const [mediaIntent, setMediaIntent] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const preloadedVideoSources = useRef(new Set<string>());
@@ -397,49 +431,67 @@ export function Projects() {
   const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
 
+  const warmProjectList = (list: readonly Project[]) => {
+    if (reducedMotion) return;
+    if (!window.matchMedia("(min-width: 700px)").matches) return;
+    if (!connectionAllowsIntentPreload()) return;
+
+    for (const src of list.flatMap(projectVideoSources)) {
+      if (preloadedVideoSources.current.has(src)) continue;
+
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "video";
+      link.type = "video/mp4";
+      link.href = src;
+      link.setAttribute("fetchpriority", "high");
+      link.dataset.projectVideoPreload = "true";
+      document.head.appendChild(link);
+      preloadedVideoSources.current.add(src);
+    }
+  };
+
+  const warmDomain = (id: ProjectDomainId) => {
+    warmProjectList(projectsForDomain(id).slice(0, PROJECT_PAGE_SIZE));
+  };
+
   useEffect(() => {
     if (reducedMotion) return;
     if (!window.matchMedia("(min-width: 700px)").matches) return;
     if (!connectionAllowsIntentPreload()) return;
 
-    const sources = visible.flatMap(projectVideoSources);
-    if (!sources.length) return;
-
     const warmVisibleVideos = () => {
-      for (const src of sources) {
-        if (preloadedVideoSources.current.has(src)) continue;
-
-        const link = document.createElement("link");
-        link.rel = "preload";
-        link.as = "video";
-        link.type = "video/mp4";
-        link.href = src;
-        link.dataset.projectVideoPreload = "true";
-        document.head.appendChild(link);
-        preloadedVideoSources.current.add(src);
-      }
+      setMediaIntent(true);
+      warmProjectList(visible);
     };
 
-    // Do not compete with the initial hero/shader startup. A first interaction
-    // is a strong signal that the visitor is moving through the page, so warm
-    // the currently selected project pair at that point.
+    if (mediaIntent) {
+      warmProjectList(visible);
+      return;
+    }
+
+    // First real user intent is our turbo trigger. It keeps the initial hero
+    // load clean, then promotes the mounted project videos to full buffering.
     const onIntent = () => {
       warmVisibleVideos();
       window.removeEventListener("scroll", onIntent);
+      window.removeEventListener("wheel", onIntent);
       window.removeEventListener("pointerdown", onIntent);
       window.removeEventListener("keydown", onIntent);
     };
 
     window.addEventListener("scroll", onIntent, { passive: true });
+    window.addEventListener("wheel", onIntent, { passive: true });
     window.addEventListener("pointerdown", onIntent, { passive: true });
     window.addEventListener("keydown", onIntent);
 
     return () => {
       window.removeEventListener("scroll", onIntent);
+      window.removeEventListener("wheel", onIntent);
       window.removeEventListener("pointerdown", onIntent);
       window.removeEventListener("keydown", onIntent);
     };
-  }, [domain, reducedMotion, safePage]);
+  }, [domain, mediaIntent, reducedMotion, safePage]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1280px)");
@@ -495,6 +547,8 @@ export function Projects() {
                 aria-selected={selected}
                 tabIndex={selected ? 0 : -1}
                 className={cn("project-story-item", selected && "project-story-item--active")}
+                onPointerEnter={() => warmDomain(item.id)}
+                onFocus={() => warmDomain(item.id)}
                 onClick={() => selectDomain(item.id)}
                 onKeyDown={(event) => onRailKeyDown(event, index)}
               >
@@ -512,6 +566,11 @@ export function Projects() {
               className="projects-pager-btn"
               aria-label={`Previous projects in ${activeDomain.label}`}
               disabled={safePage === 0}
+              onPointerEnter={() => {
+                if (safePage <= 0) return;
+                const start = (safePage - 1) * PROJECT_PAGE_SIZE;
+                warmProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+              }}
               onClick={() => setPage((value) => Math.max(0, value - 1))}
             >
               <ArrowLeft size={16} aria-hidden="true" />
@@ -524,6 +583,11 @@ export function Projects() {
               className="projects-pager-btn"
               aria-label={`Next projects in ${activeDomain.label}`}
               disabled={safePage >= pageCount - 1}
+              onPointerEnter={() => {
+                if (safePage >= pageCount - 1) return;
+                const start = (safePage + 1) * PROJECT_PAGE_SIZE;
+                warmProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+              }}
               onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
             >
               <ArrowRight size={16} aria-hidden="true" />
@@ -542,7 +606,12 @@ export function Projects() {
           key={`${domain}-${safePage}`}
         >
           {visible.map((project) => (
-            <ProjectCard key={project.id} project={project} reducedMotion={reducedMotion} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              reducedMotion={reducedMotion}
+              intentWarm={mediaIntent}
+            />
           ))}
         </div>
       </div>
