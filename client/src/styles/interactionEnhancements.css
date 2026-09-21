@@ -1012,3 +1012,23 @@
     transition: none;
   }
 }
+
+
+/* Desktop rendering containment -------------------------------------------
+   Keep the live shader and project videos on separate compositor surfaces,
+   and skip below-fold rendering work until those sections are approached.
+   No animation or visual treatment is changed. */
+.project-media {
+  contain: paint;
+}
+
+.project-media video {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.writing-section,
+.experience-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
