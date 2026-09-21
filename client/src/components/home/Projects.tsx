@@ -13,6 +13,7 @@ import { resolveProjectMediaSrc } from "@/lib/projectMedia";
 import {
   attachProjectVideo,
   parkProjectVideo,
+  primeProjectVideo,
   projectVideoSources,
   promoteProjectVideo,
 } from "@/lib/projectVideoPool";
@@ -122,6 +123,16 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const markReady = () => {
       setVideoReady(true);
       debugVideoEvent("ready");
+
+      if (isCarousel && carouselVideos.length > 1) {
+        const nextIndex = (safeSlideIndex + 1) % carouselVideos.length;
+        if (nextIndex !== safeSlideIndex) {
+          const nextVideo = carouselVideos[nextIndex];
+          if (nextVideo) {
+            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 8);
+          }
+        }
+      }
     };
 
     const onLoadStart = () => debugVideoEvent("loadstart");
@@ -255,7 +266,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       if (!carouselVideos.length || reducedMotion) return;
       const candidate = carouselVideos[normalizedSlide(nextIndex)];
       if (!candidate) return;
-      promoteProjectVideo(resolveProjectMediaSrc(candidate.src));
+      void primeProjectVideo(resolveProjectMediaSrc(candidate.src), 8);
     };
 
     const goToSlide = (nextIndex: number) => {
@@ -463,8 +474,15 @@ export function Projects() {
   const promoteProjectList = (list: readonly Project[]) => {
     if (reducedMotion) return;
 
-    for (const src of list.flatMap(projectVideoSources)) {
-      promoteProjectVideo(src);
+    for (const project of list) {
+      const sources = projectVideoSources(project);
+      for (const src of sources) promoteProjectVideo(src);
+
+      if (project.media.kind === "video-carousel") {
+        for (const video of project.media.videos.slice(1)) {
+          void primeProjectVideo(resolveProjectMediaSrc(video.src), 8);
+        }
+      }
     }
   };
 
