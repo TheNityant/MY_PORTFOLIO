@@ -50,12 +50,12 @@ export function WritingSection() {
               </span>
 
               <aside className="writing-feature-preview" aria-hidden="true">
-                <HoverFeatureMedia media={featureMedia} active={active} />
+                {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
               </aside>
 
               <aside className="writing-hover-preview" aria-hidden="true">
                 <div className="writing-hover-preview__media">
-                  <img src={previewSrc} alt="" />
+                  {active ? <img src={previewSrc} alt="" decoding="async" /> : null}
                 </div>
                 <div>
                   <span>{item.status}</span>
