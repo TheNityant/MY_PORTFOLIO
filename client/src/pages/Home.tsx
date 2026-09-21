@@ -13,9 +13,7 @@ import { SiteAtmosphere } from "@/components/layout/SiteAtmosphere";
 export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [visualsPrepared, setVisualsPrepared] = useState(false);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
-  const prepareVisuals = useCallback(() => setVisualsPrepared(true), []);
   const revealPortfolio = useCallback(() => setRevealed(true), []);
   const toggleSearch = useCallback(() => setSearchOpen((open) => !open), []);
 
@@ -48,11 +46,11 @@ export default function Home() {
 
   return (
     <>
-      <PortfolioLoader onPrepareVisuals={prepareVisuals} onReveal={revealPortfolio} />
+      <PortfolioLoader onReveal={revealPortfolio} />
       <div
         className={`site-shell ${revealed ? "site-shell--revealed" : "site-shell--preparing"}`}
       >
-        <SiteAtmosphere enabled={visualsPrepared || revealed} />
+        <SiteAtmosphere />
         <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
         <div className="page-column">
           <Hero />
