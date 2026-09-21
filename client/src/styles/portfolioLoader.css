@@ -139,7 +139,7 @@ html.portfolio-is-loading body {
 }
 
 .site-shell--revealed .site-header {
-  animation: portfolio-header-reveal 520ms ease-out 120ms both;
+  animation: portfolio-header-reveal 520ms ease-out 120ms;
 }
 
 @keyframes portfolio-content-reveal {
