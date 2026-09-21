@@ -62,9 +62,69 @@ function waitForState(
     };
 
     const onError = () => finish(false);
-    const timeout = window.setTimeout(() => finish(false), 45000);
+    const timeout = window.setTimeout(() => finish(false), 55000);
 
     for (const event of events) video.addEventListener(event, onReady);
+    video.addEventListener("error", onError, { once: true });
+  });
+}
+
+function bufferedAhead(video: HTMLVideoElement) {
+  if (!video.buffered.length) return 0;
+
+  for (let index = 0; index < video.buffered.length; index += 1) {
+    const start = video.buffered.start(index);
+    const end = video.buffered.end(index);
+    if (video.currentTime >= start && video.currentTime <= end) {
+      return Math.max(0, end - video.currentTime);
+    }
+  }
+
+  return 0;
+}
+
+function waitForPlayableBuffer(video: HTMLVideoElement) {
+  const MIN_BUFFERED_SECONDS = 2;
+
+  const isReady = () => {
+    if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return false;
+
+    const duration = Number.isFinite(video.duration) ? video.duration : null;
+    const target =
+      duration === null
+        ? MIN_BUFFERED_SECONDS
+        : Math.min(MIN_BUFFERED_SECONDS, Math.max(0.35, duration * 0.35));
+
+    return bufferedAhead(video) >= target || video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
+  };
+
+  if (isReady()) return Promise.resolve(true);
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const events = ["progress", "loadeddata", "canplay", "canplaythrough", "durationchange"];
+
+    const cleanup = () => {
+      for (const event of events) video.removeEventListener(event, onProgress);
+      video.removeEventListener("error", onError);
+      window.clearTimeout(timeout);
+    };
+
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+
+    const onProgress = () => {
+      if (isReady()) finish(true);
+    };
+
+    const onError = () => finish(false);
+    const timeout = window.setTimeout(() => finish(false), 55000);
+
+    for (const event of events) video.addEventListener(event, onProgress);
     video.addEventListener("error", onError, { once: true });
   });
 }
@@ -87,11 +147,7 @@ function createEntry(src: string, mode: ProjectVideoWarmMode) {
     HTMLMediaElement.HAVE_METADATA,
     ["loadedmetadata"],
   );
-  const playablePromise = waitForState(
-    video,
-    HTMLMediaElement.HAVE_CURRENT_DATA,
-    ["loadeddata", "canplay"],
-  );
+  const playablePromise = waitForPlayableBuffer(video);
 
   const entry: ProjectVideoPoolEntry = {
     src,
