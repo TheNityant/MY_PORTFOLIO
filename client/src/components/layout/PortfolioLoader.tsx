@@ -8,6 +8,7 @@ import {
 } from "@/data/portfolio";
 import {
   canAggressivelyWarmProjectMedia,
+  primeProjectVideo,
   projectVideoSources,
   warmProjectVideo,
 } from "@/lib/projectVideoPool";
@@ -57,7 +58,26 @@ async function preloadImage(src: string) {
 function getWarmupTasks(onMediaReady: () => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
   const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
-  const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
+  const carouselAlternateSources = new Set(
+    projects.flatMap((project) =>
+      project.media.kind === "video-carousel"
+        ? project.media.videos
+            .slice(1)
+            .map((video) => projectVideoSources({
+              ...project,
+              media: { ...project.media, videos: [video] },
+            })[0])
+            .filter((src): src is string => Boolean(src))
+        : [],
+    ),
+  );
+  const allSources = Array.from(
+    new Set([
+      ...initialSources,
+      ...carouselAlternateSources,
+      ...projects.flatMap(projectVideoSources),
+    ]),
+  );
   const aggressiveMediaWarmup = canAggressivelyWarmProjectMedia();
 
   const imageSources = new Set<string>();
@@ -78,9 +98,15 @@ function getWarmupTasks(onMediaReady: () => void) {
   // constrained/mobile connections keep the existing lighter behavior.
   const videoTasks = allSources.map((src) => {
     const mode =
-      aggressiveMediaWarmup || initialSources.has(src) ? "auto" : "metadata";
+      aggressiveMediaWarmup || initialSources.has(src) || carouselAlternateSources.has(src)
+        ? "auto"
+        : "metadata";
 
-    return warmProjectVideo(src, mode)
+    const job = carouselAlternateSources.has(src)
+      ? primeProjectVideo(src, 5)
+      : warmProjectVideo(src, mode);
+
+    return job
       .then((ready) => {
         if (ready) onMediaReady();
         return ready;
@@ -209,8 +235,9 @@ export function PortfolioLoader({
         </div>
 
         <div className="portfolio-loader__identity">
-          <span>NITYANT / PORTFOLIO</span>
+          <span>NITYANT / ENGINEERING PORTFOLIO</span>
           <strong>{status}</strong>
+          <p>Fonts · identity · interface · project media</p>
         </div>
 
         <div className="portfolio-loader__media" aria-hidden="true">
@@ -232,6 +259,21 @@ export function PortfolioLoader({
                 }
               />
             ))}
+          </div>
+        </div>
+
+        <div className="portfolio-loader__stats" aria-hidden="true">
+          <div>
+            <span>Progress</span>
+            <strong>{Math.round(progress)}%</strong>
+          </div>
+          <div>
+            <span>Media</span>
+            <strong>{mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}</strong>
+          </div>
+          <div>
+            <span>Mode</span>
+            <strong>{aggressiveWarmup ? "Playable" : "Balanced"}</strong>
           </div>
         </div>
 
