@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   defaultProjectDomain,
+  experience,
   profile,
+  projects,
   projectsForDomain,
 } from "@/data/portfolio";
 import {
@@ -10,13 +12,20 @@ import {
   warmProjectVideo,
 } from "@/lib/projectVideoPool";
 
-const EMERGENCY_REVEAL_MS = 25000;
+const EMERGENCY_REVEAL_MS = 60000;
 const EXIT_MS = 680;
-const VISUAL_WARMUP_MS = 420;
 
 let loaderPlayedForThisDocument = false;
 
 type LoaderPhase = "loading" | "leaving" | "done";
+
+function waitForWindowLoad() {
+  if (document.readyState === "complete") return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    window.addEventListener("load", () => resolve(), { once: true });
+  });
+}
 
 async function preloadImage(src: string) {
   if (!src) return;
@@ -47,24 +56,29 @@ async function preloadImage(src: string) {
 
 function getWarmupTasks(onMediaReady: () => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
-  const prioritySources = Array.from(
-    new Set(initialProjects.flatMap(projectVideoSources)),
-  );
+  const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
+  const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
   const aggressiveMediaWarmup = canAggressivelyWarmProjectMedia();
 
-  const tasks: Array<Promise<unknown>> = [
-    document.fonts?.ready ?? Promise.resolve(),
-  ];
+  const imageSources = new Set<string>();
+  if (profile.portraitSrc) imageSources.add(profile.portraitSrc);
 
-  if (profile.portraitSrc) {
-    tasks.push(preloadImage(profile.portraitSrc));
+  for (const item of experience) {
+    if (item.mark.src) imageSources.add(item.mark.src);
   }
 
-  // Only the first visible project pair belongs on the critical path.
-  // Warming every project at once caused all large MP4s to compete for the
-  // same browser/network resources and did not improve perceived startup.
-  const videoTasks = prioritySources.map((src) => {
-    const mode = aggressiveMediaWarmup ? "auto" : "metadata";
+  const tasks: Array<Promise<unknown>> = [
+    waitForWindowLoad(),
+    document.fonts?.ready ?? Promise.resolve(),
+    ...Array.from(imageSources).map((src) => preloadImage(src)),
+  ];
+
+  // Every project video enters the browser's media queue in the same turn.
+  // On capable desktop connections we ask all of them for playable buffering;
+  // constrained/mobile connections keep the existing lighter behavior.
+  const videoTasks = allSources.map((src) => {
+    const mode =
+      aggressiveMediaWarmup || initialSources.has(src) ? "auto" : "metadata";
 
     return warmProjectVideo(src, mode)
       .then((ready) => {
@@ -78,16 +92,14 @@ function getWarmupTasks(onMediaReady: () => void) {
 
   return {
     tasks,
-    mediaTotal: prioritySources.length,
+    mediaTotal: allSources.length,
     aggressiveMediaWarmup,
   };
 }
 
 export function PortfolioLoader({
-  onPrepareVisuals,
   onReveal,
 }: {
-  onPrepareVisuals: () => void;
   onReveal: () => void;
 }) {
   const [phase, setPhase] = useState<LoaderPhase>(
@@ -101,7 +113,6 @@ export function PortfolioLoader({
 
   useEffect(() => {
     if (loaderPlayedForThisDocument) {
-      onPrepareVisuals();
       onReveal();
       return;
     }
@@ -109,7 +120,6 @@ export function PortfolioLoader({
     loaderPlayedForThisDocument = true;
     let disposed = false;
     let completedTasks = 0;
-    let visualTimer: number | null = null;
 
     document.documentElement.classList.add("portfolio-is-loading");
 
@@ -135,7 +145,7 @@ export function PortfolioLoader({
         .finally(markTaskDone),
     );
 
-    const finishReveal = () => {
+    const startReveal = () => {
       if (disposed || revealStartedRef.current) return;
       revealStartedRef.current = true;
       setProgress(100);
@@ -149,39 +159,31 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    const prepareVisualsThenReveal = () => {
-      if (disposed || revealStartedRef.current) return;
-      onPrepareVisuals();
-
-      if (visualTimer !== null) window.clearTimeout(visualTimer);
-      visualTimer = window.setTimeout(finishReveal, VISUAL_WARMUP_MS);
-    };
-
+    // Reveal as soon as the real warmup work is finished. There is no
+    // artificial minimum duration anymore, and we no longer reveal at 6/8 or
+    // 7/8 simply because an eight-second timer expired.
     void Promise.allSettled(trackedTasks).then((results) => {
       if (disposed) return;
 
-      const allPriorityMediaReady = results.every((result) => {
+      const allProjectMediaReady = results.every((result) => {
         if (result.status !== "fulfilled") return false;
         return result.value !== false;
       });
 
-      if (allPriorityMediaReady) prepareVisualsThenReveal();
+      if (allProjectMediaReady) startReveal();
     });
 
-    // Never trap the user behind a failed media request. Even the emergency
-    // path gives the shader a brief hidden warm-up before the loader exits.
-    const emergencyTimer = window.setTimeout(
-      prepareVisualsThenReveal,
-      EMERGENCY_REVEAL_MS,
-    );
+    // A broken/blocked media asset must never trap someone on the loading
+    // screen forever. This is an emergency fallback, not the normal reveal
+    // path.
+    const emergencyTimer = window.setTimeout(startReveal, EMERGENCY_REVEAL_MS);
 
     return () => {
       disposed = true;
       window.clearTimeout(emergencyTimer);
-      if (visualTimer !== null) window.clearTimeout(visualTimer);
       document.documentElement.classList.remove("portfolio-is-loading");
     };
-  }, [onPrepareVisuals, onReveal]);
+  }, [onReveal]);
 
   if (phase === "done") return null;
 
@@ -189,7 +191,7 @@ export function PortfolioLoader({
     progress < 24
       ? "Booting the interface"
       : mediaTotal > 0 && mediaSettled < mediaTotal
-        ? "Buffering priority project media"
+        ? "Buffering project media"
         : "Finalizing the experience";
 
   return (
@@ -207,14 +209,13 @@ export function PortfolioLoader({
         </div>
 
         <div className="portfolio-loader__identity">
-          <span>NITYANT / ENGINEERING PORTFOLIO</span>
+          <span>NITYANT / PORTFOLIO</span>
           <strong>{status}</strong>
-          <p>Fonts · identity · interface · priority project media</p>
         </div>
 
         <div className="portfolio-loader__media" aria-hidden="true">
           <div className="portfolio-loader__media-head">
-            <span>{aggressiveWarmup ? "Priority playable media" : "Priority media warm-up"}</span>
+            <span>{aggressiveWarmup ? "Playable media pool" : "Media warm-up"}</span>
             <strong>
               {mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}
             </strong>
@@ -231,21 +232,6 @@ export function PortfolioLoader({
                 }
               />
             ))}
-          </div>
-        </div>
-
-        <div className="portfolio-loader__stats" aria-hidden="true">
-          <div>
-            <span>Progress</span>
-            <strong>{Math.round(progress)}%</strong>
-          </div>
-          <div>
-            <span>Media</span>
-            <strong>{mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}</strong>
-          </div>
-          <div>
-            <span>Mode</span>
-            <strong>{aggressiveWarmup ? "Priority" : "Balanced"}</strong>
           </div>
         </div>
 
