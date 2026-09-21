@@ -1,19 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import {
   defaultProjectDomain,
-  experience,
   profile,
-  projects,
   projectsForDomain,
 } from "@/data/portfolio";
 import {
-  canAggressivelyWarmProjectMedia,
-  primeProjectVideo,
   projectVideoSources,
   warmProjectVideo,
 } from "@/lib/projectVideoPool";
 
-const EMERGENCY_REVEAL_MS = 60000;
+const EMERGENCY_REVEAL_MS = 8000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -57,63 +53,32 @@ async function preloadImage(src: string) {
 
 function getWarmupTasks(onMediaReady: () => void) {
   const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
-  const initialSources = new Set(initialProjects.flatMap(projectVideoSources));
-  const allSources = Array.from(new Set(projects.flatMap(projectVideoSources)));
-  const secondaryCarouselSources = new Set(
-    projects.flatMap((project) =>
-      project.media.kind === "video-carousel"
-        ? project.media.videos
-            .slice(1)
-            .map((video) => projectVideoSources({
-              ...project,
-              media: {
-                kind: "video-carousel",
-                alt: project.media.alt,
-                videos: [video],
-              },
-            })[0])
-            .filter((src): src is string => Boolean(src))
-        : [],
-    ),
+  const initialSources = Array.from(
+    new Set(initialProjects.flatMap(projectVideoSources)),
   );
-  const blockingSources = allSources.filter((src) => !secondaryCarouselSources.has(src));
-  const aggressiveMediaWarmup = canAggressivelyWarmProjectMedia();
 
-  const imageSources = new Set<string>();
-  if (profile.portraitSrc) imageSources.add(profile.portraitSrc);
-
-  for (const item of experience) {
-    if (item.mark.src) imageSources.add(item.mark.src);
-  }
-
-  const tasks: Array<Promise<unknown>> = [
+  const criticalTasks: Array<Promise<unknown>> = [
     waitForWindowLoad(),
     document.fonts?.ready ?? Promise.resolve(),
-    ...Array.from(imageSources).map((src) => preloadImage(src)),
+    preloadImage(profile.portraitSrc),
   ];
 
-  // Every project video enters the browser's media queue in the same turn.
-  // On capable desktop connections we ask all of them for playable buffering;
-  // constrained/mobile connections keep the existing lighter behavior.
-  const videoTasks = blockingSources.map((src) => {
-    const mode =
-      aggressiveMediaWarmup || initialSources.has(src) ? "auto" : "metadata";
-
-    return warmProjectVideo(src, mode)
+  // Only the first visible project pair is warmed during startup, and that
+  // work never blocks the portfolio reveal. Everything else is promoted by
+  // viewport/intent logic in Projects.tsx.
+  const backgroundMediaTasks = initialSources.map((src) =>
+    warmProjectVideo(src, "auto")
       .then((ready) => {
         if (ready) onMediaReady();
         return ready;
       })
-      .catch(() => false);
-  });
-
-  tasks.push(...videoTasks);
+      .catch(() => false),
+  );
 
   return {
-    tasks,
-    mediaTotal: blockingSources.length,
-    aggressiveMediaWarmup,
-    secondaryCarouselSources: Array.from(secondaryCarouselSources),
+    criticalTasks,
+    backgroundMediaTasks,
+    mediaTotal: initialSources.length,
   };
 }
 
@@ -128,7 +93,6 @@ export function PortfolioLoader({
   const [progress, setProgress] = useState(loaderPlayedForThisDocument ? 100 : 4);
   const [mediaSettled, setMediaSettled] = useState(0);
   const [mediaTotal, setMediaTotal] = useState(0);
-  const [aggressiveWarmup, setAggressiveWarmup] = useState(false);
   const revealStartedRef = useRef(loaderPlayedForThisDocument);
 
   useEffect(() => {
@@ -149,9 +113,8 @@ export function PortfolioLoader({
     });
 
     setMediaTotal(warmup.mediaTotal);
-    setAggressiveWarmup(warmup.aggressiveMediaWarmup);
 
-    const totalTasks = Math.max(1, warmup.tasks.length);
+    const totalTasks = Math.max(1, warmup.criticalTasks.length);
 
     const markTaskDone = () => {
       completedTasks += 1;
@@ -159,11 +122,15 @@ export function PortfolioLoader({
       setProgress((current) => Math.max(current, taskProgress));
     };
 
-    const trackedTasks = warmup.tasks.map((task) =>
+    const trackedCriticalTasks = warmup.criticalTasks.map((task) =>
       Promise.resolve(task)
         .catch(() => undefined)
         .finally(markTaskDone),
     );
+
+    // Fire-and-forget. These prime the default project pair but are not part
+    // of the loading-screen gate.
+    void Promise.allSettled(warmup.backgroundMediaTasks);
 
     const startReveal = () => {
       if (disposed || revealStartedRef.current) return;
@@ -179,35 +146,17 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    // Reveal as soon as the real warmup work is finished. There is no
-    // artificial minimum duration anymore, and we no longer reveal at 6/8 or
-    // 7/8 simply because an eight-second timer expired.
-    void Promise.allSettled(trackedTasks).then((results) => {
+    // The loader now gates only on critical UI assets. Large MP4s continue
+    // warming in the background and can never hold the site hostage.
+    void Promise.allSettled(trackedCriticalTasks).then(() => {
       if (disposed) return;
-
-      const allProjectMediaReady = results.every((result) => {
-        if (result.status !== "fulfilled") return false;
-        return result.value !== false;
-      });
-
-      if (allProjectMediaReady) {
-        // Secondary carousel clips should never hold the portfolio hostage.
-        // Start a deeper background prime right as the primary experience is
-        // ready, so a later slide switch can reuse already-buffered/decoded media.
-        for (const src of warmup.secondaryCarouselSources) {
-          void primeProjectVideo(src, 8);
-        }
-        startReveal();
-      }
+      startReveal();
     });
 
     // A broken/blocked media asset must never trap someone on the loading
     // screen forever. This is an emergency fallback, not the normal reveal
     // path.
     const emergencyTimer = window.setTimeout(() => {
-      for (const src of warmup.secondaryCarouselSources) {
-        void primeProjectVideo(src, 8);
-      }
       startReveal();
     }, EMERGENCY_REVEAL_MS);
 
@@ -248,7 +197,7 @@ export function PortfolioLoader({
 
         <div className="portfolio-loader__media" aria-hidden="true">
           <div className="portfolio-loader__media-head">
-            <span>{aggressiveWarmup ? "Playable media pool" : "Media warm-up"}</span>
+            <span>Media warm-up</span>
             <strong>
               {mediaTotal > 0 ? `${mediaSettled}/${mediaTotal}` : "—"}
             </strong>
