@@ -61,13 +61,7 @@ function getWarmupTasks(onMediaReady: () => void) {
   const carouselAlternateSources = new Set(
     projects.flatMap((project) =>
       project.media.kind === "video-carousel"
-        ? project.media.videos
-            .slice(1)
-            .map((video) => projectVideoSources({
-              ...project,
-              media: { ...project.media, videos: [video] },
-            })[0])
-            .filter((src): src is string => Boolean(src))
+        ? projectVideoSources(project).slice(1)
         : [],
     ),
   );
