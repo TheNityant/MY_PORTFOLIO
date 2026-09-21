@@ -39,6 +39,72 @@ function connectionAllowsIntentPreload() {
   return !["slow-2g", "2g"].includes(connection?.effectiveType ?? "");
 }
 
+const warmedVideoPrefixes = new Set<string>();
+const warmingVideoPrefixes = new Map<string, Promise<void>>();
+
+function warmVideoPrefix(src: string, debug = false) {
+  if (!connectionAllowsIntentPreload()) return Promise.resolve();
+  if (warmedVideoPrefixes.has(src)) return Promise.resolve();
+
+  const existing = warmingVideoPrefixes.get(src);
+  if (existing) return existing;
+
+  const started = performance.now();
+  const requestInit: RequestInit & { priority?: "high" | "low" | "auto" } = {
+    method: "GET",
+    mode: "cors",
+    cache: "force-cache",
+    headers: {
+      Range: "bytes=0-1048575",
+      Accept: "video/mp4,video/*;q=0.9,*/*;q=0.1",
+    },
+    priority: "high",
+  };
+
+  const request = fetch(src, requestInit)
+    .then(async (response) => {
+      // Only consume a genuine partial response. If an origin ever ignores the
+      // Range header and returns the full MP4, cancel immediately rather than
+      // accidentally downloading tens of megabytes in this warm-up path.
+      if (response.status !== 206) {
+        await response.body?.cancel().catch(() => undefined);
+        if (debug) {
+          console.info("[project-video:warm-prefix] skipped", {
+            status: response.status,
+            src,
+          });
+        }
+        return;
+      }
+
+      await response.arrayBuffer();
+      warmedVideoPrefixes.add(src);
+
+      if (debug) {
+        console.info("[project-video:warm-prefix] complete", {
+          src,
+          ms: Math.round(performance.now() - started),
+          contentRange: response.headers.get("content-range"),
+          cacheStatus: response.headers.get("cf-cache-status"),
+        });
+      }
+    })
+    .catch((error) => {
+      if (debug) {
+        console.info("[project-video:warm-prefix] unavailable", {
+          src,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })
+    .finally(() => {
+      warmingVideoPrefixes.delete(src);
+    });
+
+  warmingVideoPrefixes.set(src, request);
+  return request;
+}
+
 function TechList({ items }: { items: readonly string[] }) {
   return (
     <ul className="project-tech">
@@ -209,10 +275,20 @@ function ProjectMedia({
       ? resolveProjectMediaSrc(activeCarouselVideo.poster)
       : undefined;
 
+    const normalizedSlide = (nextIndex: number) =>
+      (nextIndex + carouselVideos.length) % carouselVideos.length;
+
+    const warmCarouselSlide = (nextIndex: number) => {
+      if (!carouselVideos.length || reducedMotion) return;
+      const candidate = carouselVideos[normalizedSlide(nextIndex)];
+      if (!candidate) return;
+      void warmVideoPrefix(resolveProjectMediaSrc(candidate.src), mediaDebug);
+    };
+
     const goToSlide = (nextIndex: number) => {
       if (!carouselVideos.length) return;
-      const normalized =
-        (nextIndex + carouselVideos.length) % carouselVideos.length;
+      const normalized = normalizedSlide(nextIndex);
+      warmCarouselSlide(normalized);
       setSlideIndex(normalized);
     };
 
@@ -256,6 +332,8 @@ function ProjectMedia({
               type="button"
               className="project-media-carousel-button"
               aria-label="Previous Robocon video"
+              onPointerEnter={() => warmCarouselSlide(safeSlideIndex - 1)}
+              onFocus={() => warmCarouselSlide(safeSlideIndex - 1)}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -273,6 +351,8 @@ function ProjectMedia({
               type="button"
               className="project-media-carousel-button"
               aria-label="Next Robocon video"
+              onPointerEnter={() => warmCarouselSlide(safeSlideIndex + 1)}
+              onFocus={() => warmCarouselSlide(safeSlideIndex + 1)}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -423,7 +503,6 @@ export function Projects() {
   const [mediaIntent, setMediaIntent] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const preloadedVideoSources = useRef(new Set<string>());
   const domains = useMemo(() => visibleProjectDomains(), []);
   const domainProjects = projectsForDomain(domain);
   const pageCount = Math.max(1, Math.ceil(domainProjects.length / PROJECT_PAGE_SIZE));
@@ -431,24 +510,23 @@ export function Projects() {
   const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
 
+  const mediaDebug =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("mediaDebug");
+
   const warmProjectList = (list: readonly Project[]) => {
     if (reducedMotion) return;
     if (!window.matchMedia("(min-width: 700px)").matches) return;
     if (!connectionAllowsIntentPreload()) return;
 
-    for (const src of list.flatMap(projectVideoSources)) {
-      if (preloadedVideoSources.current.has(src)) continue;
-
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "video";
-      link.type = "video/mp4";
-      link.href = src;
-      link.setAttribute("fetchpriority", "high");
-      link.dataset.projectVideoPreload = "true";
-      document.head.appendChild(link);
-      preloadedVideoSources.current.add(src);
-    }
+    // Warm at most 1 MiB from each upcoming MP4, sequentially. This primes the
+    // connection/CDN and the beginning of Fast-Start files without competing
+    // with the active video's full-buffer request.
+    const sources = list.flatMap(projectVideoSources);
+    void sources.reduce(
+      (previous, src) => previous.then(() => warmVideoPrefix(src, mediaDebug)),
+      Promise.resolve(),
+    );
   };
 
   const warmDomain = (id: ProjectDomainId) => {
@@ -461,14 +539,13 @@ export function Projects() {
     if (!connectionAllowsIntentPreload()) return;
 
     const warmVisibleVideos = () => {
+      // The mounted videos themselves are the best loader for the current
+      // project pair. Promote them to preload=auto; reserve byte-range warming
+      // for videos the visitor is likely to switch to next.
       setMediaIntent(true);
-      warmProjectList(visible);
     };
 
-    if (mediaIntent) {
-      warmProjectList(visible);
-      return;
-    }
+    if (mediaIntent) return;
 
     // First real user intent is our turbo trigger. It keeps the initial hero
     // load clean, then promotes the mounted project videos to full buffering.
