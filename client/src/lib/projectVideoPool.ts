@@ -9,6 +9,7 @@ type ProjectVideoPoolEntry = {
   mode: ProjectVideoWarmMode;
   metadataPromise: Promise<boolean>;
   playablePromise: Promise<boolean>;
+  primePromise?: Promise<boolean>;
 };
 
 const entries = new Map<string, ProjectVideoPoolEntry>();
@@ -81,6 +82,45 @@ function bufferedAhead(video: HTMLVideoElement) {
   }
 
   return 0;
+}
+
+function waitForBufferedTarget(video: HTMLVideoElement, seconds: number) {
+  const isReady = () => {
+    if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) return false;
+    const duration = Number.isFinite(video.duration) ? video.duration : null;
+    const target = duration === null ? seconds : Math.min(seconds, Math.max(0.35, duration * 0.9));
+    return bufferedAhead(video) >= target || video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
+  };
+
+  if (isReady()) return Promise.resolve(true);
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const events = ["progress", "loadeddata", "canplay", "canplaythrough", "durationchange"];
+
+    const cleanup = () => {
+      for (const event of events) video.removeEventListener(event, onProgress);
+      video.removeEventListener("error", onError);
+      window.clearTimeout(timeout);
+    };
+
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+
+    const onProgress = () => {
+      if (isReady()) finish(true);
+    };
+
+    const onError = () => finish(false);
+    const timeout = window.setTimeout(() => finish(false), 20000);
+
+    for (const event of events) video.addEventListener(event, onProgress);
+    video.addEventListener("error", onError, { once: true });
+  });
 }
 
 function waitForPlayableBuffer(video: HTMLVideoElement) {
@@ -250,6 +290,64 @@ export function warmProjectVideoSet(
 export function promoteProjectVideo(src: string) {
   if (typeof document === "undefined") return;
   ensureEntry(src, "auto");
+}
+
+export function primeProjectVideo(
+  src: string,
+  bufferedSeconds = 5,
+) {
+  if (typeof document === "undefined") return Promise.resolve(false);
+
+  const entry = ensureEntry(src, "auto");
+  if (entry.primePromise) return entry.primePromise;
+
+  entry.primePromise = (async () => {
+    const playable = await entry.playablePromise;
+    if (!playable) return false;
+
+    const buffered = await waitForBufferedTarget(entry.video, bufferedSeconds);
+    if (!buffered) return false;
+
+    const video = entry.video;
+    const originalTime = video.currentTime;
+
+    try {
+      video.currentTime = 0;
+      await video.play();
+
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          resolve();
+        };
+
+        const timeout = window.setTimeout(finish, 700);
+
+        if ("requestVideoFrameCallback" in video) {
+          video.requestVideoFrameCallback(() => finish());
+        } else {
+          window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+        }
+      });
+
+      video.pause();
+      video.currentTime = 0;
+      return true;
+    } catch {
+      video.pause();
+      try {
+        video.currentTime = originalTime;
+      } catch {
+        // Ignore browsers that reject a seek while media state changes.
+      }
+      return buffered;
+    }
+  })();
+
+  return entry.primePromise;
 }
 
 export function attachProjectVideo({
