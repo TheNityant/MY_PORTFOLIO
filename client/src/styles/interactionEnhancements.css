@@ -1032,3 +1032,42 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 900px;
 }
+
+
+/* Persistent project-video pool -------------------------------------------
+   Video elements are parked off-canvas instead of destroyed when switching
+   project domains. Keeping the same media element alive preserves its buffered
+   state for the duration of the document. */
+.project-video-pool {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  z-index: -1;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  contain: strict;
+}
+
+.project-video-pool video {
+  width: 1px;
+  height: 1px;
+}
+
+.project-media-video-host {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.project-media-video-host .project-media-asset {
+  display: block;
+}
+
+.project-media-carousel-controls {
+  z-index: 4;
+}
