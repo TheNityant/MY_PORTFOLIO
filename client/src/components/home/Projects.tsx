@@ -12,6 +12,33 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { resolveProjectMediaSrc } from "@/lib/projectMedia";
 import { cn } from "@/lib/utils";
 
+function projectVideoSources(project: Project) {
+  if (project.media.kind === "video") {
+    return [resolveProjectMediaSrc(project.media.src)];
+  }
+
+  if (project.media.kind === "video-carousel") {
+    const first = project.media.videos[0];
+    return first ? [resolveProjectMediaSrc(first.src)] : [];
+  }
+
+  return [];
+}
+
+function connectionAllowsIntentPreload() {
+  const connection = (
+    navigator as Navigator & {
+      connection?: {
+        saveData?: boolean;
+        effectiveType?: string;
+      };
+    }
+  ).connection;
+
+  if (connection?.saveData) return false;
+  return !["slow-2g", "2g"].includes(connection?.effectiveType ?? "");
+}
+
 function TechList({ items }: { items: readonly string[] }) {
   return (
     <ul className="project-tech">
@@ -89,6 +116,15 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const preloadObserver = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
+
+        // The element starts in metadata mode. Explicitly upgrade the media
+        // request as it approaches the viewport so Chromium does not keep the
+        // resource at metadata-only priority until play() is called.
+        if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+          video.preload = "auto";
+          video.load();
+        }
+
         setNearViewport(true);
         preloadObserver.disconnect();
       },
@@ -353,12 +389,57 @@ export function Projects() {
   const [vertical, setVertical] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const preloadedVideoSources = useRef(new Set<string>());
   const domains = useMemo(() => visibleProjectDomains(), []);
   const domainProjects = projectsForDomain(domain);
   const pageCount = Math.max(1, Math.ceil(domainProjects.length / PROJECT_PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    if (!window.matchMedia("(min-width: 700px)").matches) return;
+    if (!connectionAllowsIntentPreload()) return;
+
+    const sources = visible.flatMap(projectVideoSources);
+    if (!sources.length) return;
+
+    const warmVisibleVideos = () => {
+      for (const src of sources) {
+        if (preloadedVideoSources.current.has(src)) continue;
+
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "video";
+        link.type = "video/mp4";
+        link.href = src;
+        link.dataset.projectVideoPreload = "true";
+        document.head.appendChild(link);
+        preloadedVideoSources.current.add(src);
+      }
+    };
+
+    // Do not compete with the initial hero/shader startup. A first interaction
+    // is a strong signal that the visitor is moving through the page, so warm
+    // the currently selected project pair at that point.
+    const onIntent = () => {
+      warmVisibleVideos();
+      window.removeEventListener("scroll", onIntent);
+      window.removeEventListener("pointerdown", onIntent);
+      window.removeEventListener("keydown", onIntent);
+    };
+
+    window.addEventListener("scroll", onIntent, { passive: true });
+    window.addEventListener("pointerdown", onIntent, { passive: true });
+    window.addEventListener("keydown", onIntent);
+
+    return () => {
+      window.removeEventListener("scroll", onIntent);
+      window.removeEventListener("pointerdown", onIntent);
+      window.removeEventListener("keydown", onIntent);
+    };
+  }, [domain, reducedMotion, safePage]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1280px)");
