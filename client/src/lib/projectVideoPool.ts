@@ -201,7 +201,6 @@ function createEntry(src: string, mode: ProjectVideoWarmMode) {
   ensurePoolHost()?.appendChild(video);
 
   video.src = src;
-  video.load();
 
   return entry;
 }
@@ -216,10 +215,6 @@ function ensureEntry(src: string, mode: ProjectVideoWarmMode) {
   if (mode === "auto" && entry.mode !== "auto") {
     entry.mode = "auto";
     entry.video.preload = "auto";
-
-    if (entry.video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
-      entry.video.load();
-    }
   }
 
   return entry;
