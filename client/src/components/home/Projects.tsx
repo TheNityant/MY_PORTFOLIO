@@ -476,18 +476,21 @@ export function Projects() {
       warmVisibleVideos();
       window.removeEventListener("scroll", onIntent);
       window.removeEventListener("wheel", onIntent);
+      window.removeEventListener("pointermove", onIntent);
       window.removeEventListener("pointerdown", onIntent);
       window.removeEventListener("keydown", onIntent);
     };
 
     window.addEventListener("scroll", onIntent, { passive: true });
     window.addEventListener("wheel", onIntent, { passive: true });
+    window.addEventListener("pointermove", onIntent, { passive: true, once: true });
     window.addEventListener("pointerdown", onIntent, { passive: true });
     window.addEventListener("keydown", onIntent);
 
     return () => {
       window.removeEventListener("scroll", onIntent);
       window.removeEventListener("wheel", onIntent);
+      window.removeEventListener("pointermove", onIntent);
       window.removeEventListener("pointerdown", onIntent);
       window.removeEventListener("keydown", onIntent);
     };
