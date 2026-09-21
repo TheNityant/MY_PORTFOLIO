@@ -112,3 +112,18 @@
     animation: none !important;
   }
 }
+
+
+/* Compositor isolation for the fixed shader. This preserves the exact visual
+   animation while preventing unrelated page paints from unnecessarily
+   invalidating the full-screen WebGL surface. */
+.site-atmosphere__shader {
+  contain: paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.site-atmosphere__shader canvas {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
