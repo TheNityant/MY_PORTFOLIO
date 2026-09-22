@@ -476,12 +476,18 @@ export function Projects() {
 
     for (const project of list) {
       const sources = projectVideoSources(project);
-      for (const src of sources) promoteProjectVideo(src);
+      const [primarySource, ...secondarySources] = sources;
 
-      if (project.media.kind === "video-carousel") {
-        for (const video of project.media.videos.slice(1)) {
-          void primeProjectVideo(resolveProjectMediaSrc(video.src), 8);
-        }
+      if (primarySource) {
+        // Hover/focus/click is a strong intent signal. Prime enough buffered
+        // media plus a decoded first frame before the card is selected.
+        void primeProjectVideo(primarySource, 6);
+      }
+
+      for (const src of secondarySources) {
+        // Carousel alternatives are useful to warm, but keep their target
+        // smaller so they do not starve the primary project previews.
+        void primeProjectVideo(src, 3);
       }
     }
   };
@@ -578,7 +584,13 @@ export function Projects() {
                 const start = (safePage - 1) * PROJECT_PAGE_SIZE;
                 promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
               }}
-              onClick={() => setPage((value) => Math.max(0, value - 1))}
+              onClick={() => {
+                if (safePage > 0) {
+                  const start = (safePage - 1) * PROJECT_PAGE_SIZE;
+                  promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+                }
+                setPage((value) => Math.max(0, value - 1));
+              }}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
@@ -597,7 +609,13 @@ export function Projects() {
                 const start = (safePage + 1) * PROJECT_PAGE_SIZE;
                 promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
               }}
-              onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
+              onClick={() => {
+                if (safePage < pageCount - 1) {
+                  const start = (safePage + 1) * PROJECT_PAGE_SIZE;
+                  promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+                }
+                setPage((value) => Math.min(pageCount - 1, value + 1));
+              }}
             >
               <ArrowRight size={16} aria-hidden="true" />
             </button>
