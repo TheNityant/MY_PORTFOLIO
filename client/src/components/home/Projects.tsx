@@ -129,7 +129,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         if (nextIndex !== safeSlideIndex) {
           const nextVideo = carouselVideos[nextIndex];
           if (nextVideo) {
-            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 8);
+            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 3);
           }
         }
       }
@@ -266,7 +266,9 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       if (!carouselVideos.length || reducedMotion) return;
       const candidate = carouselVideos[normalizedSlide(nextIndex)];
       if (!candidate) return;
-      void primeProjectVideo(resolveProjectMediaSrc(candidate.src), 8);
+      const src = resolveProjectMediaSrc(candidate.src);
+      promoteProjectVideo(src);
+      void primeProjectVideo(src, 3);
     };
 
     const goToSlide = (nextIndex: number) => {
@@ -475,14 +477,8 @@ export function Projects() {
     if (reducedMotion) return;
 
     for (const project of list) {
-      const sources = projectVideoSources(project);
-      for (const src of sources) promoteProjectVideo(src);
-
-      if (project.media.kind === "video-carousel") {
-        for (const video of project.media.videos.slice(1)) {
-          void primeProjectVideo(resolveProjectMediaSrc(video.src), 8);
-        }
-      }
+      const [primarySource] = projectVideoSources(project);
+      if (primarySource) promoteProjectVideo(primarySource);
     }
   };
 
