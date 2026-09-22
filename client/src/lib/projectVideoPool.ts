@@ -202,6 +202,11 @@ function createEntry(src: string, mode: ProjectVideoWarmMode) {
 
   video.src = src;
 
+  // Explicitly kick the media pipeline. Setting src/preload is normally enough,
+  // but load() makes the intended preload state take effect immediately in
+  // browsers that defer media selection work.
+  video.load();
+
   return entry;
 }
 
@@ -215,6 +220,12 @@ function ensureEntry(src: string, mode: ProjectVideoWarmMode) {
   if (mode === "auto" && entry.mode !== "auto") {
     entry.mode = "auto";
     entry.video.preload = "auto";
+
+    // A preload attribute change is only a hint. Promote the existing pooled
+    // media element explicitly so metadata-only entries continue fetching.
+    if (entry.video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+      entry.video.load();
+    }
   }
 
   return entry;
@@ -300,12 +311,12 @@ export function primeProjectVideo(
     const playable = await entry.playablePromise;
     if (!playable) return false;
 
-    const buffered = await waitForBufferedTarget(entry.video, bufferedSeconds);
-    if (!buffered) return false;
-
     const video = entry.video;
     const originalTime = video.currentTime;
 
+    // Prime the decoder as soon as the browser has enough data for a frame.
+    // This happens before the longer background-buffer target so first-frame
+    // decode does not wait behind several more seconds of network buffering.
     try {
       video.currentTime = 0;
       await video.play();
@@ -327,19 +338,19 @@ export function primeProjectVideo(
           window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
         }
       });
-
-      video.pause();
-      video.currentTime = 0;
-      return true;
     } catch {
+      // Muted inline playback should normally be allowed. If a browser still
+      // rejects it, buffering remains useful and we simply skip decode priming.
+    } finally {
       video.pause();
       try {
         video.currentTime = originalTime;
       } catch {
         // Ignore browsers that reject a seek while media state changes.
       }
-      return buffered;
     }
+
+    return waitForBufferedTarget(video, bufferedSeconds);
   })();
 
   return entry.primePromise;
