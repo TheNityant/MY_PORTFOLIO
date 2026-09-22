@@ -129,7 +129,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         if (nextIndex !== safeSlideIndex) {
           const nextVideo = carouselVideos[nextIndex];
           if (nextVideo) {
-            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 3);
+            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 8);
           }
         }
       }
@@ -268,7 +268,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       if (!candidate) return;
       const src = resolveProjectMediaSrc(candidate.src);
       promoteProjectVideo(src);
-      void primeProjectVideo(src, 3);
+      void primeProjectVideo(src, 8);
     };
 
     const goToSlide = (nextIndex: number) => {
@@ -476,26 +476,16 @@ export function Projects() {
   const promoteProjectList = (list: readonly Project[]) => {
     if (reducedMotion) return;
 
-    const touchMedia =
-      window.matchMedia("(max-width: 699px)").matches ||
-      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-
     for (const project of list) {
-      const sources = projectVideoSources(project);
+      const bufferedSeconds = project.media.kind === "video-carousel" ? 8 : 5;
 
-      if (touchMedia) {
-        // Mobile browsers commonly deprioritize off-screen video preload.
-        // Start the visible project pair in parallel when the domain is
-        // selected, and include carousel siblings so Robocon demo 2 is already
-        // fetching before the user presses the next-video control.
-        for (const src of sources) {
-          void primeProjectVideo(src, 3);
-        }
-        continue;
+      for (const src of projectVideoSources(project)) {
+        // Domain selection is a strong intent signal. Start every visible
+        // project's media immediately on every device, including carousel
+        // siblings, so a loader timeout never turns into another delayed card.
+        promoteProjectVideo(src);
+        void primeProjectVideo(src, bufferedSeconds);
       }
-
-      const [primarySource] = sources;
-      if (primarySource) promoteProjectVideo(primarySource);
     }
   };
 
