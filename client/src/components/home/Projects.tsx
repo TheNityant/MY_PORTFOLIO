@@ -476,8 +476,25 @@ export function Projects() {
   const promoteProjectList = (list: readonly Project[]) => {
     if (reducedMotion) return;
 
+    const touchMedia =
+      window.matchMedia("(max-width: 699px)").matches ||
+      window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
     for (const project of list) {
-      const [primarySource] = projectVideoSources(project);
+      const sources = projectVideoSources(project);
+
+      if (touchMedia) {
+        // Mobile browsers commonly deprioritize off-screen video preload.
+        // Start the visible project pair in parallel when the domain is
+        // selected, and include carousel siblings so Robocon demo 2 is already
+        // fetching before the user presses the next-video control.
+        for (const src of sources) {
+          void primeProjectVideo(src, 3);
+        }
+        continue;
+      }
+
+      const [primarySource] = sources;
       if (primarySource) promoteProjectVideo(primarySource);
     }
   };
