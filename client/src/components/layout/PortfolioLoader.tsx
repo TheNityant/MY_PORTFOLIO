@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  defaultProjectDomain,
   profile,
-  projectsForDomain,
+  projects,
 } from "@/data/portfolio";
 import {
+  primeProjectVideo,
   projectVideoSources,
-  warmProjectVideo,
 } from "@/lib/projectVideoPool";
 
-const EMERGENCY_REVEAL_MS = 8000;
+const MEDIA_GATE_MAX_MS = 15000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -51,11 +50,27 @@ async function preloadImage(src: string) {
   });
 }
 
+async function primeWithRetry(src: string, bufferedSeconds: number) {
+  const first = await primeProjectVideo(src, bufferedSeconds).catch(() => false);
+  if (first) return true;
+
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 250));
+  return primeProjectVideo(src, bufferedSeconds).catch(() => false);
+}
+
 function getWarmupTasks(onMediaReady: () => void) {
-  const initialProjects = projectsForDomain(defaultProjectDomain).slice(0, 2);
-  const initialSources = Array.from(
-    new Set(initialProjects.flatMap(projectVideoSources)),
-  );
+  const mediaTargets = new Map<string, number>();
+
+  for (const project of projects) {
+    const bufferedSeconds = project.media.kind === "video-carousel" ? 8 : 5;
+
+    for (const src of projectVideoSources(project)) {
+      mediaTargets.set(
+        src,
+        Math.max(mediaTargets.get(src) ?? 0, bufferedSeconds),
+      );
+    }
+  }
 
   const criticalTasks: Array<Promise<unknown>> = [
     waitForWindowLoad(),
@@ -63,22 +78,20 @@ function getWarmupTasks(onMediaReady: () => void) {
     preloadImage(profile.portraitSrc),
   ];
 
-  // Only the first visible project pair is warmed during startup, and that
-  // work never blocks the portfolio reveal. Everything else is promoted by
-  // viewport/intent logic in Projects.tsx.
-  const backgroundMediaTasks = initialSources.map((src) =>
-    warmProjectVideo(src, "auto")
-      .then((ready) => {
-        if (ready) onMediaReady();
-        return ready;
-      })
-      .catch(() => false),
+  // Start every project video immediately during the loading screen. The
+  // pooled media elements are reused by the project cards, so this startup
+  // work survives domain switches instead of being thrown away.
+  const mediaTasks = Array.from(mediaTargets, ([src, bufferedSeconds]) =>
+    primeWithRetry(src, bufferedSeconds).then((ready) => {
+      if (ready) onMediaReady();
+      return ready;
+    }),
   );
 
   return {
     criticalTasks,
-    backgroundMediaTasks,
-    mediaTotal: initialSources.length,
+    mediaTasks,
+    mediaTotal: mediaTasks.length,
   };
 }
 
@@ -103,34 +116,36 @@ export function PortfolioLoader({
 
     loaderPlayedForThisDocument = true;
     let disposed = false;
-    let completedTasks = 0;
+    let completedCritical = 0;
+    let completedMedia = 0;
 
     document.documentElement.classList.add("portfolio-is-loading");
 
+    const updateProgress = (criticalTotal: number, mediaCount: number) => {
+      const total = Math.max(1, criticalTotal + mediaCount);
+      const completed = completedCritical + completedMedia;
+      const next = Math.min(96, 4 + (completed / total) * 92);
+      setProgress((current) => Math.max(current, next));
+    };
+
     const warmup = getWarmupTasks(() => {
       if (disposed) return;
+      completedMedia += 1;
       setMediaSettled((current) => Math.min(warmup.mediaTotal, current + 1));
+      updateProgress(warmup.criticalTasks.length, warmup.mediaTotal);
     });
 
     setMediaTotal(warmup.mediaTotal);
 
-    const totalTasks = Math.max(1, warmup.criticalTasks.length);
-
-    const markTaskDone = () => {
-      completedTasks += 1;
-      const taskProgress = Math.min(96, 4 + (completedTasks / totalTasks) * 92);
-      setProgress((current) => Math.max(current, taskProgress));
-    };
-
     const trackedCriticalTasks = warmup.criticalTasks.map((task) =>
       Promise.resolve(task)
         .catch(() => undefined)
-        .finally(markTaskDone),
+        .finally(() => {
+          if (disposed) return;
+          completedCritical += 1;
+          updateProgress(warmup.criticalTasks.length, warmup.mediaTotal);
+        }),
     );
-
-    // Fire-and-forget. These prime the default project pair but are not part
-    // of the loading-screen gate.
-    void Promise.allSettled(warmup.backgroundMediaTasks);
 
     const startReveal = () => {
       if (disposed || revealStartedRef.current) return;
@@ -146,19 +161,21 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    // The loader now gates only on critical UI assets. Large MP4s continue
-    // warming in the background and can never hold the site hostage.
-    void Promise.allSettled(trackedCriticalTasks).then(() => {
+    // Normal path: do not reveal until the UI assets are ready AND every
+    // project video has reached its startup buffer target.
+    void Promise.all([
+      Promise.allSettled(trackedCriticalTasks),
+      Promise.all(warmup.mediaTasks),
+    ]).then(([, mediaResults]) => {
       if (disposed) return;
-      startReveal();
+      if (mediaResults.every(Boolean)) startReveal();
     });
 
-    // A broken/blocked media asset must never trap someone on the loading
-    // screen forever. This is an emergency fallback, not the normal reveal
-    // path.
+    // The user prefers a longer startup screen over late project media, but a
+    // broken asset/network must still have a hard escape hatch.
     const emergencyTimer = window.setTimeout(() => {
       startReveal();
-    }, EMERGENCY_REVEAL_MS);
+    }, MEDIA_GATE_MAX_MS);
 
     return () => {
       disposed = true;
@@ -170,10 +187,10 @@ export function PortfolioLoader({
   if (phase === "done") return null;
 
   const status =
-    progress < 24
+    progress < 18
       ? "Booting the interface"
       : mediaTotal > 0 && mediaSettled < mediaTotal
-        ? "Buffering project media"
+        ? "Buffering all project media"
         : "Finalizing the experience";
 
   return (
