@@ -5,8 +5,8 @@ import {
   projectsForDomain,
 } from "@/data/portfolio";
 import {
-  primeProjectVideo,
   projectVideoSources,
+  warmProjectVideo,
 } from "@/lib/projectVideoPool";
 
 const EMERGENCY_REVEAL_MS = 8000;
@@ -66,11 +66,8 @@ function getWarmupTasks(onMediaReady: () => void) {
   // Only the first visible project pair is warmed during startup, and that
   // work never blocks the portfolio reveal. Everything else is promoted by
   // viewport/intent logic in Projects.tsx.
-  const desktopPrime = window.matchMedia("(min-width: 700px)").matches;
-  const bufferedSeconds = desktopPrime ? 8 : 4;
-
   const backgroundMediaTasks = initialSources.map((src) =>
-    primeProjectVideo(src, bufferedSeconds)
+    warmProjectVideo(src, "auto")
       .then((ready) => {
         if (ready) onMediaReady();
         return ready;
