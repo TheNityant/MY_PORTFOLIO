@@ -296,8 +296,14 @@ export function primeProjectVideo(
   const entry = ensureEntry(src, "auto");
   if (entry.primePromise) return entry.primePromise;
 
-  entry.primePromise = (async () => {
-    const playable = await entry.playablePromise;
+  const runPrime = (async () => {
+    // Do not permanently trust an older timed-out playable promise. A video
+    // can become playable later, especially for secondary carousel clips.
+    const playable =
+      entry.video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+        ? true
+        : await waitForPlayableBuffer(entry.video);
+
     if (!playable) return false;
 
     const buffered = await waitForBufferedTarget(entry.video, bufferedSeconds);
@@ -341,6 +347,17 @@ export function primeProjectVideo(
       return buffered;
     }
   })();
+
+  entry.primePromise = runPrime.then(
+    (ready) => {
+      if (!ready) entry.primePromise = undefined;
+      return ready;
+    },
+    () => {
+      entry.primePromise = undefined;
+      return false;
+    },
+  );
 
   return entry.primePromise;
 }
