@@ -287,6 +287,55 @@ export function promoteProjectVideo(src: string) {
   ensureEntry(src, "auto");
 }
 
+function shouldKickMobileVideoFetch() {
+  if (typeof window === "undefined") return false;
+
+  return (
+    window.matchMedia("(max-width: 699px)").matches ||
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches
+  );
+}
+
+async function kickMobileVideoFetch(video: HTMLVideoElement) {
+  if (!shouldKickMobileVideoFetch()) return;
+  if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return;
+
+  const originalTime = video.currentTime;
+
+  try {
+    await video.play();
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        video.removeEventListener("loadeddata", finish);
+        video.removeEventListener("canplay", finish);
+        video.removeEventListener("playing", finish);
+        window.clearTimeout(timeout);
+        resolve();
+      };
+
+      const timeout = window.setTimeout(finish, 900);
+      video.addEventListener("loadeddata", finish, { once: true });
+      video.addEventListener("canplay", finish, { once: true });
+      video.addEventListener("playing", finish, { once: true });
+    });
+  } catch {
+    // Muted inline autoplay can still be denied on some browser/device
+    // combinations. The normal preload path remains as the fallback.
+  } finally {
+    video.pause();
+    try {
+      video.currentTime = originalTime;
+    } catch {
+      // Ignore transient seek errors while media state is changing.
+    }
+  }
+}
+
 export function primeProjectVideo(
   src: string,
   bufferedSeconds = 5,
@@ -297,6 +346,12 @@ export function primeProjectVideo(
   if (entry.primePromise) return entry.primePromise;
 
   const runPrime = (async () => {
+    // Mobile Safari/Chrome may throttle preload="auto" for pooled/off-screen
+    // media until playback is attempted. Kick a muted inline play first so
+    // secondary carousel videos and below-fold project videos actually start
+    // fetching instead of waiting on a buffer the browser has not prioritized.
+    await kickMobileVideoFetch(entry.video);
+
     // Do not permanently trust an older timed-out playable promise. A video
     // can become playable later, especially for secondary carousel clips.
     const playable =
