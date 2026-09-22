@@ -10,6 +10,13 @@ import {
 } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { resolveProjectMediaSrc } from "@/lib/projectMedia";
+import {
+  attachProjectVideo,
+  parkProjectVideo,
+  primeProjectVideo,
+  projectVideoSources,
+  promoteProjectVideo,
+} from "@/lib/projectVideoPool";
 import { cn } from "@/lib/utils";
 
 function TechList({ items }: { items: readonly string[] }) {
@@ -24,10 +31,12 @@ function TechList({ items }: { items: readonly string[] }) {
 
 function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
   const { media } = project;
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [nearViewport, setNearViewport] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+
   const mediaDebug =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("mediaDebug");
@@ -37,53 +46,154 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const safeSlideIndex =
     carouselVideos.length === 0 ? 0 : Math.min(slideIndex, carouselVideos.length - 1);
   const activeCarouselVideo = isCarousel ? carouselVideos[safeSlideIndex] : undefined;
-  const shouldLoadVideo = nearViewport;
+
+  const activeSrc =
+    media.kind === "video"
+      ? resolveProjectMediaSrc(media.src)
+      : activeCarouselVideo
+        ? resolveProjectMediaSrc(activeCarouselVideo.src)
+        : null;
+
+  const activePoster =
+    media.kind === "video"
+      ? media.poster
+        ? resolveProjectMediaSrc(media.poster)
+        : undefined
+      : activeCarouselVideo?.poster
+        ? resolveProjectMediaSrc(activeCarouselVideo.poster)
+        : undefined;
+
+  const activeLabel =
+    media.kind === "video"
+      ? media.alt
+      : activeCarouselVideo?.label ?? (media.kind === "video-carousel" ? media.alt : "");
 
   useEffect(() => {
     setSlideIndex(0);
-    setNearViewport(false);
-    setVideoReady(false);
   }, [project.id]);
 
   useEffect(() => {
+    setNearViewport(false);
     setVideoReady(false);
-  }, [safeSlideIndex]);
-
-  const debugVideoEvent = (eventName: string) => {
-    if (!mediaDebug) return;
-    const video = videoRef.current;
-    if (!video) return;
-
-    const buffered =
-      video.buffered.length > 0
-        ? {
-            start: Number(video.buffered.start(0).toFixed(2)),
-            end: Number(video.buffered.end(video.buffered.length - 1).toFixed(2)),
-          }
-        : null;
-
-    console.info(`[project-video:${project.id}] ${eventName}`, {
-      msSinceNavigation: Math.round(performance.now()),
-      readyState: video.readyState,
-      networkState: video.networkState,
-      duration: Number.isFinite(video.duration) ? Number(video.duration.toFixed(2)) : null,
-      currentTime: Number(video.currentTime.toFixed(2)),
-      videoWidth: video.videoWidth,
-      videoHeight: video.videoHeight,
-      buffered,
-      currentSrc: video.currentSrc,
-    });
-  };
-
-  const reportReady = () => {
-    setVideoReady(true);
-    debugVideoEvent("ready");
-  };
+  }, [activeSrc]);
 
   useEffect(() => {
-    if ((media.kind !== "video" && media.kind !== "video-carousel") || reducedMotion) return;
+    if (reducedMotion || !activeSrc) return;
+
+    const host = hostRef.current;
+    if (!host) return;
+
+    const video = attachProjectVideo({
+      src: activeSrc,
+      host,
+      className: cn(
+        "project-media-asset",
+        isCarousel && "project-media-asset--contain",
+      ),
+      poster: activePoster,
+      ariaLabel: activeLabel,
+    });
+
+    videoRef.current = video;
+
+    const debugVideoEvent = (eventName: string) => {
+      if (!mediaDebug) return;
+
+      const buffered =
+        video.buffered.length > 0
+          ? {
+              start: Number(video.buffered.start(0).toFixed(2)),
+              end: Number(video.buffered.end(video.buffered.length - 1).toFixed(2)),
+            }
+          : null;
+
+      console.info(`[project-video:${project.id}] ${eventName}`, {
+        msSinceNavigation: Math.round(performance.now()),
+        readyState: video.readyState,
+        networkState: video.networkState,
+        duration: Number.isFinite(video.duration) ? Number(video.duration.toFixed(2)) : null,
+        currentTime: Number(video.currentTime.toFixed(2)),
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        buffered,
+        currentSrc: video.currentSrc,
+      });
+    };
+
+    const markReady = () => {
+      setVideoReady(true);
+      debugVideoEvent("ready");
+
+      if (isCarousel && carouselVideos.length > 1) {
+        const nextIndex = (safeSlideIndex + 1) % carouselVideos.length;
+        if (nextIndex !== safeSlideIndex) {
+          const nextVideo = carouselVideos[nextIndex];
+          if (nextVideo) {
+            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 8);
+          }
+        }
+      }
+    };
+
+    const onLoadStart = () => debugVideoEvent("loadstart");
+    const onLoadedMetadata = () => debugVideoEvent("loadedmetadata");
+    const onPlaying = () => debugVideoEvent("playing");
+    const onWaiting = () => debugVideoEvent("waiting");
+    const onStalled = () => debugVideoEvent("stalled");
+    const onError = () => debugVideoEvent("error");
+
+    video.addEventListener("loadstart", onLoadStart);
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("loadeddata", markReady);
+    video.addEventListener("canplay", markReady);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("stalled", onStalled);
+    video.addEventListener("error", onError);
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      setVideoReady(true);
+    }
+
+    return () => {
+      video.removeEventListener("loadstart", onLoadStart);
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("loadeddata", markReady);
+      video.removeEventListener("canplay", markReady);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("stalled", onStalled);
+      video.removeEventListener("error", onError);
+
+      parkProjectVideo(activeSrc, host);
+      if (videoRef.current === video) videoRef.current = null;
+    };
+  }, [
+    activeLabel,
+    activePoster,
+    activeSrc,
+    isCarousel,
+    mediaDebug,
+    project.id,
+    reducedMotion,
+  ]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    video.className = cn(
+      "project-media-asset",
+      isCarousel && "project-media-asset--contain",
+      videoReady && "project-media-asset--ready",
+    );
+  }, [isCarousel, videoReady]);
+
+  useEffect(() => {
+    if (reducedMotion || !activeSrc) return;
+
+    const host = hostRef.current;
+    if (!host) return;
 
     const desktopLayout = window.matchMedia("(min-width: 700px)").matches;
     const preloadObserver = new IntersectionObserver(
@@ -93,31 +203,37 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         preloadObserver.disconnect();
       },
       {
-        rootMargin: desktopLayout ? "1200px 0px" : "700px 0px",
+        rootMargin: desktopLayout ? "2400px 0px" : "1000px 0px",
         threshold: 0.01,
       },
     );
 
-    preloadObserver.observe(video);
+    preloadObserver.observe(host);
     return () => preloadObserver.disconnect();
-  }, [media.kind, reducedMotion]);
+  }, [activeSrc, reducedMotion]);
 
   useEffect(() => {
-    if (
-      (media.kind !== "video" && media.kind !== "video-carousel") ||
-      reducedMotion ||
-      !shouldLoadVideo
-    ) {
-      return;
-    }
+    if (reducedMotion || !activeSrc || !nearViewport) return;
+    promoteProjectVideo(activeSrc);
+  }, [activeSrc, nearViewport, reducedMotion]);
 
-    const video = videoRef.current;
-    if (!video) return;
+  useEffect(() => {
+    if (reducedMotion || !activeSrc) return;
+
+    const host = hostRef.current;
+    if (!host) return;
 
     const playbackObserver = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) video.play().catch(() => undefined);
-        else video.pause();
+        const video = videoRef.current;
+        if (!video) return;
+
+        if (entry.isIntersecting) {
+          promoteProjectVideo(activeSrc);
+          video.play().catch(() => undefined);
+        } else {
+          video.pause();
+        }
       },
       {
         rootMargin: "80px 0px",
@@ -125,15 +241,15 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       },
     );
 
-    playbackObserver.observe(video);
+    playbackObserver.observe(host);
     return () => {
       playbackObserver.disconnect();
-      video.pause();
+      videoRef.current?.pause();
     };
-  }, [media.kind, reducedMotion, safeSlideIndex, shouldLoadVideo]);
+  }, [activeSrc, reducedMotion]);
 
   if (media.kind === "video-carousel") {
-    if (!activeCarouselVideo) {
+    if (!activeCarouselVideo || !activeSrc) {
       return (
         <div
           className="project-media project-media--frame project-media--empty"
@@ -143,17 +259,36 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       );
     }
 
-    const src = resolveProjectMediaSrc(activeCarouselVideo.src);
-    const poster = activeCarouselVideo.poster
-      ? resolveProjectMediaSrc(activeCarouselVideo.poster)
-      : undefined;
+    const normalizedSlide = (nextIndex: number) =>
+      (nextIndex + carouselVideos.length) % carouselVideos.length;
+
+    const warmCarouselSlide = (nextIndex: number) => {
+      if (!carouselVideos.length || reducedMotion) return;
+      const candidate = carouselVideos[normalizedSlide(nextIndex)];
+      if (!candidate) return;
+      void primeProjectVideo(resolveProjectMediaSrc(candidate.src), 8);
+    };
 
     const goToSlide = (nextIndex: number) => {
       if (!carouselVideos.length) return;
-      const normalized =
-        (nextIndex + carouselVideos.length) % carouselVideos.length;
+      const normalized = normalizedSlide(nextIndex);
+      warmCarouselSlide(normalized);
       setSlideIndex(normalized);
     };
+
+    if (reducedMotion) {
+      return (
+        <div className="project-media project-media--frame project-media--carousel">
+          {activePoster ? (
+            <img
+              className="project-media-asset project-media-asset--contain"
+              src={activePoster}
+              alt={media.alt}
+            />
+          ) : null}
+        </div>
+      );
+    }
 
     return (
       <div
@@ -161,33 +296,10 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
           "project-media",
           "project-media--frame",
           "project-media--carousel",
-          shouldLoadVideo && !videoReady && "project-media--loading",
+          !videoReady && "project-media--loading",
         )}
       >
-        <video
-          key={src}
-          ref={videoRef}
-          className={cn(
-            "project-media-asset",
-            "project-media-asset--contain",
-            videoReady && "project-media-asset--ready",
-          )}
-          src={reducedMotion ? undefined : src}
-          poster={poster}
-          muted
-          loop
-          playsInline
-          preload={shouldLoadVideo ? "auto" : "metadata"}
-          onLoadStart={() => debugVideoEvent("loadstart")}
-          onLoadedMetadata={() => debugVideoEvent("loadedmetadata")}
-          onLoadedData={reportReady}
-          onCanPlay={reportReady}
-          onPlaying={() => debugVideoEvent("playing")}
-          onWaiting={() => debugVideoEvent("waiting")}
-          onStalled={() => debugVideoEvent("stalled")}
-          onError={() => debugVideoEvent("error")}
-          aria-label={activeCarouselVideo.label ?? media.alt}
-        />
+        <div ref={hostRef} className="project-media-video-host" />
 
         {carouselVideos.length > 1 ? (
           <div className="project-media-carousel-controls" aria-label="Robocon demo video selector">
@@ -195,6 +307,8 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
               type="button"
               className="project-media-carousel-button"
               aria-label="Previous Robocon video"
+              onPointerEnter={() => warmCarouselSlide(safeSlideIndex - 1)}
+              onFocus={() => warmCarouselSlide(safeSlideIndex - 1)}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -212,6 +326,8 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
               type="button"
               className="project-media-carousel-button"
               aria-label="Next Robocon video"
+              onPointerEnter={() => warmCarouselSlide(safeSlideIndex + 1)}
+              onFocus={() => warmCarouselSlide(safeSlideIndex + 1)}
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -227,13 +343,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }
 
   if (media.kind === "video") {
-    const src = resolveProjectMediaSrc(media.src);
-    const poster = media.poster ? resolveProjectMediaSrc(media.poster) : undefined;
-
     if (reducedMotion) {
       return (
         <div className="project-media project-media--frame">
-          {poster ? <img className="project-media-asset" src={poster} alt={media.alt} /> : null}
+          {activePoster ? (
+            <img className="project-media-asset" src={activePoster} alt={media.alt} />
+          ) : null}
         </div>
       );
     }
@@ -243,28 +358,10 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         className={cn(
           "project-media",
           "project-media--frame",
-          shouldLoadVideo && !videoReady && "project-media--loading",
+          !videoReady && "project-media--loading",
         )}
       >
-        <video
-          ref={videoRef}
-          className={cn("project-media-asset", videoReady && "project-media-asset--ready")}
-          src={reducedMotion ? undefined : src}
-          poster={poster}
-          muted
-          loop
-          playsInline
-          preload={shouldLoadVideo ? "auto" : "metadata"}
-          onLoadStart={() => debugVideoEvent("loadstart")}
-          onLoadedMetadata={() => debugVideoEvent("loadedmetadata")}
-          onLoadedData={reportReady}
-          onCanPlay={reportReady}
-          onPlaying={() => debugVideoEvent("playing")}
-          onWaiting={() => debugVideoEvent("waiting")}
-          onStalled={() => debugVideoEvent("stalled")}
-          onError={() => debugVideoEvent("error")}
-          aria-label={media.alt}
-        />
+        <div ref={hostRef} className="project-media-video-host" />
       </div>
     );
   }
@@ -277,7 +374,13 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     );
   }
 
-  return <div className="project-media project-media--frame project-media--empty" role="img" aria-label={media.alt} />;
+  return (
+    <div
+      className="project-media project-media--frame project-media--empty"
+      role="img"
+      aria-label={media.alt}
+    />
+  );
 }
 
 function ProjectContent({
@@ -338,7 +441,12 @@ function ProjectCard({ project, reducedMotion }: { project: Project; reducedMoti
 
   if (project.href) {
     return (
-      <a className="project-card project-card--featured" href={project.href} target="_blank" rel="noopener noreferrer">
+      <a
+        className="project-card project-card--featured"
+        href={project.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {inner}
       </a>
     );
@@ -357,8 +465,30 @@ export function Projects() {
   const domainProjects = projectsForDomain(domain);
   const pageCount = Math.max(1, Math.ceil(domainProjects.length / PROJECT_PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
-  const visible = domainProjects.slice(safePage * PROJECT_PAGE_SIZE, safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE);
+  const visible = domainProjects.slice(
+    safePage * PROJECT_PAGE_SIZE,
+    safePage * PROJECT_PAGE_SIZE + PROJECT_PAGE_SIZE,
+  );
   const activeDomain = domains.find((item) => item.id === domain) ?? domains[0];
+
+  const promoteProjectList = (list: readonly Project[]) => {
+    if (reducedMotion) return;
+
+    for (const project of list) {
+      const sources = projectVideoSources(project);
+      for (const src of sources) promoteProjectVideo(src);
+
+      if (project.media.kind === "video-carousel") {
+        for (const video of project.media.videos.slice(1)) {
+          void primeProjectVideo(resolveProjectMediaSrc(video.src), 8);
+        }
+      }
+    }
+  };
+
+  const warmDomain = (id: ProjectDomainId) => {
+    promoteProjectList(projectsForDomain(id).slice(0, PROJECT_PAGE_SIZE));
+  };
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1280px)");
@@ -369,6 +499,7 @@ export function Projects() {
   }, []);
 
   const selectDomain = (id: ProjectDomainId, index?: number) => {
+    warmDomain(id);
     setDomain(id);
     setPage(0);
     if (index !== undefined) tabRefs.current[index]?.focus();
@@ -377,11 +508,19 @@ export function Projects() {
   const onRailKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const last = domains.length - 1;
     let next = index;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = index === last ? 0 : index + 1;
-    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = index === 0 ? last : index - 1;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = last;
-    else return;
+
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = index === last ? 0 : index + 1;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = index === 0 ? last : index - 1;
+    } else if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = last;
+    } else {
+      return;
+    }
+
     event.preventDefault();
     selectDomain(domains[next].id, next);
   };
@@ -401,6 +540,7 @@ export function Projects() {
         >
           {domains.map((item, index) => {
             const selected = item.id === domain;
+
             return (
               <button
                 key={item.id}
@@ -414,6 +554,8 @@ export function Projects() {
                 aria-selected={selected}
                 tabIndex={selected ? 0 : -1}
                 className={cn("project-story-item", selected && "project-story-item--active")}
+                onPointerEnter={() => warmDomain(item.id)}
+                onFocus={() => warmDomain(item.id)}
                 onClick={() => selectDomain(item.id)}
                 onKeyDown={(event) => onRailKeyDown(event, index)}
               >
@@ -431,18 +573,30 @@ export function Projects() {
               className="projects-pager-btn"
               aria-label={`Previous projects in ${activeDomain.label}`}
               disabled={safePage === 0}
+              onPointerEnter={() => {
+                if (safePage <= 0) return;
+                const start = (safePage - 1) * PROJECT_PAGE_SIZE;
+                promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+              }}
               onClick={() => setPage((value) => Math.max(0, value - 1))}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
+
             <span className="projects-pager-count">
               {safePage + 1} / {pageCount}
             </span>
+
             <button
               type="button"
               className="projects-pager-btn"
               aria-label={`Next projects in ${activeDomain.label}`}
               disabled={safePage >= pageCount - 1}
+              onPointerEnter={() => {
+                if (safePage >= pageCount - 1) return;
+                const start = (safePage + 1) * PROJECT_PAGE_SIZE;
+                promoteProjectList(domainProjects.slice(start, start + PROJECT_PAGE_SIZE));
+              }}
               onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}
             >
               <ArrowRight size={16} aria-hidden="true" />
