@@ -1068,6 +1068,26 @@
   display: block;
 }
 
+/* Robocon carousel ---------------------------------------------------------
+   Both pooled videos stay mounted in the card. Switching slides now only
+   changes which host is visible, so mobile browsers keep each clip's buffered
+   and decoded state instead of re-parenting/restarting the active element. */
+.project-media-carousel-video-host {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease;
+}
+
+.project-media-carousel-video-host--active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.project-media-carousel-video {
+  width: 100%;
+  height: 100%;
+}
+
 .project-media-carousel-controls {
   z-index: 4;
 }
