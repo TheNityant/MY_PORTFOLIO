@@ -33,9 +33,14 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   const { media } = project;
   const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const carouselContainerRef = useRef<HTMLDivElement>(null);
+  const carouselHostRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const carouselVideoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const [slideIndex, setSlideIndex] = useState(0);
   const [nearViewport, setNearViewport] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [carouselReady, setCarouselReady] = useState<boolean[]>([]);
+  const [carouselVisible, setCarouselVisible] = useState(false);
 
   const mediaDebug =
     typeof window !== "undefined" &&
@@ -73,12 +78,13 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }, [project.id]);
 
   useEffect(() => {
+    if (isCarousel) return;
     setNearViewport(false);
     setVideoReady(false);
-  }, [activeSrc]);
+  }, [activeSrc, isCarousel]);
 
   useEffect(() => {
-    if (reducedMotion || !activeSrc) return;
+    if (isCarousel || reducedMotion || !activeSrc) return;
 
     const host = hostRef.current;
     if (!host) return;
@@ -179,6 +185,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   ]);
 
   useEffect(() => {
+    if (isCarousel) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -190,7 +197,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }, [isCarousel, videoReady]);
 
   useEffect(() => {
-    if (reducedMotion || !activeSrc) return;
+    if (isCarousel || reducedMotion || !activeSrc) return;
 
     const host = hostRef.current;
     if (!host) return;
@@ -213,12 +220,12 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   }, [activeSrc, reducedMotion]);
 
   useEffect(() => {
-    if (reducedMotion || !activeSrc || !nearViewport) return;
+    if (isCarousel || reducedMotion || !activeSrc || !nearViewport) return;
     promoteProjectVideo(activeSrc);
-  }, [activeSrc, nearViewport, reducedMotion]);
+  }, [activeSrc, isCarousel, nearViewport, reducedMotion]);
 
   useEffect(() => {
-    if (reducedMotion || !activeSrc) return;
+    if (isCarousel || reducedMotion || !activeSrc) return;
 
     const host = hostRef.current;
     if (!host) return;
@@ -248,6 +255,179 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     };
   }, [activeSrc, reducedMotion]);
 
+  useEffect(() => {
+    if (!isCarousel || reducedMotion || carouselVideos.length === 0) return;
+
+    setCarouselReady(carouselVideos.map(() => false));
+
+    const cleanups = carouselVideos.map((item, index) => {
+      const host = carouselHostRefs.current[index];
+      if (!host) return () => undefined;
+
+      const src = resolveProjectMediaSrc(item.src);
+      const poster = item.poster ? resolveProjectMediaSrc(item.poster) : undefined;
+      const video = attachProjectVideo({
+        src,
+        host,
+        className: cn(
+          "project-media-asset",
+          "project-media-asset--contain",
+          "project-media-carousel-video",
+        ),
+        poster,
+        ariaLabel: item.label ?? media.alt,
+      });
+
+      carouselVideoRefs.current[index] = video;
+
+      const debugCarouselEvent = (eventName: string) => {
+        if (!mediaDebug) return;
+
+        const buffered =
+          video.buffered.length > 0
+            ? {
+                start: Number(video.buffered.start(0).toFixed(2)),
+                end: Number(video.buffered.end(video.buffered.length - 1).toFixed(2)),
+              }
+            : null;
+
+        console.info(`[project-video:${project.id}:carousel-${index}] ${eventName}`, {
+          msSinceNavigation: Math.round(performance.now()),
+          readyState: video.readyState,
+          networkState: video.networkState,
+          currentTime: Number(video.currentTime.toFixed(2)),
+          buffered,
+          currentSrc: video.currentSrc,
+        });
+      };
+
+      const markReady = () => {
+        setCarouselReady((current) => {
+          const next = current.length === carouselVideos.length
+            ? [...current]
+            : carouselVideos.map((_, itemIndex) => Boolean(current[itemIndex]));
+          next[index] = true;
+          return next;
+        });
+        debugCarouselEvent("ready");
+      };
+
+      const onPlaying = () => debugCarouselEvent("playing");
+      const onWaiting = () => debugCarouselEvent("waiting");
+      const onStalled = () => debugCarouselEvent("stalled");
+      const onError = () => debugCarouselEvent("error");
+
+      video.addEventListener("loadeddata", markReady);
+      video.addEventListener("canplay", markReady);
+      video.addEventListener("playing", onPlaying);
+      video.addEventListener("waiting", onWaiting);
+      video.addEventListener("stalled", onStalled);
+      video.addEventListener("error", onError);
+
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        markReady();
+      }
+
+      return () => {
+        video.removeEventListener("loadeddata", markReady);
+        video.removeEventListener("canplay", markReady);
+        video.removeEventListener("playing", onPlaying);
+        video.removeEventListener("waiting", onWaiting);
+        video.removeEventListener("stalled", onStalled);
+        video.removeEventListener("error", onError);
+        parkProjectVideo(src, host);
+        if (carouselVideoRefs.current[index] === video) {
+          carouselVideoRefs.current[index] = null;
+        }
+      };
+    });
+
+    return () => {
+      for (const cleanup of cleanups) cleanup();
+    };
+  }, [isCarousel, mediaDebug, project.id, reducedMotion]);
+
+  useEffect(() => {
+    if (!isCarousel) return;
+
+    carouselVideoRefs.current.forEach((video, index) => {
+      if (!video) return;
+
+      const active = index === safeSlideIndex;
+      video.className = cn(
+        "project-media-asset",
+        "project-media-asset--contain",
+        "project-media-carousel-video",
+        carouselReady[index] && "project-media-asset--ready",
+      );
+      video.setAttribute("aria-hidden", active ? "false" : "true");
+
+      const host = carouselHostRefs.current[index];
+      if (host) {
+        host.className = cn(
+          "project-media-video-host",
+          "project-media-carousel-video-host",
+          active && "project-media-carousel-video-host--active",
+        );
+      }
+    });
+  }, [carouselReady, isCarousel, safeSlideIndex]);
+
+  useEffect(() => {
+    if (!isCarousel || reducedMotion) return;
+
+    const container = carouselContainerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setCarouselVisible(entry.isIntersecting),
+      { rootMargin: "80px 0px", threshold: 0.05 },
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isCarousel, reducedMotion]);
+
+  useEffect(() => {
+    if (!isCarousel || reducedMotion || carouselVideos.length === 0) return;
+
+    let cancelled = false;
+
+    carouselVideoRefs.current.forEach((video, index) => {
+      if (!video || index === safeSlideIndex) return;
+      video.pause();
+    });
+
+    const activeVideo = carouselVideoRefs.current[safeSlideIndex];
+    const activeItem = carouselVideos[safeSlideIndex];
+
+    if (!carouselVisible || !activeVideo || !activeItem) {
+      activeVideo?.pause();
+      return;
+    }
+
+    const src = resolveProjectMediaSrc(activeItem.src);
+    promoteProjectVideo(src);
+
+    // A loader/domain prime may still own this same pooled element. Wait for
+    // that job to finish because primeProjectVideo intentionally pauses/reset
+    // the element at the end; then start the active Robocon clip for real.
+    void primeProjectVideo(src, 8).then(() => {
+      if (cancelled) return;
+      if (carouselVideoRefs.current[safeSlideIndex] !== activeVideo) return;
+      activeVideo.play().catch(() => undefined);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    carouselVisible,
+    isCarousel,
+    reducedMotion,
+    safeSlideIndex,
+  ]);
+
   if (media.kind === "video-carousel") {
     if (!activeCarouselVideo || !activeSrc) {
       return (
@@ -274,7 +454,6 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const goToSlide = (nextIndex: number) => {
       if (!carouselVideos.length) return;
       const normalized = normalizedSlide(nextIndex);
-      warmCarouselSlide(normalized);
       setSlideIndex(normalized);
     };
 
@@ -294,14 +473,27 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
 
     return (
       <div
+        ref={carouselContainerRef}
         className={cn(
           "project-media",
           "project-media--frame",
           "project-media--carousel",
-          !videoReady && "project-media--loading",
+          !carouselReady[safeSlideIndex] && "project-media--loading",
         )}
       >
-        <div ref={hostRef} className="project-media-video-host" />
+        {carouselVideos.map((item, index) => (
+          <div
+            key={resolveProjectMediaSrc(item.src)}
+            ref={(node) => {
+              carouselHostRefs.current[index] = node;
+            }}
+            className={cn(
+              "project-media-video-host",
+              "project-media-carousel-video-host",
+              index === safeSlideIndex && "project-media-carousel-video-host--active",
+            )}
+          />
+        ))}
 
         {carouselVideos.length > 1 ? (
           <div className="project-media-carousel-controls" aria-label="Robocon demo video selector">
