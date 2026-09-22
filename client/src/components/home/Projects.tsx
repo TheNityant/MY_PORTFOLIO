@@ -13,9 +13,9 @@ import { resolveProjectMediaSrc } from "@/lib/projectMedia";
 import {
   attachProjectVideo,
   parkProjectVideo,
-  primeProjectVideo,
   projectVideoSources,
   promoteProjectVideo,
+  warmProjectVideo,
 } from "@/lib/projectVideoPool";
 import { cn } from "@/lib/utils";
 
@@ -129,7 +129,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
         if (nextIndex !== safeSlideIndex) {
           const nextVideo = carouselVideos[nextIndex];
           if (nextVideo) {
-            void primeProjectVideo(resolveProjectMediaSrc(nextVideo.src), 3);
+            void warmProjectVideo(resolveProjectMediaSrc(nextVideo.src), "auto");
           }
         }
       }
@@ -266,9 +266,7 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
       if (!carouselVideos.length || reducedMotion) return;
       const candidate = carouselVideos[normalizedSlide(nextIndex)];
       if (!candidate) return;
-      const src = resolveProjectMediaSrc(candidate.src);
-      promoteProjectVideo(src);
-      void primeProjectVideo(src, 3);
+      void warmProjectVideo(resolveProjectMediaSrc(candidate.src), "auto");
     };
 
     const goToSlide = (nextIndex: number) => {
