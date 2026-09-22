@@ -50,17 +50,21 @@ export default function Home() {
       <div
         className={`site-shell ${revealed ? "site-shell--revealed" : "site-shell--preparing"}`}
       >
-        <SiteAtmosphere />
-        <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
-        <div className="page-column">
-          <Hero />
-          <Dashboard />
-          <Projects />
-          <WritingSection />
-          <Experience />
-          <Footer />
-        </div>
-        <CommandPalette open={searchOpen} onClose={closeSearch} />
+        {revealed ? (
+          <>
+            <SiteAtmosphere />
+            <Navbar searchOpen={searchOpen} onToggleSearch={toggleSearch} />
+            <div className="page-column">
+              <Hero />
+              <Dashboard />
+              <Projects />
+              <WritingSection />
+              <Experience />
+              <Footer />
+            </div>
+            <CommandPalette open={searchOpen} onClose={closeSearch} />
+          </>
+        ) : null}
       </div>
     </>
   );
