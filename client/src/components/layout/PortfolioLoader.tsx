@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  experience,
   profile,
   projects,
 } from "@/data/portfolio";
@@ -58,6 +59,36 @@ async function primeWithRetry(src: string, bufferedSeconds: number) {
   return primeProjectVideo(src, bufferedSeconds).catch(() => false);
 }
 
+async function primeMediaWithConcurrency(
+  targets: Array<[string, number]>,
+  concurrency: number,
+  onMediaReady: () => void,
+) {
+  const results = new Array<boolean>(targets.length).fill(false);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < targets.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+
+      const [src, bufferedSeconds] = targets[index];
+      const ready = await primeWithRetry(src, bufferedSeconds);
+      results[index] = ready;
+      if (ready) onMediaReady();
+    }
+  }
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(concurrency, Math.max(1, targets.length)) },
+      () => worker(),
+    ),
+  );
+
+  return results;
+}
+
 function getWarmupTasks(onMediaReady: () => void) {
   const mediaTargets = new Map<string, number>();
 
@@ -72,26 +103,31 @@ function getWarmupTasks(onMediaReady: () => void) {
     }
   }
 
+  const experienceImages = experience.flatMap((item) =>
+    item.kind === "entry" && item.mark.src ? [item.mark.src] : [],
+  );
+
+  const imageSources = Array.from(
+    new Set([profile.portraitSrc, ...experienceImages].filter(Boolean)),
+  );
+
   const criticalTasks: Array<Promise<unknown>> = [
     waitForWindowLoad(),
     document.fonts?.ready ?? Promise.resolve(),
-    preloadImage(profile.portraitSrc),
+    ...imageSources.map((src) => preloadImage(src)),
   ];
 
-  // Start every project video immediately during the loading screen. The
-  // pooled media elements are reused by the project cards, so this startup
-  // work survives domain switches instead of being thrown away.
-  const mediaTasks = Array.from(mediaTargets, ([src, bufferedSeconds]) =>
-    primeWithRetry(src, bufferedSeconds).then((ready) => {
-      if (ready) onMediaReady();
-      return ready;
-    }),
-  );
+  const targets = Array.from(mediaTargets.entries());
 
   return {
     criticalTasks,
-    mediaTasks,
-    mediaTotal: mediaTasks.length,
+    mediaTotal: targets.length,
+    // Do not start all large MP4s at once. Let the portrait and experience
+    // imagery win the first network slots, then warm project videos in pairs.
+    startMedia: async () => {
+      await Promise.allSettled(criticalTasks);
+      return primeMediaWithConcurrency(targets, 2, onMediaReady);
+    },
   };
 }
 
@@ -161,12 +197,12 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    // Normal path: do not reveal until the UI assets are ready AND every
-    // project video has reached its startup buffer target.
-    void Promise.all([
-      Promise.allSettled(trackedCriticalTasks),
-      Promise.all(warmup.mediaTasks),
-    ]).then(([, mediaResults]) => {
+    // Normal path: critical UI images/fonts load first. Only then do we warm
+    // the large project videos, two at a time, so videos cannot starve the
+    // portrait and experience imagery on mobile connections.
+    void Promise.allSettled(trackedCriticalTasks).then(async () => {
+      if (disposed) return;
+      const mediaResults = await warmup.startMedia();
       if (disposed) return;
       if (mediaResults.every(Boolean)) startReveal();
     });
