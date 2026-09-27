@@ -1,7 +1,7 @@
 const DEFAULT_PORTFOLIO_ASSET_BASE_URL =
   "https://pub-1220a4f9bd7a440ab6fc81b776a37cc9.r2.dev";
 const DEFAULT_PORTFOLIO_SUPABASE_URL = "https://xlyynhcutwplyvjewqwa.supabase.co";
-const RESUME_BUCKET = "Profile PIC";
+const RESUME_BUCKET = "PROFILE";
 
 function publicAssetUrl(baseUrl: string, bucket: string, objectPath: string) {
   const encodedBucket = encodeURIComponent(bucket);
