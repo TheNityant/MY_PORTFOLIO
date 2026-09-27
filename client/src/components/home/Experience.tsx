@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
-import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
+import { PdfCertificatePreview } from "@/components/ui/PdfCertificatePreview";
 import { useFinePointer } from "@/hooks/useFinePointer";
 import {
   education,
@@ -14,9 +14,7 @@ import {
   type ExperiencePreviewMode,
 } from "@/data/portfolio";
 import {
-  experienceFeatureMedia,
   experiencePreviewMedia,
-  fallbackExperienceFeatureMedia,
   fallbackExperiencePreview,
 } from "@/data/media";
 
@@ -38,6 +36,7 @@ type HackathonCertificateFile = {
   name: string;
   objectPath: string;
   url: string;
+  previewUrl?: string;
 };
 
 type HackathonCertificateResponse = {
@@ -140,6 +139,7 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
               `${title} — certificate-backed participation record. This entry is linked to the original credential stored in the portfolio archive.`,
             skills: ["Hackathon", "Competition"],
             href: file.url,
+            previewHref: file.previewUrl,
             previewMode: "image-and-text",
           };
         });
@@ -272,11 +272,9 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
                     {finePointer ? (
                       <div className="experience-collection-certificate">
                         {certificateHref ? (
-                          <iframe
-                            src={`${certificateHref}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                            title={`${entry.org} certificate preview`}
-                            loading="lazy"
-                            tabIndex={-1}
+                          <PdfCertificatePreview
+                            src={entry.previewHref ?? certificateHref}
+                            label={entry.org}
                           />
                         ) : (
                           <div className="experience-collection-certificate__empty">
@@ -370,10 +368,6 @@ export function Experience() {
                       </ul>
                     ) : null}
                   </div>
-
-                  <aside className="experience-feature-preview" aria-hidden="true">
-                    {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
-                  </aside>
 
                   <ExperienceHoverPreview entry={item} previewSrc={previewSrc} active={active} />
                 </li>
