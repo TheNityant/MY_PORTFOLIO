@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
-import { FeatureMediaPortal } from "@/components/ui/FeatureMediaPortal";
+import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
 import { writingEntries } from "@/data/portfolio";
 import {
   fallbackWritingFeatureMedia,
@@ -49,11 +49,9 @@ export function WritingSection() {
                 Read <ArrowRight size={14} aria-hidden="true" />
               </span>
 
-              <FeatureMediaPortal
-                media={featureMedia}
-                active={active}
-                variant="writing"
-              />
+              <aside className="writing-feature-preview" aria-hidden="true">
+                {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
+              </aside>
 
               <aside className="writing-hover-preview" aria-hidden="true">
                 <div className="writing-hover-preview__media">
