@@ -300,8 +300,8 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
               </strong>
               <span>
                 {certificateStatus === "error"
-                  ? "The portfolio could not read the Supabase Hackathon Certificates folder."
-                  : "PDF certificates placed in the configured Supabase folder will appear here automatically."}
+                  ? "The portfolio could not read the R2 certificate archive."
+                  : "Certificate PDFs stored in the portfolio media archive will appear here."}
               </span>
             </div>
           )}
