@@ -475,7 +475,7 @@ export const experience: ExperienceItem[] = [
       "STM32 and ESP-class control, sensors, motors, servos, and mechanism integration for a competition robot.",
     skills: ["STM32", "ESP32", "Embedded C"],
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
-    mark: { src: portfolioAsset("EXPERIENCE AND BLOGS", "iit.jpg"), fallback: "R", alt: "Robocon 2026" },
+    mark: { src: portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg"), fallback: "R", alt: "Robocon 2026" },
   },
   {
     kind: "entry",
