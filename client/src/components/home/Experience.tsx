@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { PdfCertificatePreview } from "@/components/ui/PdfCertificatePreview";
+import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
 import { useFinePointer } from "@/hooks/useFinePointer";
 import {
   education,
@@ -14,7 +15,9 @@ import {
   type ExperiencePreviewMode,
 } from "@/data/portfolio";
 import {
+  experienceFeatureMedia,
   experiencePreviewMedia,
+  fallbackExperienceFeatureMedia,
   fallbackExperiencePreview,
 } from "@/data/media";
 
@@ -328,6 +331,7 @@ export function Experience() {
               }
 
               const previewSrc = experiencePreviewMedia[item.id] ?? fallbackExperiencePreview;
+              const featureMedia = experienceFeatureMedia[item.id] ?? fallbackExperienceFeatureMedia;
               const active = activePreview === item.id;
 
               return (
@@ -367,6 +371,10 @@ export function Experience() {
                       </ul>
                     ) : null}
                   </div>
+
+                  <aside className="experience-feature-preview experience-feature-preview--controlled" aria-hidden="true">
+                    {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
+                  </aside>
 
                   <ExperienceHoverPreview entry={item} previewSrc={previewSrc} active={active} />
                 </li>
