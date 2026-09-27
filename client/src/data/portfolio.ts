@@ -154,7 +154,7 @@ export const profile = {
   taglineEmphasis: "backend systems",
   taglineTail: "with AI/ML engineering.",
   portraitAlt: "Nityant Tiwari",
-  portraitSrc: portfolioAsset("Profile PIC", "PORTRAIT.png"),
+  portraitSrc: portfolioAsset("PROFILE", "PORTRAIT.png"),
   email: "nityant.tiwari2404@gmail.com",
   githubHref: "https://github.com/TheNityant",
   githubHandle: "TheNityant",
@@ -474,7 +474,7 @@ export const experience: ExperienceItem[] = [
       "STM32 and ESP-class control, sensors, motors, servos, and mechanism integration for a competition robot.",
     skills: ["STM32", "ESP32", "Embedded C"],
     href: "https://github.com/TheNityant/ROBOCON_2026_COMPLETE_BOT",
-    mark: { src: portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg"), fallback: "R", alt: "Robocon 2026" },
+    mark: { fallback: "R", alt: "Robocon 2026" },
   },
   {
     kind: "entry",
