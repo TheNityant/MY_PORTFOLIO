@@ -9,7 +9,7 @@ import {
   projectVideoSources,
 } from "@/lib/projectVideoPool";
 
-const MEDIA_GATE_MAX_MS = 15000;
+const MEDIA_GATE_MAX_MS = 5000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -197,14 +197,13 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    // Normal path: critical UI images/fonts load first. Only then do we warm
-    // the large project videos, two at a time, so videos cannot starve the
-    // portrait and experience imagery on mobile connections.
-    void Promise.allSettled(trackedCriticalTasks).then(async () => {
+    // Reveal the portfolio as soon as the core UI assets have settled.
+    // Project videos continue warming in the background and are no longer
+    // allowed to block the entire site from becoming visible.
+    void Promise.allSettled(trackedCriticalTasks).then(() => {
       if (disposed) return;
-      const mediaResults = await warmup.startMedia();
-      if (disposed) return;
-      if (mediaResults.every(Boolean)) startReveal();
+      startReveal();
+      void warmup.startMedia();
     });
 
     // The user prefers a longer startup screen over late project media, but a
