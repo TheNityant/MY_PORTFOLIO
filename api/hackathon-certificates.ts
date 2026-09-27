@@ -30,6 +30,7 @@ export async function GET(_request: Request) {
     name,
     objectPath: name,
     url: publicObjectUrl(baseUrl, BUCKET, name),
+    previewUrl: `/api/certificate-file?name=${encodeURIComponent(name)}`,
     size: null,
     createdAt: null,
     updatedAt: null,
