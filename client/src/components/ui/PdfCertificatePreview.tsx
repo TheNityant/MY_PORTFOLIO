@@ -1,24 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 
-const PDFJS_MODULE_URL =
-  "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
+const PDFJS_SCRIPT_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
 const PDFJS_WORKER_URL =
-  "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 type PdfRenderTask = {
   promise: Promise<void>;
   cancel?: () => void;
 };
 
+type PdfViewport = {
+  width: number;
+  height: number;
+};
+
 type PdfPage = {
-  getViewport: (options: { scale: number }) => {
-    width: number;
-    height: number;
-  };
+  getViewport: (options: { scale: number }) => PdfViewport;
   render: (options: {
     canvasContext: CanvasRenderingContext2D;
-    viewport: { width: number; height: number };
+    viewport: PdfViewport;
   }) => PdfRenderTask;
+  cleanup?: () => void;
 };
 
 type PdfDocument = {
@@ -26,13 +29,77 @@ type PdfDocument = {
   destroy?: () => Promise<void> | void;
 };
 
-type PdfJsModule = {
+type PdfJsLib = {
   GlobalWorkerOptions: { workerSrc: string };
-  getDocument: (options: { url: string }) => {
+  getDocument: (options: {
+    url: string;
+    disableRange?: boolean;
+    disableStream?: boolean;
+    disableAutoFetch?: boolean;
+    stopAtErrors?: boolean;
+  }) => {
     promise: Promise<PdfDocument>;
     destroy?: () => Promise<void> | void;
   };
 };
+
+declare global {
+  interface Window {
+    pdfjsLib?: PdfJsLib;
+  }
+}
+
+let pdfJsPromise: Promise<PdfJsLib> | null = null;
+
+function loadPdfJs() {
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    return Promise.resolve(window.pdfjsLib);
+  }
+
+  if (pdfJsPromise) return pdfJsPromise;
+
+  pdfJsPromise = new Promise<PdfJsLib>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-portfolio-pdfjs="true"]',
+    );
+
+    const finish = () => {
+      if (!window.pdfjsLib) {
+        reject(new Error("PDF.js loaded without exposing pdfjsLib"));
+        return;
+      }
+
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      resolve(window.pdfjsLib);
+    };
+
+    if (existing) {
+      existing.addEventListener("load", finish, { once: true });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("PDF.js script failed to load")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = PDFJS_SCRIPT_URL;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.portfolioPdfjs = "true";
+    script.addEventListener("load", finish, { once: true });
+    script.addEventListener(
+      "error",
+      () => reject(new Error("PDF.js script failed to load")),
+      { once: true },
+    );
+    document.head.appendChild(script);
+  });
+
+  return pdfJsPromise;
+}
 
 export function PdfCertificatePreview({
   src,
@@ -49,20 +116,30 @@ export function PdfCertificatePreview({
     let cancelled = false;
     let renderTask: PdfRenderTask | null = null;
     let pdfDocument: PdfDocument | null = null;
+    let page: PdfPage | null = null;
 
     const render = async () => {
       try {
         setState("loading");
 
-        const pdfJsUrl = PDFJS_MODULE_URL;
-        const pdfjs = (await import(/* @vite-ignore */ pdfJsUrl)) as PdfJsModule;
-        pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+        const pdfjs = await loadPdfJs();
+        if (cancelled) return;
 
-        const loadingTask = pdfjs.getDocument({ url: src });
+        // These certificate files are small. Fetch each PDF as one complete
+        // response instead of relying on range/stream support through the
+        // Vercel proxy, which was unreliable for some PDFs.
+        const loadingTask = pdfjs.getDocument({
+          url: src,
+          disableRange: true,
+          disableStream: true,
+          disableAutoFetch: true,
+          stopAtErrors: false,
+        });
+
         pdfDocument = await loadingTask.promise;
         if (cancelled) return;
 
-        const page = await pdfDocument.getPage(1);
+        page = await pdfDocument.getPage(1);
         if (cancelled) return;
 
         const canvas = canvasRef.current;
@@ -70,38 +147,39 @@ export function PdfCertificatePreview({
         if (!canvas || !host) return;
 
         const baseViewport = page.getViewport({ scale: 1 });
-        const maxWidth = Math.max(240, host.clientWidth - 20);
+        const maxWidth = Math.max(220, host.clientWidth - 20);
         const maxHeight = 224;
         const cssScale = Math.min(
           maxWidth / baseViewport.width,
           maxHeight / baseViewport.height,
         );
         const outputScale = Math.min(window.devicePixelRatio || 1, 2);
-        const renderViewport = page.getViewport({
-          scale: cssScale * outputScale,
-        });
+        const viewport = page.getViewport({ scale: cssScale * outputScale });
 
-        canvas.width = Math.max(1, Math.floor(renderViewport.width));
-        canvas.height = Math.max(1, Math.floor(renderViewport.height));
-        canvas.style.width = `${Math.floor(renderViewport.width / outputScale)}px`;
-        canvas.style.height = `${Math.floor(renderViewport.height / outputScale)}px`;
+        canvas.width = Math.max(1, Math.floor(viewport.width));
+        canvas.height = Math.max(1, Math.floor(viewport.height));
+        canvas.style.width = `${Math.floor(viewport.width / outputScale)}px`;
+        canvas.style.height = `${Math.floor(viewport.height / outputScale)}px`;
 
         const context = canvas.getContext("2d", { alpha: false });
         if (!context) throw new Error("Canvas context unavailable");
 
+        context.save();
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
 
         renderTask = page.render({
           canvasContext: context,
-          viewport: renderViewport,
+          viewport,
         });
+
         await renderTask.promise;
 
         if (!cancelled) setState("ready");
       } catch (error) {
         if (cancelled) return;
-        console.error("Certificate preview render failed", error);
+        console.error(`Certificate preview render failed for ${label}`, error);
         setState("error");
       }
     };
@@ -111,9 +189,10 @@ export function PdfCertificatePreview({
     return () => {
       cancelled = true;
       renderTask?.cancel?.();
+      page?.cleanup?.();
       void pdfDocument?.destroy?.();
     };
-  }, [src]);
+  }, [label, src]);
 
   return (
     <div
@@ -128,7 +207,9 @@ export function PdfCertificatePreview({
         aria-hidden="true"
       />
       {state === "loading" ? (
-        <span className="pdf-certificate-preview__status">Rendering certificate…</span>
+        <span className="pdf-certificate-preview__status">
+          Rendering certificate…
+        </span>
       ) : null}
       {state === "error" ? (
         <span className="pdf-certificate-preview__status">
