@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { TracingBeam } from "@/components/ui/TracingBeam";
 import { PdfCertificatePreview } from "@/components/ui/PdfCertificatePreview";
-import { FeatureMediaPortal } from "@/components/ui/FeatureMediaPortal";
+import { HoverFeatureMedia } from "@/components/ui/HoverFeatureMedia";
 import { useFinePointer } from "@/hooks/useFinePointer";
 import {
   education,
@@ -372,11 +372,9 @@ export function Experience() {
                     ) : null}
                   </div>
 
-                  <FeatureMediaPortal
-                    media={featureMedia}
-                    active={active}
-                    variant="experience"
-                  />
+                  <aside className="experience-feature-preview" aria-hidden="true">
+                    {active ? <HoverFeatureMedia media={featureMedia} active /> : null}
+                  </aside>
 
                   <ExperienceHoverPreview entry={item} previewSrc={previewSrc} active={active} />
                 </li>
