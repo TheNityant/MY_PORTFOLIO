@@ -275,6 +275,42 @@
   transform: translateY(0) scale(1);
 }
 
+
+/* Controlled upper feature media ------------------------------------------
+   Keep the upper image/video preview in a stable desktop viewport position.
+   The lower image+text card remains attached to the hovered row. This avoids
+   the old failure mode where the upper 16:9 surface extended above the
+   viewport and only a cropped horizontal strip was visible. */
+.experience-feature-preview--controlled,
+.writing-feature-preview--controlled {
+  position: fixed;
+  top: clamp(5.25rem, 9vh, 7rem);
+  right: max(1rem, calc((100vw - 78rem) / 2));
+  bottom: auto;
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: min(20.25rem, calc(48vh - 1rem));
+  aspect-ratio: 16 / 9;
+  z-index: 120;
+  transform-origin: top right;
+}
+
+.experience-feature-preview--controlled img,
+.experience-feature-preview--controlled video,
+.writing-feature-preview--controlled img,
+.writing-feature-preview--controlled video {
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (max-height: 700px) {
+  .experience-feature-preview--controlled,
+  .writing-feature-preview--controlled {
+    top: 4.6rem;
+    width: min(30rem, calc(100vw - 2rem));
+    max-height: 15.5rem;
+  }
+}
+
 /* Experience lower-preview layout modes ---------------------------------- */
 .experience-hover-preview--text-only {
   grid-template-columns: minmax(0, 1fr);
