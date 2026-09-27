@@ -287,6 +287,10 @@ export function promoteProjectVideo(src: string) {
   ensureEntry(src, "auto");
 }
 
+function isVideoParked(video: HTMLVideoElement) {
+  return video.parentElement?.id === "project-video-pool";
+}
+
 function shouldKickMobileVideoFetch() {
   if (typeof window === "undefined") return false;
 
@@ -327,11 +331,16 @@ async function kickMobileVideoFetch(video: HTMLVideoElement) {
     // Muted inline autoplay can still be denied on some browser/device
     // combinations. The normal preload path remains as the fallback.
   } finally {
-    video.pause();
-    try {
-      video.currentTime = originalTime;
-    } catch {
-      // Ignore transient seek errors while media state is changing.
+    // If the pooled element was attached to a visible project card while this
+    // kick was in flight, playback ownership now belongs to that card. Do not
+    // pause or seek it out from under the active UI.
+    if (isVideoParked(video)) {
+      video.pause();
+      try {
+        video.currentTime = originalTime;
+      } catch {
+        // Ignore transient seek errors while media state is changing.
+      }
     }
   }
 }
@@ -365,6 +374,11 @@ export function primeProjectVideo(
     if (!buffered) return false;
 
     const video = entry.video;
+
+    // Buffer readiness is already enough once the element is attached to a
+    // visible card. The card owns playback from this point forward.
+    if (!isVideoParked(video)) return true;
+
     const originalTime = video.currentTime;
 
     try {
@@ -389,15 +403,19 @@ export function primeProjectVideo(
         }
       });
 
-      video.pause();
-      video.currentTime = 0;
+      if (isVideoParked(video)) {
+        video.pause();
+        video.currentTime = 0;
+      }
       return true;
     } catch {
-      video.pause();
-      try {
-        video.currentTime = originalTime;
-      } catch {
-        // Ignore browsers that reject a seek while media state changes.
+      if (isVideoParked(video)) {
+        video.pause();
+        try {
+          video.currentTime = originalTime;
+        } catch {
+          // Ignore browsers that reject a seek while media state changes.
+        }
       }
       return buffered;
     }
