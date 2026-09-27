@@ -127,6 +127,7 @@ export type ExperienceCollectionEntry = {
   description: string;
   skills: string[];
   href?: string;
+  previewHref?: string;
   previewMode?: ExperiencePreviewMode;
 };
 
