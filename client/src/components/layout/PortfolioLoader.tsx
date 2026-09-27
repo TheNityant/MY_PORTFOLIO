@@ -9,7 +9,7 @@ import {
   projectVideoSources,
 } from "@/lib/projectVideoPool";
 
-const MEDIA_GATE_MAX_MS = 5000;
+const MEDIA_GATE_MAX_MS = 15000;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -117,16 +117,39 @@ function getWarmupTasks(onMediaReady: () => void) {
     ...imageSources.map((src) => preloadImage(src)),
   ];
 
-  const targets = Array.from(mediaTargets.entries());
+  const priorityBySource = new Map<string, number>();
+
+  for (const project of projects) {
+    const priority =
+      project.id === "robocon-2026" || project.id === "robotic-hand"
+        ? 0
+        : project.domain === "backend"
+          ? 1
+          : 2;
+
+    for (const src of projectVideoSources(project)) {
+      priorityBySource.set(
+        src,
+        Math.min(priorityBySource.get(src) ?? Number.POSITIVE_INFINITY, priority),
+      );
+    }
+  }
+
+  const targets = Array.from(mediaTargets.entries()).sort(
+    ([srcA], [srcB]) =>
+      (priorityBySource.get(srcA) ?? 9) - (priorityBySource.get(srcB) ?? 9),
+  );
 
   return {
     criticalTasks,
     mediaTotal: targets.length,
-    // Do not start all large MP4s at once. Let the portrait and experience
-    // imagery win the first network slots, then warm project videos in pairs.
+    // Identity/experience imagery wins the first network turn. Once those
+    // assets settle, warm project media in a small parallel batch. Robotics
+    // clips are deliberately first because Robotic Hand and the secondary
+    // RoboCon clip were the slowest on real cold-entry tests.
     startMedia: async () => {
       await Promise.allSettled(criticalTasks);
-      return primeMediaWithConcurrency(targets, 2, onMediaReady);
+      return primeMediaWithConcurrency(targets, 4, onMediaReady);
     },
   };
 }
@@ -197,17 +220,17 @@ export function PortfolioLoader({
       }, EXIT_MS);
     };
 
-    // Reveal the portfolio as soon as the core UI assets have settled.
-    // Project videos continue warming in the background and are no longer
-    // allowed to block the entire site from becoming visible.
-    void Promise.allSettled(trackedCriticalTasks).then(() => {
+    // The opening screen is a real media-readiness gate on a cold document:
+    // identity assets settle first, then every project video is primed to its
+    // target buffer before the normal reveal. A hard timeout still prevents a
+    // single broken/slow asset from trapping the visitor indefinitely.
+    void Promise.allSettled(trackedCriticalTasks).then(async () => {
       if (disposed) return;
-      startReveal();
-      void warmup.startMedia();
+      const mediaResults = await warmup.startMedia();
+      if (disposed) return;
+      if (mediaResults.every(Boolean)) startReveal();
     });
 
-    // The user prefers a longer startup screen over late project media, but a
-    // broken asset/network must still have a hard escape hatch.
     const emergencyTimer = window.setTimeout(() => {
       startReveal();
     }, MEDIA_GATE_MAX_MS);
