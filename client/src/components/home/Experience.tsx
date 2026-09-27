@@ -328,7 +328,6 @@ export function Experience() {
               }
 
               const previewSrc = experiencePreviewMedia[item.id] ?? fallbackExperiencePreview;
-              const featureMedia = experienceFeatureMedia[item.id] ?? fallbackExperienceFeatureMedia;
               const active = activePreview === item.id;
 
               return (
