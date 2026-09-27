@@ -24,23 +24,13 @@
 }
 
 .origin span {
-  width: 0.22rem;
-  height: 0.22rem;
-  border-radius: 999px;
-  border: 1px solid #059669;
-  background: #10b981;
-  animation: beamPulse 1.8s ease-in-out infinite;
+  display: none;
 }
 
 .svg {
   display: block;
   margin-left: 1rem;
   overflow: visible;
-}
-
-@keyframes beamPulse {
-  0%, 100% { opacity: 0.55; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.15); }
 }
 
 @media (max-width: 760px) {
@@ -55,6 +45,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .origin span { animation: none; }
-}
