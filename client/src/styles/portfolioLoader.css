@@ -218,12 +218,12 @@ html.portfolio-is-loading body {
 }
 
 .site-shell--preparing .page-column {
-  opacity: 0;
-  transform: translateY(12px);
+  opacity: 1;
+  transform: none;
 }
 
 .site-shell--preparing .site-header {
-  opacity: 0;
+  opacity: 1;
   pointer-events: none;
 }
 
