@@ -6,13 +6,13 @@ export type HoverFeatureMedia =
 
 export const experiencePreviewMedia: Record<string, string> = {
   "genai-academy": portfolioAsset("EXPERIENCE AND BLOGS", "gen-ai-academy.png"),
-  "robocon-applied": portfolioAsset("EXPERIENCE AND BLOGS", "iit.jpg"),
+  "robocon-applied": portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg"),
   "iitd-hackathon": portfolioAsset("EXPERIENCE AND BLOGS", "IIT_DELHI.png"),
 };
 
 export const experienceFeatureMedia: Record<string, HoverFeatureMedia> = {
   "genai-academy": { kind: "image", src: portfolioAsset("EXPERIENCE AND BLOGS", "gen-ai-academy.png") },
-  "robocon-applied": { kind: "image", src: portfolioAsset("EXPERIENCE AND BLOGS", "iit.jpg") },
+  "robocon-applied": { kind: "image", src: portfolioAsset("EXPERIENCE AND BLOGS", "robocon.jpg") },
   "iitd-hackathon": {
     kind: "image",
     src: portfolioAsset("EXPERIENCE AND BLOGS", "IIT_DELHI.png"),
