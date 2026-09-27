@@ -314,6 +314,7 @@ function ExperienceCollectionRow({ item }: { item: ExperienceCollection }) {
 
 export function Experience() {
   const [activePreview, setActivePreview] = useState<string | null>(null);
+  const [pinnedPreview, setPinnedPreview] = useState<string | null>(null);
 
   return (
     <section className="experience-section" id="experience" aria-labelledby="experience-heading">
@@ -340,12 +341,16 @@ export function Experience() {
                   key={item.id}
                   tabIndex={0}
                   onMouseEnter={() => setActivePreview(item.id)}
-                  onMouseLeave={() => setActivePreview(null)}
+                  onMouseLeave={() => setActivePreview(pinnedPreview)}
                   onFocus={() => setActivePreview(item.id)}
+                  onClick={() => {
+                    setPinnedPreview(item.id);
+                    setActivePreview(item.id);
+                  }}
                   onBlur={(event) => {
                     const nextTarget = event.relatedTarget;
                     if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-                    setActivePreview(null);
+                    setActivePreview(pinnedPreview);
                   }}
                 >
                   <ExperienceMarkView mark={item.mark} />
