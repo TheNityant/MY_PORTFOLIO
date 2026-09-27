@@ -4,12 +4,20 @@ const configuredSupabaseUrl =
   import.meta.env.VITE_SUPABASE_URL?.trim().replace(/\/+$/, "") ||
   DEFAULT_SUPABASE_URL;
 
+const configuredAssetBaseUrl =
+  import.meta.env.VITE_PORTFOLIO_ASSET_BASE_URL?.trim().replace(/\/+$/, "") ||
+  null;
+
 export function portfolioAsset(bucket: string, path: string) {
   const encodedBucket = encodeURIComponent(bucket);
   const encodedPath = path
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
+
+  if (configuredAssetBaseUrl) {
+    return `${configuredAssetBaseUrl}/${encodedBucket}/${encodedPath}`;
+  }
 
   return `${configuredSupabaseUrl}/storage/v1/object/public/${encodedBucket}/${encodedPath}`;
 }
