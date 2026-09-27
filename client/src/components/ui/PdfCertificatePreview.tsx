@@ -1,105 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  GlobalWorkerOptions,
+  getDocument,
+  type PDFDocumentProxy,
+  type PDFPageProxy,
+  type RenderTask,
+} from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-const PDFJS_SCRIPT_URL =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-const PDFJS_WORKER_URL =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-type PdfRenderTask = {
-  promise: Promise<void>;
-  cancel?: () => void;
-};
-
-type PdfViewport = {
-  width: number;
-  height: number;
-};
-
-type PdfPage = {
-  getViewport: (options: { scale: number }) => PdfViewport;
-  render: (options: {
-    canvasContext: CanvasRenderingContext2D;
-    viewport: PdfViewport;
-  }) => PdfRenderTask;
-  cleanup?: () => void;
-};
-
-type PdfDocument = {
-  getPage: (pageNumber: number) => Promise<PdfPage>;
-  destroy?: () => Promise<void> | void;
-};
-
-type PdfJsLib = {
-  GlobalWorkerOptions: { workerSrc: string };
-  getDocument: (options: {
-    url: string;
-    disableRange?: boolean;
-    disableStream?: boolean;
-    disableAutoFetch?: boolean;
-    stopAtErrors?: boolean;
-  }) => {
-    promise: Promise<PdfDocument>;
-    destroy?: () => Promise<void> | void;
-  };
-};
-
-declare global {
-  interface Window {
-    pdfjsLib?: PdfJsLib;
-  }
-}
-
-let pdfJsPromise: Promise<PdfJsLib> | null = null;
-
-function loadPdfJs() {
-  if (window.pdfjsLib) {
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
-    return Promise.resolve(window.pdfjsLib);
-  }
-
-  if (pdfJsPromise) return pdfJsPromise;
-
-  pdfJsPromise = new Promise<PdfJsLib>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[data-portfolio-pdfjs="true"]',
-    );
-
-    const finish = () => {
-      if (!window.pdfjsLib) {
-        reject(new Error("PDF.js loaded without exposing pdfjsLib"));
-        return;
-      }
-
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
-      resolve(window.pdfjsLib);
-    };
-
-    if (existing) {
-      existing.addEventListener("load", finish, { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("PDF.js script failed to load")),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = PDFJS_SCRIPT_URL;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.dataset.portfolioPdfjs = "true";
-    script.addEventListener("load", finish, { once: true });
-    script.addEventListener(
-      "error",
-      () => reject(new Error("PDF.js script failed to load")),
-      { once: true },
-    );
-    document.head.appendChild(script);
-  });
-
-  return pdfJsPromise;
-}
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 export function PdfCertificatePreview({
   src,
@@ -114,21 +23,15 @@ export function PdfCertificatePreview({
 
   useEffect(() => {
     let cancelled = false;
-    let renderTask: PdfRenderTask | null = null;
-    let pdfDocument: PdfDocument | null = null;
-    let page: PdfPage | null = null;
+    let renderTask: RenderTask | null = null;
+    let pdfDocument: PDFDocumentProxy | null = null;
+    let page: PDFPageProxy | null = null;
 
     const render = async () => {
       try {
         setState("loading");
 
-        const pdfjs = await loadPdfJs();
-        if (cancelled) return;
-
-        // These certificate files are small. Fetch each PDF as one complete
-        // response instead of relying on range/stream support through the
-        // Vercel proxy, which was unreliable for some PDFs.
-        const loadingTask = pdfjs.getDocument({
+        const loadingTask = getDocument({
           url: src,
           disableRange: true,
           disableStream: true,
@@ -164,10 +67,8 @@ export function PdfCertificatePreview({
         const context = canvas.getContext("2d", { alpha: false });
         if (!context) throw new Error("Canvas context unavailable");
 
-        context.save();
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, canvas.width, canvas.height);
-        context.restore();
 
         renderTask = page.render({
           canvasContext: context,
@@ -188,9 +89,9 @@ export function PdfCertificatePreview({
 
     return () => {
       cancelled = true;
-      renderTask?.cancel?.();
-      page?.cleanup?.();
-      void pdfDocument?.destroy?.();
+      renderTask?.cancel();
+      page?.cleanup();
+      void pdfDocument?.destroy();
     };
   }, [label, src]);
 
