@@ -25,7 +25,7 @@ export default function SiteShaderScene() {
           uTime={8}
           uSpeed={0.15}
           uStrength={1.5}
-          uDensity={2.0}
+          uDensity={3.0}
           uFrequency={0}
           uAmplitude={0}
           positionX={0}
@@ -45,7 +45,7 @@ export default function SiteShaderScene() {
           lightType="3d"
           brightness={1}
           envPreset="city"
-          grain="off"
+          grain="on"
           toggleAxis={false}
           zoomOut={false}
           hoverState=""
