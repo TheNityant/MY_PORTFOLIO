@@ -45,7 +45,7 @@ export default function SiteShaderScene() {
           lightType="3d"
           brightness={1}
           envPreset="city"
-          grain="on"
+          grain="off"
           toggleAxis={false}
           zoomOut={false}
           hoverState=""
