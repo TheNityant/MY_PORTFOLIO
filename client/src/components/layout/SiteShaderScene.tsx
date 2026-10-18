@@ -23,9 +23,9 @@ export default function SiteShaderScene() {
           wireframe={false}
           shader="defaults"
           uTime={8}
-          uSpeed={0.1}
+          uSpeed={0.15}
           uStrength={1.5}
-          uDensity={1.5}
+          uDensity={2.0}
           uFrequency={0}
           uAmplitude={0}
           positionX={0}
