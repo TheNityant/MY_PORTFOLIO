@@ -25,7 +25,7 @@ export default function SiteShaderScene() {
           uTime={8}
           uSpeed={0.15}
           uStrength={2.0}
-          uDensity={1.5}
+          uDensity={1.75}
           uFrequency={0}
           uAmplitude={0}
           positionX={0}
