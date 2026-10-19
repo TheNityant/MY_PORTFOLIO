@@ -10,6 +10,7 @@ import {
 } from "@/lib/projectVideoPool";
 
 const MEDIA_GATE_MAX_MS = 15000;
+const VISUAL_PREPARE_MS = 240;
 const EXIT_MS = 680;
 
 let loaderPlayedForThisDocument = false;
@@ -155,8 +156,10 @@ function getWarmupTasks(onMediaReady: () => void) {
 }
 
 export function PortfolioLoader({
+  onPrepareVisuals,
   onReveal,
 }: {
+  onPrepareVisuals: () => void;
   onReveal: () => void;
 }) {
   const [phase, setPhase] = useState<LoaderPhase>(
@@ -169,12 +172,14 @@ export function PortfolioLoader({
 
   useEffect(() => {
     if (loaderPlayedForThisDocument) {
+      onPrepareVisuals();
       onReveal();
       return;
     }
 
     loaderPlayedForThisDocument = true;
     let disposed = false;
+    let prepareTimer: number | null = null;
     let completedCritical = 0;
     let completedMedia = 0;
 
@@ -210,14 +215,23 @@ export function PortfolioLoader({
       if (disposed || revealStartedRef.current) return;
       revealStartedRef.current = true;
       setProgress(100);
-      setPhase("leaving");
-      onReveal();
 
-      window.setTimeout(() => {
+      // Mount the real page and live ShaderGradient only after the media warmup
+      // has had the machine/network to itself. The loader remains opaque during
+      // this short preparation window, so the visible design is unchanged.
+      onPrepareVisuals();
+
+      prepareTimer = window.setTimeout(() => {
         if (disposed) return;
-        setPhase("done");
-        document.documentElement.classList.remove("portfolio-is-loading");
-      }, EXIT_MS);
+        setPhase("leaving");
+        onReveal();
+
+        window.setTimeout(() => {
+          if (disposed) return;
+          setPhase("done");
+          document.documentElement.classList.remove("portfolio-is-loading");
+        }, EXIT_MS);
+      }, VISUAL_PREPARE_MS);
     };
 
     // The opening screen is a real media-readiness gate on a cold document:
@@ -238,9 +252,10 @@ export function PortfolioLoader({
     return () => {
       disposed = true;
       window.clearTimeout(emergencyTimer);
+      if (prepareTimer !== null) window.clearTimeout(prepareTimer);
       document.documentElement.classList.remove("portfolio-is-loading");
     };
-  }, [onReveal]);
+  }, [onPrepareVisuals, onReveal]);
 
   if (phase === "done") return null;
 
