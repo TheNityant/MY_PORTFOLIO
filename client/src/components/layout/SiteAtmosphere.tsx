@@ -49,14 +49,14 @@ function useRichAtmosphereAvailable() {
   return available;
 }
 
-export function SiteAtmosphere() {
+export function SiteAtmosphere({ enabled = true }: { enabled?: boolean }) {
   const richAtmosphereAvailable = useRichAtmosphereAvailable();
   const reducedMotion = usePrefersReducedMotion();
 
   return (
     <div className="site-atmosphere" aria-hidden="true">
       <div className="site-atmosphere__fallback" />
-      {richAtmosphereAvailable && !reducedMotion ? (
+      {enabled && richAtmosphereAvailable && !reducedMotion ? (
         <SiteShaderBoundary>
           <Suspense fallback={null}>
             <div className="site-atmosphere__shader">
