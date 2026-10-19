@@ -1166,3 +1166,183 @@
 .project-media-carousel-controls {
   z-index: 4;
 }
+
+
+/* Hackathon archive readability ------------------------------------------ */
+.dark .experience-collection-item:hover,
+.dark .experience-collection-item:focus-within {
+  color: #111417;
+  border-color: rgba(17, 20, 23, 0.18);
+  background: rgba(247, 245, 239, 0.98);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.18),
+    inset 3px 0 0 rgba(17, 20, 23, 0.24);
+}
+
+.dark .experience-collection-item:hover :is(
+  .experience-collection-item__heading h3,
+  .experience-collection-item__heading span,
+  .experience-collection-item__selected,
+  .experience-collection-item__meta,
+  p,
+  .experience-collection-certificate-link
+),
+.dark .experience-collection-item:focus-within :is(
+  .experience-collection-item__heading h3,
+  .experience-collection-item__heading span,
+  .experience-collection-item__selected,
+  .experience-collection-item__meta,
+  p,
+  .experience-collection-certificate-link
+) {
+  color: #111417 !important;
+}
+
+.dark .experience-collection-item:hover .project-tech li,
+.dark .experience-collection-item:focus-within .project-tech li {
+  color: #111417;
+  border-color: rgba(17, 20, 23, 0.16);
+  background: rgba(17, 20, 23, 0.055);
+}
+
+.dark .experience-collection-item:hover .experience-collection-certificate,
+.dark .experience-collection-item:focus-within .experience-collection-certificate {
+  border-color: rgba(17, 20, 23, 0.14);
+  background: rgba(17, 20, 23, 0.045);
+}
+
+/* Compact mobile dashboard ------------------------------------------------
+   Keep the same dashboard content, but compose it as a phone dashboard rather
+   than nine full-width desktop cards stacked vertically. */
+@media (max-width: 699px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "location scratch"
+      "workouts hours"
+      "feature feature"
+      "activity activity"
+      "corestack contact"
+      "tools tools";
+    gap: 0.65rem;
+  }
+
+  .dashboard-item-frame {
+    padding: 0.35rem;
+    border-radius: 0.8rem;
+  }
+
+  .dashboard-tile {
+    padding: 0.72rem;
+    border-radius: 0.62rem;
+  }
+
+  .dashboard-area-location,
+  .dashboard-area-scratch {
+    min-height: 11rem;
+  }
+
+  .dashboard-area-location .tile-body {
+    min-height: 8.1rem;
+  }
+
+  .dashboard-area-location .globe-stage {
+    inset: -0.35rem -0.7rem -1.1rem;
+  }
+
+  .dashboard-area-location .tile-title,
+  .dashboard-area-scratch .tile-title {
+    font-size: 0.76rem;
+    white-space: normal;
+  }
+
+  .dashboard-area-scratch .tile-body {
+    align-items: center;
+  }
+
+  .dashboard-area-workouts .dashboard-tile,
+  .dashboard-area-hours .dashboard-tile {
+    min-height: 6.25rem;
+  }
+
+  .dashboard-area-workouts .tile-metric-value,
+  .dashboard-area-hours .tile-metric-value {
+    font-size: clamp(1.15rem, 6vw, 1.45rem);
+  }
+
+  .dashboard-area-feature .feature-card {
+    gap: 0.65rem;
+  }
+
+  .dashboard-area-feature .feature-building-icon {
+    flex-basis: 1.9rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .dashboard-area-activity .github-calendar-wrap {
+    min-height: 4rem;
+  }
+
+  .dashboard-area-corestack .favorite-tools {
+    gap: 0.5rem;
+  }
+
+  .dashboard-area-corestack .tool-mark--large {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-area-corestack .tool-mark--large .tool-mark-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+
+  .dashboard-area-contact .connect-list {
+    gap: 0.45rem;
+  }
+
+  .dashboard-area-contact .connect-list a {
+    gap: 0.4rem;
+    font-size: 0.78rem;
+  }
+
+  .dashboard-area-tools .tools-marquee--logos {
+    min-height: 3.8rem;
+  }
+
+  .dashboard-area-tools .tools-track {
+    gap: 1.1rem;
+  }
+
+  .dashboard-area-tools .tools-marquee-group {
+    gap: 1.1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-grid {
+    gap: 0.5rem;
+  }
+
+  .dashboard-tile {
+    padding: 0.62rem;
+  }
+
+  .dashboard-area-location,
+  .dashboard-area-scratch {
+    min-height: 10.25rem;
+  }
+
+  .dashboard-area-location .tile-body {
+    min-height: 7.45rem;
+  }
+
+  .dashboard-area-location .globe-stage {
+    inset: -0.2rem -0.5rem -0.9rem;
+  }
+
+  .dashboard-area-corestack .tool-mark--large {
+    font-size: 0.74rem;
+  }
+}
