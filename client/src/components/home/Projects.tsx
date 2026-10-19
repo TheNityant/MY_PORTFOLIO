@@ -391,8 +391,6 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
   useEffect(() => {
     if (!isCarousel || reducedMotion || carouselVideos.length === 0) return;
 
-    let cancelled = false;
-
     carouselVideoRefs.current.forEach((video, index) => {
       if (!video || index === safeSlideIndex) return;
       video.pause();
@@ -409,17 +407,17 @@ function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMot
     const src = resolveProjectMediaSrc(activeItem.src);
     promoteProjectVideo(src);
 
-    // A loader/domain prime may still own this same pooled element. Wait for
-    // that job to finish because primeProjectVideo intentionally pauses/reset
-    // the element at the end; then start the active Robocon clip for real.
-    void primeProjectVideo(src, 8).then(() => {
-      if (cancelled) return;
-      if (carouselVideoRefs.current[safeSlideIndex] !== activeVideo) return;
-      activeVideo.play().catch(() => undefined);
-    });
+    // Playback is the priority once the card is visible. Do not wait for the
+    // deeper 8-second warmup to finish before starting; muted play() itself
+    // tells the browser this media is immediately needed. The deep prime keeps
+    // running in parallel and no longer pauses an attached/visible element.
+    activeVideo.play().catch(() => undefined);
+    void primeProjectVideo(src, 8);
 
     return () => {
-      cancelled = true;
+      if (carouselVideoRefs.current[safeSlideIndex] === activeVideo) {
+        activeVideo.pause();
+      }
     };
   }, [
     carouselVisible,
