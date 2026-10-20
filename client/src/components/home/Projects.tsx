@@ -228,9 +228,17 @@ function ProjectMedia({
   }, [activeSrc, reducedMotion]);
 
   useEffect(() => {
-    if (isCarousel || reducedMotion || !activeSrc || !nearViewport) return;
+    if (isCarousel || reducedMotion || !activeSrc || (!nearViewport && !forcePreload)) return;
+
     promoteProjectVideo(activeSrc);
-  }, [activeSrc, isCarousel, nearViewport, reducedMotion]);
+
+    // Intent preload should get enough media for an immediate first frame,
+    // but avoid deep-buffering one card so aggressively that it starves the
+    // other visible card.
+    if (forcePreload) {
+      void primeProjectVideo(activeSrc, 2.5);
+    }
+  }, [activeSrc, forcePreload, isCarousel, nearViewport, reducedMotion]);
 
   useEffect(() => {
     if (isCarousel || reducedMotion || !activeSrc) return;
@@ -399,6 +407,21 @@ function ProjectMedia({
   useEffect(() => {
     if (!isCarousel || reducedMotion || carouselVideos.length === 0) return;
 
+    if (forcePreload) {
+      const primary = carouselVideos[safeSlideIndex];
+      if (primary) {
+        const primarySrc = resolveProjectMediaSrc(primary.src);
+        promoteProjectVideo(primarySrc);
+        void primeProjectVideo(primarySrc, 2.5).then(() => {
+          const sibling = carouselVideos.find((_, index) => index !== safeSlideIndex);
+          if (!sibling) return;
+          const siblingSrc = resolveProjectMediaSrc(sibling.src);
+          promoteProjectVideo(siblingSrc);
+          void primeProjectVideo(siblingSrc, 2.5);
+        });
+      }
+    }
+
     carouselVideoRefs.current.forEach((video, index) => {
       if (!video || index === safeSlideIndex) return;
       video.pause();
@@ -429,6 +452,7 @@ function ProjectMedia({
     };
   }, [
     carouselVisible,
+    forcePreload,
     isCarousel,
     reducedMotion,
     safeSlideIndex,
@@ -691,22 +715,71 @@ export function Projects() {
   const promoteProjectList = (list: readonly Project[]) => {
     if (reducedMotion) return;
 
-    for (const project of list) {
-      const bufferedSeconds = project.media.kind === "video-carousel" ? 8 : 5;
+    const primaryJobs: Promise<boolean>[] = [];
+    const secondarySources: string[] = [];
 
-      for (const src of projectVideoSources(project)) {
-        // Domain selection is a strong intent signal. Start every visible
-        // project's media immediately on every device, including carousel
-        // siblings, so a loader timeout never turns into another delayed card.
-        promoteProjectVideo(src);
-        void primeProjectVideo(src, bufferedSeconds);
+    for (const project of list) {
+      const sources = projectVideoSources(project);
+      const primary = sources[0];
+      if (!primary) continue;
+
+      promoteProjectVideo(primary);
+      primaryJobs.push(primeProjectVideo(primary, 2.5));
+
+      if (sources.length > 1) {
+        secondarySources.push(...sources.slice(1));
       }
     }
+
+    // Secondary carousel clips are useful, but first-frame latency of the
+    // visible cards wins. Start siblings after the visible primaries have had
+    // their chance to become playable.
+    void Promise.allSettled(primaryJobs).then(() => {
+      for (const src of secondarySources) {
+        promoteProjectVideo(src);
+        void primeProjectVideo(src, 2.5);
+      }
+    });
   };
 
   const warmDomain = (id: ProjectDomainId) => {
     promoteProjectList(projectsForDomain(id).slice(0, PROJECT_PAGE_SIZE));
   };
+
+  useEffect(() => {
+    if (reducedMotion || intentPreload) return;
+
+    const connection = (
+      navigator as Navigator & {
+        connection?: {
+          saveData?: boolean;
+          effectiveType?: string;
+        };
+      }
+    ).connection;
+
+    if (connection?.saveData) return;
+    if (["slow-2g", "2g"].includes(connection?.effectiveType ?? "")) return;
+
+    const warmCurrentVisibleProjects = () => {
+      setIntentPreload(true);
+      promoteProjectList(visible);
+
+      window.removeEventListener("scroll", warmCurrentVisibleProjects);
+      window.removeEventListener("pointerdown", warmCurrentVisibleProjects);
+      window.removeEventListener("keydown", warmCurrentVisibleProjects);
+    };
+
+    window.addEventListener("scroll", warmCurrentVisibleProjects, { passive: true });
+    window.addEventListener("pointerdown", warmCurrentVisibleProjects, { passive: true });
+    window.addEventListener("keydown", warmCurrentVisibleProjects);
+
+    return () => {
+      window.removeEventListener("scroll", warmCurrentVisibleProjects);
+      window.removeEventListener("pointerdown", warmCurrentVisibleProjects);
+      window.removeEventListener("keydown", warmCurrentVisibleProjects);
+    };
+  }, [intentPreload, reducedMotion]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1280px)");
