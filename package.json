@@ -2,7 +2,7 @@
   "name": "portfolio-v3-rebuild",
   "version": "1.0.0",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "vite --host",
     "dev:api": "tsx --env-file=.env server/index.ts",
