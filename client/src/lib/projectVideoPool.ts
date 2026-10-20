@@ -215,6 +215,17 @@ function ensureEntry(src: string, mode: ProjectVideoWarmMode) {
   if (mode === "auto" && entry.mode !== "auto") {
     entry.mode = "auto";
     entry.video.preload = "auto";
+
+    // Changing preload after src has already been selected is only a hint.
+    // Chromium can keep an existing metadata-only request at low priority.
+    // Run load() once at the promotion boundary so the real pooled element
+    // immediately re-enters the media load algorithm in auto mode.
+    if (
+      entry.video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA &&
+      entry.video.networkState !== HTMLMediaElement.NETWORK_LOADING
+    ) {
+      entry.video.load();
+    }
   }
 
   return entry;
