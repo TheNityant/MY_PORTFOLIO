@@ -29,7 +29,15 @@ function TechList({ items }: { items: readonly string[] }) {
   );
 }
 
-function ProjectMedia({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectMedia({
+  project,
+  reducedMotion,
+  forcePreload,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  forcePreload: boolean;
+}) {
   const { media } = project;
   const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -612,13 +620,25 @@ function ProjectContent({
   );
 }
 
-function ProjectCard({ project, reducedMotion }: { project: Project; reducedMotion: boolean }) {
+function ProjectCard({
+  project,
+  reducedMotion,
+  forcePreload,
+}: {
+  project: Project;
+  reducedMotion: boolean;
+  forcePreload: boolean;
+}) {
   const hasInteractiveMedia = project.media.kind === "video-carousel";
 
   if (hasInteractiveMedia) {
     return (
       <article className="project-card project-card--featured">
-        <ProjectMedia project={project} reducedMotion={reducedMotion} />
+        <ProjectMedia
+          project={project}
+          reducedMotion={reducedMotion}
+          forcePreload={forcePreload}
+        />
         <ProjectContent project={project} explicitLink />
       </article>
     );
@@ -626,7 +646,11 @@ function ProjectCard({ project, reducedMotion }: { project: Project; reducedMoti
 
   const inner = (
     <>
-      <ProjectMedia project={project} reducedMotion={reducedMotion} />
+      <ProjectMedia
+          project={project}
+          reducedMotion={reducedMotion}
+          forcePreload={forcePreload}
+        />
       <ProjectContent project={project} />
     </>
   );
@@ -651,6 +675,7 @@ export function Projects() {
   const [domain, setDomain] = useState<ProjectDomainId>(defaultProjectDomain);
   const [page, setPage] = useState(0);
   const [vertical, setVertical] = useState(false);
+  const [intentPreload, setIntentPreload] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const domains = useMemo(() => visibleProjectDomains(), []);
@@ -808,7 +833,12 @@ export function Projects() {
           key={`${domain}-${safePage}`}
         >
           {visible.map((project) => (
-            <ProjectCard key={project.id} project={project} reducedMotion={reducedMotion} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              reducedMotion={reducedMotion}
+              forcePreload={intentPreload}
+            />
           ))}
         </div>
       </div>
