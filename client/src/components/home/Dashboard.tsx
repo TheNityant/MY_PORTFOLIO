@@ -27,9 +27,15 @@ export function Dashboard() {
       ? data.coding.totalSeconds
       : null;
   const codingMetric =
-    liveCodingSeconds == null
-      ? formatMetric(metrics.codingHours)
-      : formatCodingDuration(liveCodingSeconds);
+    liveCodingSeconds != null
+      ? formatCodingDuration(liveCodingSeconds)
+      : data == null
+        ? "Loading…"
+        : data.coding.status === "stale"
+          ? "Updating…"
+          : data.coding.status === "unconfigured"
+            ? "Not set"
+            : "Unavailable";
 
   const liveWorkoutDays =
     data?.workouts.status === "ready"
@@ -47,7 +53,7 @@ export function Dashboard() {
         : `All-time WakaTime total · ${data.coding.percentCalculated}% calculated`
       : data?.coding.status === "ready"
         ? "All-time WakaTime total"
-        : undefined;
+        : data?.coding.diagnostic ?? undefined;
 
   return (
     <DashboardCursorProvider>
