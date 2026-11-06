@@ -48,29 +48,32 @@ function hoursFromSeconds(seconds: number) {
   return Math.round((seconds / 3600) * 100) / 100;
 }
 
-async function fetchAllTime(apiKey: string) {
+async function fetchAllTime(accessToken: string) {
   const response = await fetch(WAKATIME_ALL_TIME_URL, {
     headers: {
       Accept: "application/json",
-      Authorization: `Basic ${Buffer.from(apiKey).toString("base64")}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     cache: "no-store",
     signal: AbortSignal.timeout(7_000),
   });
 
+  if (response.status === 401 || response.status === 403) {
+    throw new Error(`WakaTime OAuth access denied (HTTP ${response.status}). Check WAKATIME_ACCESS_TOKEN and its read_stats permission.`);
+  }
   if (!response.ok) {
     throw new Error(`WakaTime all-time stats failed with HTTP ${response.status}`);
   }
 
-  return (await response.json()) as WakaAllTimeResponse;
+  return { status: response.status, body: (await response.json()) as WakaAllTimeResponse };
 }
 
 export async function GET(_request: Request) {
-  const apiKey = process.env.WAKATIME_API_KEY?.trim();
+  const accessToken = process.env.WAKATIME_ACCESS_TOKEN?.trim();
 
-  if (!apiKey) {
+  if (!accessToken) {
     return Response.json(
-      fallback("unconfigured", "WAKATIME_API_KEY is missing from this deployment"),
+      fallback("unconfigured", "WAKATIME_ACCESS_TOKEN is missing. Generate a read_stats OAuth token in WakaTime and set it as a server-side deployment secret."),
       {
         status: 200,
         headers: { "Cache-Control": "no-store, max-age=0" },
@@ -79,15 +82,28 @@ export async function GET(_request: Request) {
   }
 
   try {
-    const response = await fetchAllTime(apiKey);
-    const data = response.data;
+    const { status, body } = await fetchAllTime(accessToken);
+    const data = body.data;
     const totalSeconds = data?.total_seconds;
 
     if (typeof totalSeconds !== "number" || !Number.isFinite(totalSeconds)) {
+      if (status === 202) {
+        return Response.json(
+          {
+            ...fallback("stale", "WakaTime is still calculating the all-time total"),
+            isUpToDate: false,
+            percentCalculated:
+              typeof data?.percent_calculated === "number"
+                ? data.percent_calculated
+                : null,
+          },
+          { headers: { "Cache-Control": "no-store" } },
+        );
+      }
       throw new Error("WakaTime all-time response did not include total_seconds");
     }
 
-    const isUpToDate = data?.is_up_to_date !== false;
+    const isUpToDate = status !== 202 && data?.is_up_to_date !== false;
     const percentCalculated =
       typeof data?.percent_calculated === "number" ? data.percent_calculated : null;
 
@@ -99,10 +115,7 @@ export async function GET(_request: Request) {
       totalText: typeof data?.text === "string" ? data.text : null,
       isUpToDate,
       percentCalculated,
-      updatedAt:
-        typeof data?.range?.end === "string"
-          ? data.range.end
-          : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ...(!isUpToDate
         ? {
             diagnostic:
@@ -115,7 +128,9 @@ export async function GET(_request: Request) {
 
     return Response.json(payload, {
       headers: {
-        "Cache-Control": "no-store, max-age=0",
+        "Cache-Control": isUpToDate
+          ? "public, max-age=0, s-maxage=300, stale-while-revalidate=600"
+          : "no-store",
       },
     });
   } catch (error) {

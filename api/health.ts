@@ -1,5 +1,5 @@
 export async function GET(_request: Request) {
-  const hasWakatimeKey = Boolean(process.env.WAKATIME_API_KEY?.trim());
+  const hasWakatimeAccessToken = Boolean(process.env.WAKATIME_ACCESS_TOKEN?.trim());
 
   const hasSupabaseUrl = Boolean(
     process.env.HABIT_TRACKER_SUPABASE_URL?.trim() ||
@@ -36,7 +36,7 @@ export async function GET(_request: Request) {
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
     },
     providers: {
-      wakatimeConfigured: hasWakatimeKey,
+      wakatimeConfigured: hasWakatimeAccessToken,
       workoutSupabaseConfigured:
         hasSupabaseUrl &&
         (hasSupabaseSecretKey || hasSupabaseServiceRoleKey || hasLegacyWorkoutToken),
