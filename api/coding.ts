@@ -59,7 +59,7 @@ async function fetchAllTime(accessToken: string) {
   });
 
   if (response.status === 401 || response.status === 403) {
-    throw new Error(`WakaTime OAuth access denied (HTTP ${response.status}). Check WAKATIME_ACCESS_TOKEN and its read_stats permission.`);
+    throw new Error(`WakaTime OAuth access denied (HTTP ${response.status}). Make sure the configured environment variable contains a personal OAuth access token (not a WakaTime plugin API key).`);
   }
   if (!response.ok) {
     throw new Error(`WakaTime all-time stats failed with HTTP ${response.status}`);
@@ -69,11 +69,16 @@ async function fetchAllTime(accessToken: string) {
 }
 
 export async function GET(_request: Request) {
-  const accessToken = process.env.WAKATIME_ACCESS_TOKEN?.trim();
+  // WAKATIME_API_KEY is retained for deployments that replaced the old
+  // write-only API key's value with a personal OAuth token.
+  // Both variables must contain an OAuth token, never a plugin API key.
+  const accessToken =
+    process.env.WAKATIME_ACCESS_TOKEN?.trim() ||
+    process.env.WAKATIME_API_KEY?.trim();
 
   if (!accessToken) {
     return Response.json(
-      fallback("unconfigured", "WAKATIME_ACCESS_TOKEN is missing. Generate a read_stats OAuth token in WakaTime and set it as a server-side deployment secret."),
+      fallback("unconfigured", "Neither WAKATIME_ACCESS_TOKEN nor WAKATIME_API_KEY is defined in this deployment. Configure a personal OAuth token in Vercel."),
       {
         status: 200,
         headers: { "Cache-Control": "no-store, max-age=0" },
