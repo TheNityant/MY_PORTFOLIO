@@ -1,5 +1,10 @@
 export async function GET(_request: Request) {
-  const hasWakatimeAccessToken = Boolean(process.env.WAKATIME_ACCESS_TOKEN?.trim());
+  const wakatimeCredentialSource = process.env.WAKATIME_ACCESS_TOKEN?.trim()
+    ? "WAKATIME_ACCESS_TOKEN"
+    : process.env.WAKATIME_API_KEY?.trim()
+      ? "WAKATIME_API_KEY"
+      : null;
+  const hasWakatimeAccessToken = Boolean(wakatimeCredentialSource);
 
   const hasSupabaseUrl = Boolean(
     process.env.HABIT_TRACKER_SUPABASE_URL?.trim() ||
@@ -37,6 +42,7 @@ export async function GET(_request: Request) {
     },
     providers: {
       wakatimeConfigured: hasWakatimeAccessToken,
+      wakatimeCredentialSource,
       workoutSupabaseConfigured:
         hasSupabaseUrl &&
         (hasSupabaseSecretKey || hasSupabaseServiceRoleKey || hasLegacyWorkoutToken),
