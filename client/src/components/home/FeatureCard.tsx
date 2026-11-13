@@ -189,7 +189,7 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
   return (
     <div
       ref={rootRef}
-      className="live-pulse"
+      className={`live-pulse${!inView || !pageVisible || reducedMotion ? " live-pulse--paused" : ""}`}
       style={{
         "--live-pulse-tint": liveTint,
         "--live-pulse-interval": `${LIVE_PULSE_SWITCH_MS}ms`,
@@ -211,7 +211,9 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
             <div className="live-pulse__copy">
               <p className="live-pulse__eyebrow">
                 {musicPlaying ? "Now playing" : trackAvailable ? "Last played" : "Spotify"}
-                {musicPlaying ? <span className="live-pulse__equalizer" aria-hidden="true"><span/><span/><span/></span> : null}
+                <span className="live-pulse__equalizer" aria-hidden="true">
+                  {Array.from({ length: 6 }, (_, index) => <span key={index} />)}
+                </span>
               </p>
               <div className="live-pulse__song">
                 {trackAvailable && playback.artwork ? (
@@ -234,6 +236,19 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
               ) : null}
             </div>
             <div className="live-pulse__figure live-pulse__figure--dance" aria-label="Animated dancer" role="img">
+              <div className="live-pulse__spectrum" aria-hidden="true">
+                {Array.from({ length: 26 }, (_, index) => (
+                  <span
+                    key={index}
+                    className="live-pulse__spectrum-bar"
+                    style={{
+                      "--wave-delay": `-${(index * 97) % 1090}ms`,
+                      "--wave-duration": `${650 + (index * 83) % 600}ms`,
+                      "--wave-height": `${28 + (index * 41) % 72}%`,
+                    } as CSSProperties}
+                  />
+                ))}
+              </div>
               {(!dancerReady || dancerFailed || reducedMotion) ? (
                 <span className="live-pulse__fallback"><DancingFigure /></span>
               ) : null}
