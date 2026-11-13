@@ -27,7 +27,6 @@ export function DashboardCursorProvider({ children }: { children: ReactNode }) {
   const finePointer = useFinePointer();
   const reducedMotion = usePrefersReducedMotion();
   const cursorRef = useRef<HTMLSpanElement>(null);
-  const activeKind = useRef<DashboardCursorKind | null>(null);
   // Keep the hovered card reference so its emoji updates without mouse movement
   // when Listening automatically switches to Building (and vice versa).
   const activeSurface = useRef<HTMLElement | null>(null);
@@ -101,19 +100,16 @@ export function DashboardCursorProvider({ children }: { children: ReactNode }) {
       const target = (event.target as Element | null)?.closest<HTMLElement>("[data-cursor-kind]");
       if (target) {
         activeSurface.current = target;
-        activeKind.current = target.dataset.cursorKind as DashboardCursorKind;
         pointer.current.visible = true;
       } else {
         activeSurface.current = null;
         pointer.current.visible = false;
-        activeKind.current = null;
       }
     };
 
     const onLeave = () => {
       activeSurface.current = null;
       pointer.current.visible = false;
-      activeKind.current = null;
     };
 
     document.addEventListener("pointermove", onMove, { passive: true });
