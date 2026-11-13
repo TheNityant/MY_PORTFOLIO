@@ -184,13 +184,19 @@ Spotify is **not connected until those environment variables are provided and au
 
 ### Character and lighting animations
 
-Both are **original inline SVG figures**, so there are no external heavy dancing GIFs, Lottie packages, MP4s, or copyrighted character files.
+The live scenes now use **embedded animated stickers**, following the implementation pattern in [Shivam Patel's open-source dashboard](https://github.com/shivy02/portfolio-website/blob/main/src/components/home/dashboard.tsx): an animated foreground character, a light sweep and a small floor-shadow effect. The two dancing/floor GIF URLs in `FeatureCard.tsx` come from his example, and the hard-hat hammering sticker comes from [Tenor's Manutencao listing](https://tenor.com/view/manutencao-gif-2627228245989249955).
+
+These are **external hosted media**, not newly authored or redistributable GIF files. Before relying on them long term (especially for business use), verify the respective creator/platform usage rights and availability; replace with properly licensed or commissioned assets when necessary. The original inline SVG figures remain as instant fallbacks and are also used when a visitor requests reduced motion.
 
 Tune these in `interactionEnhancements.css`:
 
 | Class / keyframe | What changes |
 | --- | --- |
-| `.live-pulse__figure` | Right-hand animation size |
+| `.live-pulse__figure` | Right-hand animation space |
+| `.live-pulse__gif` | Size and placement of actual animated Giphy/Tenor stickers |
+| `.live-pulse__floor` | Dancing character's subtle floor-shadow GIF |
+| `.dashboard-area-feature .tile-header` | Hidden large duplicate heading; don't re-enable unless redesigning the tile |
+| `.live-pulse::before` | Full-tile atmospheric highlight rather than half-tile glow |
 | `live-dance` | Dancer side-to-side body movement |
 | `live-arm-left`, `live-arm-right` | Dancer arm timing and swing |
 | `live-step-left`, `live-step-right` | Dancer legs |
@@ -201,11 +207,11 @@ Tune these in `interactionEnhancements.css`:
 | `live-equalize` | Audio-themed bars; only shown when Spotify says `playing` |
 | `--live-pulse-green`, `--live-pulse-violet` / `--live-pulse-tint` | Color emphasis |
 
-The characters are decorative and **do not play music**. A Spotify link opens the actual track when available. Shadows are CSS-only and intentionally restrained: the global shader already provides the site's atmosphere.
+The characters are decorative and **do not play music**. A Spotify link opens the actual track when available. The visual spotlight is CSS, the dancing-floor loop is a second GIF, and animated images only mount for the active five-second scene.
 
 ### Where to change layout safely
 
-Look for `.live-pulse__body` and `.live-pulse__figure` in `interactionEnhancements.css`. The body uses a two-column grid, with text on the left and the small SVG scene on the right. Keep `overflow: hidden`, `min-width: 0`, and the truncation rules; these prevent the feature card from resizing or pushing the whole dashboard layout. The feature card's fixed dashboard grid slot has **not** been resized.
+Look for `.live-pulse__body`, `.live-pulse__gif`, and `.live-pulse__figure` in `interactionEnhancements.css`. The body uses a two-column grid, with text on the left and the animation on the right. The oversized outer heading is hidden only for the feature tile; the tiny Listening/Building toggle remains visible. The atmosphere now fills the tile's entire content area. Keep `overflow: hidden`, `min-width: 0`, and the truncation rules; these prevent the feature card from resizing or pushing the whole dashboard layout. The feature card's fixed dashboard grid slot has **not** been resized.
 
 ## 8. Core stack, tools, and contact
 
