@@ -1861,3 +1861,130 @@
   .dashboard-area-feature .live-pulse__gif--dancer,
   .dashboard-area-feature .live-pulse__gif--worker { max-height: none; }
 }
+
+
+/* Full-card sound-wave refinement (November 2026).
+   Inspired by the independently timed bars in Shivam Patel's SoundWave.
+   Bars are a visual MUSIC motif, not sampled audio or false playback activity.
+   Keep the existing tile/grid size, GIF scene, labels and automatic switching. */
+.dashboard-area-feature .dashboard-tile {
+  padding: .15rem .19rem;
+}
+.dashboard-area-feature .live-pulse {
+  border: 1px solid color-mix(in srgb, var(--live-pulse-tint) 27%, transparent);
+  border-radius: .38rem;
+  padding: .08rem .23rem .09rem;
+  background:
+    radial-gradient(ellipse 83% 140% at 100% 6%,
+      color-mix(in srgb, var(--live-pulse-tint) 23%, transparent), transparent 78%),
+    radial-gradient(ellipse 95% 135% at 0% 100%,
+      color-mix(in srgb, var(--live-pulse-tint) 11%, transparent), transparent 85%),
+    color-mix(in srgb, var(--live-pulse-tint) 4%, var(--background));
+}
+/* The ambient wash and faint studio lights extend to all four inner edges. */
+.dashboard-area-feature .live-pulse::before {
+  inset: 0;
+  opacity: .55;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 100% at 98% 0%,
+      color-mix(in srgb, var(--live-pulse-tint) 21%, transparent), transparent 79%),
+    linear-gradient(108deg,
+      color-mix(in srgb, var(--live-pulse-tint) 9%, transparent),
+      transparent 68%);
+}
+.dashboard-area-feature .live-pulse__tabs,
+.dashboard-area-feature .live-pulse__body {
+  position: relative;
+  z-index: 1;
+}
+.dashboard-area-feature .live-pulse__body {
+  grid-template-columns: minmax(0, 1fr) minmax(102px, 46%);
+  gap: .12rem;
+}
+.dashboard-area-feature .live-pulse__figure {
+  isolation: isolate;
+}
+/* Status-wave: always present on Listening, including unconfigured Spotify.
+   Its movement is decorative only; track status text remains truthful. */
+.live-pulse__equalizer {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.live-pulse__equalizer span {
+  width: 2px;
+  min-width: 2px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--live-pulse-tint);
+  transform-origin: center;
+  animation: live-pulse-wave 820ms ease-in-out infinite alternate;
+}
+.live-pulse__equalizer span:nth-child(2) { animation-duration: 1040ms; animation-delay: -270ms; }
+.live-pulse__equalizer span:nth-child(3) { animation-duration: 710ms; animation-delay: -490ms; }
+.live-pulse__equalizer span:nth-child(4) { animation-duration: 930ms; animation-delay: -650ms; }
+.live-pulse__equalizer span:nth-child(5) { animation-duration: 790ms; animation-delay: -390ms; }
+.live-pulse__equalizer span:nth-child(6) { animation-duration: 1110ms; animation-delay: -750ms; }
+@keyframes live-pulse-wave {
+  0%, 100% { transform: scaleY(.27); }
+  45% { transform: scaleY(.9); }
+  70% { transform: scaleY(.46); }
+}
+/* Longer waveform fills the otherwise empty area behind the dancing GIF. */
+.dashboard-area-feature .live-pulse__spectrum {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 3%;
+  height: 86%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 1px;
+  opacity: .67;
+  pointer-events: none;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 13%, black 87%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 13%, black 87%, transparent 100%);
+}
+.dashboard-area-feature .live-pulse__spectrum-bar {
+  flex: 1 1 2px;
+  min-width: 1px;
+  max-width: 5px;
+  height: var(--wave-height, 70%);
+  border-radius: 2px 2px 0 0;
+  transform-origin: bottom center;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--live-pulse-tint) 80%, transparent),
+    color-mix(in srgb, var(--live-pulse-tint) 19%, transparent));
+  animation: live-pulse-wave var(--wave-duration, 840ms) ease-in-out
+    var(--wave-delay, 0ms) infinite alternate;
+}
+/* Never leave decorative bar animations running below the viewport. */
+.live-pulse--paused .live-pulse__equalizer span,
+.live-pulse--paused .live-pulse__spectrum-bar,
+.live-pulse--paused .live-pulse__figure::before,
+.live-pulse--paused .live-pulse__figure::after {
+  animation-play-state: paused !important;
+}
+@media (max-width: 699px) {
+  .dashboard-area-feature .dashboard-tile { padding: .13rem .16rem; }
+  .dashboard-area-feature .live-pulse { padding: .06rem .14rem .07rem; }
+  .dashboard-area-feature .live-pulse__body {
+    grid-template-columns: minmax(0, 1fr) minmax(75px, 43%);
+  }
+  .dashboard-area-feature .live-pulse__spectrum { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-pulse__equalizer span,
+  .dashboard-area-feature .live-pulse__spectrum-bar {
+    animation: none !important;
+    transform: scaleY(.38);
+  }
+}
