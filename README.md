@@ -47,7 +47,7 @@ The site combines a deliberately minimal interface with live interaction, projec
 ### Highlights
 
 - **Interactive visual atmosphere** powered by ShaderGradient and WebGL.
-- **Personal engineering dashboard** with GitHub activity, coding time, workouts, tools, location, and current-build context.
+- **Personal engineering dashboard** with GitHub activity, damped odometer metrics, workouts, a live Spotify / Now Building carousel, tools, location, and scratch interactions.
 - **Project showcase** organized across backend, full-stack/app development, AI/ML, and robotics/embedded work.
 - **Media-aware project cards** with lazy loading, preload orchestration, responsive playback behavior, and mobile-specific optimizations.
 - **Writing system** for long-form engineering notes such as the LLM Engineering Notebook.
@@ -76,6 +76,7 @@ flowchart TD
     API --> HABIT_DB[Habit Tracker Supabase]
     API --> RESUME[Resume / certificate storage]
 
+    API --> SPOTIFY[Spotify OAuth / Now Playing]
     UI --> GITHUB[GitHub public activity]
     UI --> MEDIA[Supabase public media]
 ```
@@ -128,6 +129,7 @@ The goal is not to remove the visual system for performance. It is to make the b
 ├── api/                    # Serverless API routes
 │   ├── coding.ts
 │   ├── workouts.ts
+│   ├── now-playing.ts
 │   ├── resume.ts
 │   ├── hackathon-certificates.ts
 │   └── health.ts
@@ -145,6 +147,8 @@ The goal is not to remove the visual system for performance. It is to make the b
 │       ├── pages/
 │       └── styles/
 │
+├── docs/
+│   └── DASHBOARD_CUSTOMIZATION.md  # Every dashboard card, animation speed, integration
 ├── server/                 # Local API development bridge
 ├── licenses/               # Third-party / preserved license texts
 ├── NOTICE                  # Required attribution notices
@@ -214,10 +218,19 @@ The production deployment currently includes routes for:
 | --- | --- |
 | `/api/coding` | Coding-time data |
 | `/api/workouts` | Workout metrics |
+| `/api/now-playing` | Secure, optional Spotify current and last played data |
 | `/api/resume` | Resume resolution / delivery |
 | `/api/hackathon-certificates` | Credential archive discovery |
 | `/api/certificate-file` | Certificate file delivery |
 | `/api/health` | Integration / deployment health |
+
+---
+
+## Dashboard customization
+
+For a detailed walkthrough of **every dashboard card**—location, Scratch Me, Activity, workouts, WakaTime, Listening / Building, core stack, Connect, and Tools—see **[Dashboard Customization Guide](docs/DASHBOARD_CUSTOMIZATION.md)**.
+
+It documents precisely which files and variables control the numbers, transition damping, five-second auto-switch, dancer and construction worker animation, spotlight colors, Supabase/WakaTime sources, and Spotify OAuth. The full dashboard grid dimensions remain unchanged.
 
 ---
 
