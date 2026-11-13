@@ -176,11 +176,34 @@ Create your own Spotify developer application and authorize the **same Spotify a
 
 Statuses:
 
-- `playing`: actual current song — shows **Now playing** and a three-bar equalizer;
+- `playing`: actual current song — shows **Now playing**; the decorative six-bar status waveform and background spectrum remain visible in Listening mode;
 - `last-played`: most recent song — labels it **Last played** (not pretending you're currently listening);
 - `idle`, `unconfigured`, `unavailable`: a neutral **Music corner** placeholder; no fake song, artist, or playback indicator.
 
 Spotify is **not connected until those environment variables are provided and authorized**. A database table alone cannot infer the actual currently playing track on Spotify.
+
+### Listening waveform and full-card ambient background
+
+The Listening view intentionally shows a **decorative visual sound-wave even when Spotify has not yet been connected**. Shivam Patel's [SoundWave implementation](https://github.com/shivy02/portfolio-website/blob/main/src/components/ui/sound-wave.tsx) uses six bars with slightly different animation durations and offsets. Our adaptation uses the same independent-timing idea in two places:
+
+- **Six compact bars** next to the Spotify / Now playing / Last played text in `FeatureCard.tsx`; they are always visible while the Listening tab is selected. Their state is *not* taken from the audio stream.
+- **26 translucent bars** behind the dancing GIF, distributed across the right-hand stage; they act as a subtle dancing sound-wall, not an actual FFT waveform.
+
+In `client/src/styles/interactionEnhancements.css` look for the final `/* Full-card sound-wave refinement */` section (which intentionally overrides earlier base selectors):
+
+| CSS selector / value | Effect |
+| --- | --- |
+| `.live-pulse__equalizer span` | Adjust width, spacing and color of the six bars |
+| `live-pulse-wave` | Change the rise/fall rhythm; use `transform: scaleY()` to avoid layout reflows |
+| `--wave-duration`, `--wave-delay`, `--wave-height` | Per-bar duration, offset, and height for the 26-bar backdrop, generated in `FeatureCard.tsx` |
+| `.live-pulse__spectrum` `height` and `opacity` | How prominently the sound-wall fills the animation stage |
+| `.dashboard-area-feature .live-pulse` `background` | Full-width green/purple atmospheric wash and 1px inset border |
+| `.dashboard-area-feature .live-pulse__body` `grid-template-columns` | Text/character width split; do not change dashboard grid dimensions |
+| `.dashboard-area-feature .dashboard-tile` `padding` | Narrow visible edge margin between inner stage and outer tile |
+
+This update increases **the background's coverage within the existing card**, not the card's dimensions. The duplicate big heading remains hidden, and both modes still alternate every five seconds. The CSS waveform pauses off-screen or in a hidden tab and becomes static if the user prefers reduced motion.
+
+**Accuracy:** Spotify status still comes from `/api/now-playing`. Music-wave motion is purely illustrative: `Music corner / Track sync not connected` still appears until credentials are configured; `Now playing` is reserved for a real playing response. Do not describe these bars as an actual playback-based or audio-reactive visualization.
 
 ### Character and lighting animations
 
@@ -204,7 +227,7 @@ Tune these in `interactionEnhancements.css`:
 | `live-builder-bob` | Worker walking/leaning motion |
 | `live-hammer-hit` | Hammer impact cycle |
 | `live-builder-spark` | Impact sparks |
-| `live-equalize` | Audio-themed bars; only shown when Spotify says `playing` |
+| `live-pulse-wave` | Decorative six-bar status equalizer and 26-bar background spectrum in Listening mode; independent timings |
 | `--live-pulse-green`, `--live-pulse-violet` / `--live-pulse-tint` | Color emphasis |
 
 The characters are decorative and **do not play music**. A Spotify link opens the actual track when available. The visual spotlight is CSS, the dancing-floor loop is a second GIF, and animated images only mount for the active five-second scene.
