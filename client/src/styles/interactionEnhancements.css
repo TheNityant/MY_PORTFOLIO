@@ -1901,3 +1901,122 @@
     transform: scaleY(.3);
   }
 }
+
+
+/* Listening / Building typography parity and softer shared atmosphere (Nov 2026).
+   One type scale / letter spacing for BOTH states, including the mobile
+   breakpoint. The long Jiraiya title is allowed up to two balanced lines at
+   tight widths instead of being reduced to a different font size. */
+.dashboard-area-feature .live-pulse--listening .live-pulse__copy,
+.dashboard-area-feature .live-pulse--building .live-pulse__copy {
+  padding: .18rem clamp(.44rem, 1vw, .78rem);
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__eyebrow,
+.dashboard-area-feature .live-pulse--building .live-pulse__eyebrow {
+  font-size: clamp(.59rem, .78vw, .7rem);
+  font-weight: 700;
+  letter-spacing: .095em;
+  line-height: 1.25;
+  margin: 0 0 .3rem;
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__heading,
+.dashboard-area-feature .live-pulse--building .live-pulse__heading {
+  font-family: inherit;
+  font-size: clamp(.98rem, 1.18vw, 1.18rem);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.2;
+  letter-spacing: .014em;
+  text-wrap: balance;
+  white-space: normal;
+  overflow-wrap: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__sub,
+.dashboard-area-feature .live-pulse--building .live-pulse__sub {
+  font-family: inherit;
+  font-size: clamp(.76rem, .95vw, .9rem);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: .016em;
+  line-height: 1.3;
+  margin-top: .28rem;
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__link,
+.dashboard-area-feature .live-pulse--building .live-pulse__link {
+  font-size: .67rem;
+  letter-spacing: .015em;
+  margin-top: .2rem;
+}
+/* Retain the existing seamless dark-to-green/violet blend, but soften the
+   secondary halo only: no added borders or changes to the outside frame. */
+.dashboard-area-feature .live-pulse::before {
+  opacity: .38;
+  background: radial-gradient(ellipse 108% 150% at 88% 44%,
+    color-mix(in srgb, var(--live-pulse-tint) 16%, transparent) 0%,
+    color-mix(in srgb, var(--live-pulse-tint) 6%, transparent) 53%,
+    transparent 96%);
+}
+/* More energetic red music wave: taller peaks, distinct alternating crests,
+   smoother right-to-left phase progression, and a longer visual reach. */
+.dashboard-area-feature .live-pulse__spectrum {
+  height: 92%;
+  opacity: .86;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.20) 15%,
+    rgba(0,0,0,.62) 43%,
+    rgba(0,0,0,.94) 70%,
+    #000 91%);
+  mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.20) 15%,
+    rgba(0,0,0,.62) 43%,
+    rgba(0,0,0,.94) 70%,
+    #000 91%);
+}
+.dashboard-area-feature .live-pulse__spectrum-bar {
+  animation-duration: 3250ms;
+  animation-timing-function: cubic-bezier(.27, .68, .35, 1);
+}
+@keyframes live-pulse-red-travel {
+  0%, 100% { transform: scaleY(.12); }
+  13% { transform: scaleY(1.22); }
+  25% { transform: scaleY(.38); }
+  40% { transform: scaleY(1.05); }
+  54% { transform: scaleY(.2); }
+  69% { transform: scaleY(.86); }
+  84% { transform: scaleY(.25); }
+}
+@media (max-width: 699px) {
+  .dashboard-area-feature .live-pulse--listening .live-pulse__copy,
+  .dashboard-area-feature .live-pulse--building .live-pulse__copy {
+    padding: .12rem .33rem;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__eyebrow,
+  .dashboard-area-feature .live-pulse--building .live-pulse__eyebrow {
+    font-size: .58rem;
+    letter-spacing: .075em;
+    margin-bottom: .22rem;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__heading,
+  .dashboard-area-feature .live-pulse--building .live-pulse__heading {
+    font-size: clamp(.94rem, 3.6vw, 1.12rem);
+    letter-spacing: .008em;
+    line-height: 1.18;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__sub,
+  .dashboard-area-feature .live-pulse--building .live-pulse__sub {
+    font-size: clamp(.72rem, 2.85vw, .83rem);
+    letter-spacing: .01em;
+    margin-top: .22rem;
+  }
+  .dashboard-area-feature .live-pulse__spectrum {
+    height: 80%;
+    opacity: .68;
+  }
+}
