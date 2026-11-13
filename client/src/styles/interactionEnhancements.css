@@ -1652,3 +1652,89 @@
   .dashboard-area-feature .live-pulse__heading { font-size: .88rem; }
   .dashboard-area-feature .live-pulse__figure { min-height: 67px; max-height: 100px; }
 }
+
+
+/* Full-card live ambient color + actual dancing/worker sticker layers.
+   One external GIF at a time; original vectors remain instant fallbacks.
+   Keep this section after the earlier Live Pulse styles so responsive overrides
+   can be tweaked independently without enlarging the dashboard grid. */
+.dashboard-area-feature .live-pulse {
+  position: relative;
+  isolation: isolate;
+  border-radius: .38rem;
+  overflow: hidden;
+  padding: .12rem .25rem;
+}
+.dashboard-area-feature .live-pulse::before {
+  content: "";
+  position: absolute;
+  inset: -5px -6px;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 73% 170% at 94% 18%, color-mix(in srgb, var(--live-pulse-tint) 23%, transparent), transparent 80%),
+    radial-gradient(ellipse 82% 150% at 0% 100%, color-mix(in srgb, var(--live-pulse-tint) 10%, transparent), transparent 80%);
+}
+.dashboard-area-feature .live-pulse__body::before { display: none; }
+.dashboard-area-feature .live-pulse__tabs { position: relative; z-index: 3; }
+.dashboard-area-feature .live-pulse__figure {
+  max-height: none;
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+  align-self: stretch;
+  overflow: hidden;
+}
+.dashboard-area-feature .live-pulse__fallback {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.dashboard-area-feature .live-pulse__fallback .live-pulse__character {
+  width: min(100%, 106px);
+  height: min(100%, 112px);
+}
+.dashboard-area-feature .live-pulse__gif {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 142px;
+  max-height: 120px;
+  object-fit: contain;
+  object-position: 50% 58%;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.dashboard-area-feature .live-pulse__gif--ready { opacity: 1; }
+.dashboard-area-feature .live-pulse__gif--dancer { height: 100%; max-height: 120px; }
+.dashboard-area-feature .live-pulse__gif--worker { height: 100%; max-height: 120px; }
+.dashboard-area-feature .live-pulse__floor {
+  display: block;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  bottom: -1px;
+  left: 50%;
+  height: 16px;
+  width: min(120%, 150px);
+  overflow: hidden;
+  opacity: .45;
+  transform: translateX(-50%);
+}
+.dashboard-area-feature .live-pulse__floor img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  transform: translateY(-67.7%);
+}
+@media (max-width: 699px) {
+  .dashboard-area-feature .live-pulse__gif { max-height: 98px; }
+  .dashboard-area-feature .live-pulse__floor { height: 11px; }
+}
