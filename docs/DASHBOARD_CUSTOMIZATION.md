@@ -178,22 +178,35 @@ The label "Spotify pick" means a recommended/selected song—not a claim that th
 
 Edit the `CURSOR_EMOJI` mapping in `DashboardCursor.tsx` to choose different emojis without changing other cards.
 
-### Stage-only decorative music equalizer and small card margins
+### Background fade, song typography and traveling red equalizer
 
-The 18 independently timed bars are **a decorative sound motif**, not a signal derived from music audio. They sit behind the woman dancing in the right-hand figure, below the existing GIF and its floor/shadow animation. The construction worker scene stays untouched.
+**Current effect:** The outer dark/black dashboard frame stays in place, but the Listening/Building panel's green/purple atmospheric color dissolves gradually into the card background. There should be no hard green or purple outline; that inner color is a glow, **not a border**. The black outer dashboard card border remains untouched.
 
-Modify the **final** section of `client/src/styles/interactionEnhancements.css` headed `Curated track and stage-only sound wave`:
+The Listening view displays the manually curated `Shinigami — Draven Godrics` rather than live Spotify status. The text has a little extra left inset, larger title/artist type, and more letter spacing. The construction worker and dancing GIFs and the five-second rotation remain unchanged.
 
-| Parameter | What it changes |
+The **42 red equalizer bars** are an independent decorative animation, **not an audio analyzer**. They now sit in `live-pulse__body`, spanning from the dancer on the right toward the title on the left. Their *pulse sequence* starts at the right and moves left with increasing phase delay, while the bars decrease in height and opacity toward the left, under the text. The dancers are drawn above these bars.
+
+Implementation:
+- JSX source: `client/src/components/home/FeatureCard.tsx` (`live-pulse__spectrum` and 42 generated bars).
+- Styles: the **last** block of `client/src/styles/interactionEnhancements.css`, starting with `Curated song: soft atmospheric fade and directional red spectrum`. It overrides earlier generic Live Pulse rules.
+
+| Edit | Effect / safe adjustment |
 | --- | --- |
-| `.live-pulse__spectrum` `opacity` | Equalizer visibility |
-| `.live-pulse__spectrum` `height` | How high the bars extend behind the dancer |
-| `live-pulse-soundbar` | Damped bar motion (uses GPU-friendly transforms) |
-| `--spectrum-duration`, `--spectrum-delay`, `--spectrum-peak` | Each bar's frequency, phase, and height; generated inside `FeatureCard.tsx` |
-| `.dashboard-area-feature .dashboard-tile` `padding` | The narrow perimeter gap between inner panel and outer card |
-| `.dashboard-area-feature .live-pulse` `padding`, `background` | Inner breathing room and low-intensity green/violet full-area tint |
+| `.dashboard-area-feature .live-pulse` `background` | Green/purple-to-black fade; reduce the radial gradient's `21%` tint for less color or raise gently to intensify |
+| `.live-pulse::before` radial gradient | Secondary soft glow; keep the end stop `transparent` to avoid hard color edges |
+| `.dashboard-area-feature .dashboard-tile` `padding` | Controls visible **outer black margin**, not glow boundary. Do not alter parent grid geometry |
+| `.live-pulse--listening .live-pulse__copy` (via `.live-pulse__copy`) `padding` | Moves song/artist in from the hard left edge |
+| `.live-pulse--listening .live-pulse__heading` | Song font size, letter spacing, weight, line height |
+| `.live-pulse--listening .live-pulse__sub` | Artist font size, letter spacing, gap below the title |
+| `.live-pulse__spectrum` `height` | Overall red spectrum height; constrained within the existing card |
+| `.live-pulse__spectrum` `opacity` | Overall strength of the red wave |
+| `.live-pulse__spectrum` `mask-image` | Progressive fade to invisible on the left, full strength near the dancer |
+| `--spectrum-peak`, `--spectrum-opacity`, `--spectrum-delay` | Per-bar strength and phase, generated from each bar index in `FeatureCard.tsx` |
+| `live-pulse-red-travel` | Red pulse's motion curve; 2800ms duration is defined in the spectrum-bar animation |
 
-The **fixed grid area and card dimensions are unchanged**. The large duplicate title stays hidden and the smaller tabs remain visible. With reduced motion the waveform becomes static; it also pauses when the card is not visible. Do not restore the earlier full-panel 26-bar equalizer or the oversaturated glow: those were the changes that the user rolled back.
+For a **slower traveling equalizer**, try `3600ms` in the CSS *and* increase the index-based `42ms` phase gap moderately (to `50ms`). For **faster** motion, try `2200ms` and `34ms`. Keep the left-to-right bar ordering in JSX; `(41 - index)` intentionally delays the **left** bars so the wave visually moves **right to left**.
+
+No part of this effect changes the fixed dashboard grid, the outer frame dimensions, the DSP/audio source (there is none), or the GIF URLs. The bars stop moving while out of view or for reduced-motion users.
 
 ### Character and lighting animations
 
