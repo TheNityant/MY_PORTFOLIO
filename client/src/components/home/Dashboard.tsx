@@ -220,8 +220,8 @@ export function Dashboard() {
           <DashboardCard
             area="feature"
             title={featureCardTitle(dashboardFeature)}
-            headerIcon={dashboardHeaderIcon(dashboardFeature.kind === "building" ? "hammer" : "music")}
-            cursorKind={dashboardFeature.kind === "building" ? "hammer" : "music"}
+            headerIcon={dashboardHeaderIcon("music")}
+            cursorKind="music"
             className="dashboard-item--feature"
           >
             <FeatureCard feature={dashboardFeature} />
