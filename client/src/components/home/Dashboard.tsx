@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Github, Linkedin, Mail } from "lucide-react";
 import { DashboardCard, dashboardHeaderIcon } from "@/components/home/DashboardCard";
@@ -21,6 +21,10 @@ import {
   visibleSocials,
 } from "@/data/portfolio";
 
+// The odometer animates compositor transforms instead of changing text every
+// animation frame.  Changing the final value doesn't induce stepped reflows.
+const DIGIT_TAPE = Array.from({ length: 30 }, (_, i) => i % 10);
+
 type AnimatedMetricProps = {
   value: number | null;
   fallback: string;
@@ -28,101 +32,83 @@ type AnimatedMetricProps = {
   title?: string;
 };
 
-/**
- * Counts up the real API total only when the metric card enters the viewport.
- * Updates animate from the previous displayed total rather than resetting,
- * and the final number stays accessible to screen readers throughout.
- */
 function AnimatedMetric({ value, fallback, format, title }: AnimatedMetricProps) {
   const elementRef = useRef<HTMLParagraphElement>(null);
-  const currentValueRef = useRef(0);
-  const [shownValue, setShownValue] = useState<number | null>(null);
-  const [hasEnteredView, setHasEnteredView] = useState(false);
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const animatedOnceRef = useRef(false);
+  const [isInView, setIsInView] = useState(false);
+  const [roll, setRoll] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     const element = elementRef.current;
     if (!element) return;
-
     if (!("IntersectionObserver" in window)) {
-      setHasEnteredView(true);
+      setIsInView(true);
       return;
     }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setHasEnteredView(true);
-        observer.disconnect();
-      },
-      { threshold: 0.2 },
-    );
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setIsInView(true);
+      observer.disconnect();
+    }, { threshold: 0.2 });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
 
+  const valid = typeof value === "number" && Number.isFinite(value) && value >= 0;
+  const accessibleText = valid ? format(value) : fallback;
+
   useEffect(() => {
-    if (value === null || !Number.isFinite(value) || value < 0) {
-      currentValueRef.current = 0;
-      setShownValue(null);
-      return;
-    }
-    if (!hasEnteredView) return;
-
-    if (prefersReducedMotion) {
-      currentValueRef.current = value;
-      setShownValue(value);
-      return;
-    }
-
-    const start = currentValueRef.current;
-    if (start === value) {
-      setShownValue(value);
-      return;
-    }
-
-    let frame = 0;
-    let startedAt: number | null = null;
-    const duration = 1250;
-
-    const tick = (timestamp: number) => {
-      startedAt ??= timestamp;
-      const progress = Math.min((timestamp - startedAt) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const next = Math.round(start + (value - start) * eased);
-      currentValueRef.current = next;
-      setShownValue(next);
-
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(tick);
-      } else {
-        currentValueRef.current = value;
-        setShownValue(value);
-      }
+    if (!isInView || !valid || reducedMotion || animatedOnceRef.current) return;
+    // Keep the initial zero frame committed before transitioning the digits.
+    let outer = 0;
+    let inner = 0;
+    outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        animatedOnceRef.current = true;
+        setRoll(true);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
     };
+  }, [isInView, valid, reducedMotion]);
 
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
-  }, [value, hasEnteredView, prefersReducedMotion]);
+  if (!valid || reducedMotion) {
+    return <p ref={elementRef} className="tile-metric-value" title={title}>{accessibleText}</p>;
+  }
 
-  const validValue =
-    typeof value === "number" && Number.isFinite(value) && value >= 0;
-  const accessibleText = validValue ? format(value) : fallback;
-  const visibleNumber = !validValue
-    ? fallback
-    : !hasEnteredView
-      ? format(value)
-      : format(shownValue ?? 0);
-
+  const parts = Array.from(accessibleText);
+  let digitIndex = 0;
   return (
     <p
       ref={elementRef}
-      className="tile-metric-value"
+      className="tile-metric-value metric-odometer"
       title={title}
       aria-label={accessibleText}
-      style={{ fontVariantNumeric: "tabular-nums" }}
     >
-      <span aria-hidden="true">{visibleNumber}</span>
+      <span className="metric-odometer__content" aria-hidden="true">
+        {parts.map((char, index) => {
+          if (!/^[0-9]$/.test(char)) {
+            return <span key={index} className="metric-odometer__literal">{char}</span>;
+          }
+          const order = digitIndex++;
+          return (
+            <span key={index} className="metric-odometer__digit">
+              <span
+                className={`metric-odometer__reel${roll ? " metric-odometer__reel--rolling" : ""}`}
+                style={{
+                  "--metric-end": 20 + Number(char),
+                  "--metric-delay": `${Math.min(order, 6) * 85}ms`,
+                } as CSSProperties}
+              >
+                {DIGIT_TAPE.map((digit, step) => <span key={step}>{digit}</span>)}
+              </span>
+            </span>
+          );
+        })}
+      </span>
     </p>
   );
 }
