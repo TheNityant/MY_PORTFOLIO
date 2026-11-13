@@ -99,7 +99,7 @@ function AnimatedMetric({ value, fallback, format, title }: AnimatedMetricProps)
               <span
                 className={`metric-odometer__reel${roll ? " metric-odometer__reel--rolling" : ""}`}
                 style={{
-                  "--metric-end": 20 + Number(char),
+                  "--metric-shift": `-${20 + Number(char)}em`,
                   "--metric-delay": `${Math.min(order, 6) * 85}ms`,
                 } as CSSProperties}
               >
