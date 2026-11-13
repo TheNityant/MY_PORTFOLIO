@@ -155,7 +155,7 @@ export function FeatureCard({
   return (
     <div
       ref={rootRef}
-      className={`live-pulse${inView && pageVisible && !reducedMotion ? "" : " live-pulse--paused"}`}
+      className={`live-pulse live-pulse--${mode}${inView && pageVisible && !reducedMotion ? "" : " live-pulse--paused"}`}
       style={{
         "--live-pulse-tint": liveTint,
         "--live-pulse-interval": `${LIVE_PULSE_SWITCH_MS}ms`,
@@ -174,6 +174,24 @@ export function FeatureCard({
       <div className="live-pulse__body">
         {listening ? (
           <>
+            {/* Ambient sound bars span the card's width, from the dancer toward the
+                song information. They are decorative, never real audio data. */}
+            <div className="live-pulse__spectrum" aria-hidden="true">
+              {Array.from({ length: 42 }, (_, index) => {
+                const strength = index / 41; // faint, shorter bars on the left
+                return (
+                  <span
+                    key={index}
+                    className="live-pulse__spectrum-bar"
+                    style={{
+                      "--spectrum-peak": `${Math.round((24 + ((index * 19) % 49)) * (.15 + .85 * strength))}%`,
+                      "--spectrum-delay": `${(41 - index) * 42}ms`,
+                      "--spectrum-opacity": (0.14 + .82 * strength).toFixed(2),
+                    } as CSSProperties}
+                  />
+                );
+              })}
+            </div>
             <div className="live-pulse__copy">
               <p className="live-pulse__eyebrow">Spotify pick</p>
               <p className="live-pulse__heading" title={dashboardFeaturedTrack.title}>
@@ -184,19 +202,6 @@ export function FeatureCard({
               </p>
             </div>
             <div className="live-pulse__figure live-pulse__figure--dance" aria-label="Animated dancer" role="img">
-              <div className="live-pulse__spectrum" aria-hidden="true">
-                {Array.from({ length: 18 }, (_, index) => (
-                  <span
-                    key={index}
-                    className="live-pulse__spectrum-bar"
-                    style={{
-                      "--spectrum-peak": `${24 + ((index * 37) % 60)}%`,
-                      "--spectrum-delay": `-${(index * 137) % 920}ms`,
-                      "--spectrum-duration": `${680 + ((index * 89) % 410)}ms`,
-                    } as CSSProperties}
-                  />
-                ))}
-              </div>
               {(!dancerReady || dancerFailed || reducedMotion) ? (
                 <span className="live-pulse__fallback"><DancingFigure /></span>
               ) : null}
