@@ -6,6 +6,7 @@ import { GET as getCoding } from "../api/coding.ts";
 import { GET as getHealth } from "../api/health.ts";
 import { GET as getHackathonCertificates } from "../api/hackathon-certificates.ts";\nimport { GET as getResume } from "../api/resume.ts";
 import { GET as getWorkouts } from "../api/workouts.ts";
+import { GET as getNowPlaying } from "../api/now-playing.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +41,7 @@ async function startServer() {
   app.get("/api/hackathon-certificates", apiRoute(getHackathonCertificates));\n  app.get("/api/resume", apiRoute(getResume));
   app.get("/api/coding", apiRoute(getCoding));
   app.get("/api/workouts", apiRoute(getWorkouts));
+  app.get("/api/now-playing", apiRoute(getNowPlaying));
 
   const staticPath =
     process.env.NODE_ENV === "production"
