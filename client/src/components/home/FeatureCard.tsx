@@ -6,6 +6,16 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 export const LIVE_PULSE_SWITCH_MS = 5000;
 export const SPOTIFY_REFRESH_MS = 60000;
 
+// The same public Giphy sticker sources used by Shivam Patel's dashboard.
+// Kept as embeds (not copied into this repo) with original SVG fallbacks.
+export const DANCER_GIF =
+  "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3OXBwZGkzbG4zc2N1dTU4bmgyZDBkenk1amxoZG5meWcydWp2aGU0MyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/NawOC2k0SQ5pYjTXLt/giphy.gif";
+export const DANCER_FLOOR_GIF =
+  "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3N3J5dzE3dW9icXhlMHM0a2wwMzZhMDVmNmJ2bXNtZTZlcnljenhmayZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/GZQGgGtosl3Fm4k0A9/giphy.gif";
+// Tenor's "Manutencao" sticker: a hard-hat worker actually hammering.
+export const WORKER_GIF =
+  "https://media.tenor.com/JHXKK4oP06MAAAAj/manutencao.gif";
+
 type Playback = {
   status: "playing" | "last-played" | "idle" | "unconfigured" | "unavailable";
   title: string | null;
@@ -18,7 +28,8 @@ const INITIAL_PLAYBACK: Playback = {
   status: "idle", title: null, artist: null, artwork: null, url: null,
 };
 
-// Original illustrations: no third-party GIFs, audio downloads, WebGL, or canvas.
+// Original vector fallbacks: the reference GIFs are loaded only while their
+// respective scene is visible. No audio, canvas, or extra video is requested.
 function DancingFigure() {
   return (
     <svg className="live-pulse__character" viewBox="0 0 90 80" fill="none" aria-hidden="true">
@@ -101,6 +112,11 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
   const [pageVisible, setPageVisible] = useState(true);
   const [rotationKey, setRotationKey] = useState(0);
   const [playback, setPlayback] = useState<Playback>(INITIAL_PLAYBACK);
+  const [dancerReady, setDancerReady] = useState(false);
+  const [dancerFailed, setDancerFailed] = useState(false);
+  const [workerReady, setWorkerReady] = useState(false);
+  const [workerFailed, setWorkerFailed] = useState(false);
+  const [floorFailed, setFloorFailed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -217,8 +233,24 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
                 </a>
               ) : null}
             </div>
-            <div className="live-pulse__figure" aria-label="Dancer illustration" role="img">
-              <DancingFigure />
+            <div className="live-pulse__figure live-pulse__figure--dance" aria-label="Animated dancer" role="img">
+              {(!dancerReady || dancerFailed || reducedMotion) ? (
+                <span className="live-pulse__fallback"><DancingFigure /></span>
+              ) : null}
+              {!dancerFailed && !reducedMotion ? (
+                <>
+                  {dancerReady && !floorFailed ? (
+                    <span className="live-pulse__floor" aria-hidden="true">
+                      <img src={DANCER_FLOOR_GIF} alt="" decoding="async" loading="lazy"
+                        onError={() => setFloorFailed(true)} />
+                    </span>
+                  ) : null}
+                  <img className={`live-pulse__gif live-pulse__gif--dancer${dancerReady ? " live-pulse__gif--ready" : ""}`}
+                    src={DANCER_GIF} alt="" loading="lazy" decoding="async"
+                    onLoad={() => setDancerReady(true)}
+                    onError={() => setDancerFailed(true)} />
+                </>
+              ) : null}
             </div>
           </>
         ) : (
@@ -233,8 +265,16 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
                 </a>
               ) : null}
             </div>
-            <div className="live-pulse__figure" aria-label="Animated construction worker" role="img">
-              <WorkerFigure />
+            <div className="live-pulse__figure live-pulse__figure--work" aria-label="Animated construction worker hammering" role="img">
+              {(!workerReady || workerFailed || reducedMotion) ? (
+                <span className="live-pulse__fallback"><WorkerFigure /></span>
+              ) : null}
+              {!workerFailed && !reducedMotion ? (
+                <img className={`live-pulse__gif live-pulse__gif--worker${workerReady ? " live-pulse__gif--ready" : ""}`}
+                  src={WORKER_GIF} alt="" loading="lazy" decoding="async"
+                  onLoad={() => setWorkerReady(true)}
+                  onError={() => setWorkerFailed(true)} />
+              ) : null}
             </div>
           </>
         )}
