@@ -1,10 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { type DashboardFeature } from "@/data/portfolio";
+import { dashboardFeaturedTrack, type DashboardFeature } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export const LIVE_PULSE_SWITCH_MS = 5000;
-export const SPOTIFY_REFRESH_MS = 60000;
 
 // The same public Giphy sticker sources used by Shivam Patel's dashboard.
 // Kept as embeds (not copied into this repo) with original SVG fallbacks.
@@ -15,18 +14,6 @@ export const DANCER_FLOOR_GIF =
 // Tenor's "Manutencao" sticker: a hard-hat worker actually hammering.
 export const WORKER_GIF =
   "https://media.tenor.com/JHXKK4oP06MAAAAj/manutencao.gif";
-
-type Playback = {
-  status: "playing" | "last-played" | "idle" | "unconfigured" | "unavailable";
-  title: string | null;
-  artist: string | null;
-  artwork: string | null;
-  url: string | null;
-};
-
-const INITIAL_PLAYBACK: Playback = {
-  status: "idle", title: null, artist: null, artwork: null, url: null,
-};
 
 // Original vector fallbacks: the reference GIFs are loaded only while their
 // respective scene is visible. No audio, canvas, or extra video is requested.
@@ -99,7 +86,13 @@ function WorkerFigure() {
   );
 }
 
-export function FeatureCard({ feature }: { feature: DashboardFeature }) {
+export function FeatureCard({
+  feature,
+  onModeChange,
+}: {
+  feature: DashboardFeature;
+  onModeChange?: (mode: "listening" | "building") => void;
+}) {
   const building = feature.kind === "building" ? feature : {
     kind: "building" as const,
     title: "Jiraiya Personal Assistant",
@@ -111,7 +104,6 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [rotationKey, setRotationKey] = useState(0);
-  const [playback, setPlayback] = useState<Playback>(INITIAL_PLAYBACK);
   const [dancerReady, setDancerReady] = useState(false);
   const [dancerFailed, setDancerFailed] = useState(false);
   const [workerReady, setWorkerReady] = useState(false);
@@ -147,38 +139,12 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
     return () => window.clearInterval(interval);
   }, [inView, pageVisible, reducedMotion, rotationKey]);
 
+  // The parent owns the cursor emoji so it changes with automatic and manual tabs.
   useEffect(() => {
-    if (!inView || !pageVisible) return;
-    let active = true;
-    const controller = new AbortController();
-    const poll = async () => {
-      try {
-        const response = await fetch("/api/now-playing", {
-          signal: controller.signal,
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) throw new Error("Spotify status unavailable");
-        const next = (await response.json()) as Playback;
-        if (active && next && typeof next.status === "string") setPlayback(next);
-      } catch {
-        if (active && !controller.signal.aborted) {
-          setPlayback({ ...INITIAL_PLAYBACK, status: "unavailable" });
-        }
-      }
-    };
-    void poll();
-    const interval = window.setInterval(() => void poll(), SPOTIFY_REFRESH_MS);
-    return () => {
-      active = false;
-      controller.abort();
-      window.clearInterval(interval);
-    };
-  }, [inView, pageVisible]);
+    onModeChange?.(mode);
+  }, [mode, onModeChange]);
 
   const listening = mode === "listening";
-  const trackAvailable = Boolean(playback.title && playback.artist);
-  const musicPlaying = playback.status === "playing";
   const liveTint = listening ? "#55ba83" : "#ad91ec";
 
   const selectMode = (next: "listening" | "building") => {
@@ -189,7 +155,7 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
   return (
     <div
       ref={rootRef}
-      className="live-pulse"
+      className={`live-pulse${inView && pageVisible && !reducedMotion ? "" : " live-pulse--paused"}`}
       style={{
         "--live-pulse-tint": liveTint,
         "--live-pulse-interval": `${LIVE_PULSE_SWITCH_MS}ms`,
@@ -209,31 +175,28 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
         {listening ? (
           <>
             <div className="live-pulse__copy">
-              <p className="live-pulse__eyebrow">
-                {musicPlaying ? "Now playing" : trackAvailable ? "Last played" : "Spotify"}
-                {musicPlaying ? <span className="live-pulse__equalizer" aria-hidden="true"><span/><span/><span/></span> : null}
+              <p className="live-pulse__eyebrow">Spotify pick</p>
+              <p className="live-pulse__heading" title={dashboardFeaturedTrack.title}>
+                {dashboardFeaturedTrack.title}
               </p>
-              <div className="live-pulse__song">
-                {trackAvailable && playback.artwork ? (
-                  <img className="live-pulse__artwork" src={playback.artwork}
-                    alt="" loading="lazy" decoding="async" />
-                ) : null}
-                <div className="live-pulse__song-copy">
-                  <p className="live-pulse__heading" title={playback.title || undefined}>
-                    {trackAvailable ? playback.title : "Music corner"}
-                  </p>
-                  <p className="live-pulse__sub" title={playback.artist || undefined}>
-                    {trackAvailable ? playback.artist : "Track sync not connected"}
-                  </p>
-                </div>
-              </div>
-              {playback.url && trackAvailable ? (
-                <a className="live-pulse__link" href={playback.url} target="_blank" rel="noopener noreferrer">
-                  Open in Spotify <ArrowUpRight size={12} aria-hidden="true"/>
-                </a>
-              ) : null}
+              <p className="live-pulse__sub" title={dashboardFeaturedTrack.artist}>
+                {dashboardFeaturedTrack.artist}
+              </p>
             </div>
             <div className="live-pulse__figure live-pulse__figure--dance" aria-label="Animated dancer" role="img">
+              <div className="live-pulse__spectrum" aria-hidden="true">
+                {Array.from({ length: 18 }, (_, index) => (
+                  <span
+                    key={index}
+                    className="live-pulse__spectrum-bar"
+                    style={{
+                      "--spectrum-peak": `${24 + ((index * 37) % 60)}%`,
+                      "--spectrum-delay": `-${(index * 137) % 920}ms`,
+                      "--spectrum-duration": `${680 + ((index * 89) % 410)}ms`,
+                    } as CSSProperties}
+                  />
+                ))}
+              </div>
               {(!dancerReady || dancerFailed || reducedMotion) ? (
                 <span className="live-pulse__fallback"><DancingFigure /></span>
               ) : null}
