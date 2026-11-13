@@ -234,10 +234,13 @@ export const metrics = {
   wakaTimeEmbedUrl: null as string | null,
 };
 
+// Personal dashboard spotlight — safe to edit without changing the Projects list.
+// The card alternates with the optional real Spotify track.
 export const dashboardFeature: DashboardFeature = {
   kind: "building",
-  title: "Statistical analysis platform",
-  description: "Frontend plus Python analytics. In development.",
+  title: "Jiraiya Personal Assistant",
+  description: "Personalization · AI agents",
+  href: "https://github.com/TheNityant/JIRAYA_PERSONAL_ASSISTANT",
 };
 
 export const scratchRevealContent: ScratchRevealContent = {
