@@ -178,35 +178,36 @@ The label "Spotify pick" means a recommended/selected song—not a claim that th
 
 Edit the `CURSOR_EMOJI` mapping in `DashboardCursor.tsx` to choose different emojis without changing other cards.
 
-### Background fade, song typography and traveling red equalizer
+### Matched typography, seamless gradient and energetic traveling red equalizer
 
-**Current effect:** The outer dark/black dashboard frame stays in place, but the Listening/Building panel's green/purple atmospheric color dissolves gradually into the card background. There should be no hard green or purple outline; that inner color is a glow, **not a border**. The black outer dashboard card border remains untouched.
+Both modes now use **the same heading, eyebrow and subtitle typography**—including font family, size, weight, letter-spacing, and vertical rhythm. This fixes the noticeable jump between `Shinigami / Draven Godrics` and `Jiraiya Personal Assistant / Personalization · AI agents`.
 
-The Listening view displays the manually curated `Shinigami — Draven Godrics` rather than live Spotify status. The text has a little extra left inset, larger title/artist type, and more letter spacing. The construction worker and dancing GIFs and the five-second rotation remain unchanged.
+The shared rules are at the **very end** of `client/src/styles/interactionEnhancements.css`, under `Listening / Building typography parity and softer shared atmosphere`. The `--listening` and `--building` selectors are intentionally paired. Avoid changing just one mode again.
 
-The **42 red equalizer bars** are an independent decorative animation, **not an audio analyzer**. They now sit in `live-pulse__body`, spanning from the dancer on the right toward the title on the left. Their *pulse sequence* starts at the right and moves left with increasing phase delay, while the bars decrease in height and opacity toward the left, under the text. The dancers are drawn above these bars.
-
-Implementation:
-- JSX source: `client/src/components/home/FeatureCard.tsx` (`live-pulse__spectrum` and 42 generated bars).
-- Styles: the **last** block of `client/src/styles/interactionEnhancements.css`, starting with `Curated song: soft atmospheric fade and directional red spectrum`. It overrides earlier generic Live Pulse rules.
-
-| Edit | Effect / safe adjustment |
+| Selector | Default behavior / tuning |
 | --- | --- |
-| `.dashboard-area-feature .live-pulse` `background` | Green/purple-to-black fade; reduce the radial gradient's `21%` tint for less color or raise gently to intensify |
-| `.live-pulse::before` radial gradient | Secondary soft glow; keep the end stop `transparent` to avoid hard color edges |
-| `.dashboard-area-feature .dashboard-tile` `padding` | Controls visible **outer black margin**, not glow boundary. Do not alter parent grid geometry |
-| `.live-pulse--listening .live-pulse__copy` (via `.live-pulse__copy`) `padding` | Moves song/artist in from the hard left edge |
-| `.live-pulse--listening .live-pulse__heading` | Song font size, letter spacing, weight, line height |
-| `.live-pulse--listening .live-pulse__sub` | Artist font size, letter spacing, gap below the title |
-| `.live-pulse__spectrum` `height` | Overall red spectrum height; constrained within the existing card |
-| `.live-pulse__spectrum` `opacity` | Overall strength of the red wave |
-| `.live-pulse__spectrum` `mask-image` | Progressive fade to invisible on the left, full strength near the dancer |
-| `--spectrum-peak`, `--spectrum-opacity`, `--spectrum-delay` | Per-bar strength and phase, generated from each bar index in `FeatureCard.tsx` |
-| `live-pulse-red-travel` | Red pulse's motion curve; 2800ms duration is defined in the spectrum-bar animation |
+| `.live-pulse--listening/.live-pulse--building .live-pulse__eyebrow` | Same label size, spacing, margin and uppercase emphasis |
+| `.live-pulse--listening/.live-pulse--building .live-pulse__heading` | Shared `clamp(.98rem, 1.18vw, 1.18rem)` desktop font, `700` weight, `.014em` letter spacing |
+| `.live-pulse--listening/.live-pulse--building .live-pulse__sub` | Shared `clamp(.76rem, .95vw, .9rem)` desktop font and subtitle spacing |
+| `.live-pulse__copy` | Same left/right inset in both modes |
+| `.live-pulse__heading` line clamp | Long project title may wrap up to **two lines** at tight widths rather than shrinking to a different font size |
+| `@media (max-width: 699px)` paired selectors | Identical responsive font settings in both modes |
+| `.live-pulse::before` | Very subtle secondary green/purple-to-black halo; preserves the existing large background blend |
+| `.live-pulse__spectrum` `height: 92%` | Increases the red wave's vertical reach; mobile uses `80%` |
+| `.live-pulse__spectrum` `opacity` and `mask-image` | Stronger motion and a longer fade toward the song text |
+| `live-pulse-red-travel` | Multiple peaks in a `3250ms` CSS animation instead of a single brief spike |
 
-For a **slower traveling equalizer**, try `3600ms` in the CSS *and* increase the index-based `42ms` phase gap moderately (to `50ms`). For **faster** motion, try `2200ms` and `34ms`. Keep the left-to-right bar ordering in JSX; `(41 - index)` intentionally delays the **left** bars so the wave visually moves **right to left**.
+The 42 red bars are **a stylized equalizer, not live music analysis**. They begin stronger near the dancer on the right and gradually fade toward the left beneath the text. To make them calmer, lower the wave's `scaleY` keyframe peaks, the `opacity` of `.live-pulse__spectrum`, or the height `92%`. For stronger motion, raise these sparingly—large peaks can crowd the dancer.
 
-No part of this effect changes the fixed dashboard grid, the outer frame dimensions, the DSP/audio source (there is none), or the GIF URLs. The bars stop moving while out of view or for reduced-motion users.
+To change the horizontal traveling phase, edit `FeatureCard.tsx`:
+
+```tsx
+"--spectrum-delay": `-${index * 48}ms`,
+```
+
+The negative offset means bars on the **right** lead bars on the **left**. The `48ms` step and `3250ms` duration together determine the apparent traveling wave. Increasing the `48ms` step creates larger phase separation; decreasing it produces tighter pulses. Keeping the same duration for all bars maintains wave continuity. `--spectrum-peak` and `--spectrum-opacity` are also set in that component.
+
+The outer black frame, fixed dashboard grid, animated dancer and construction-worker GIFs, five-second alternating views, song selection, cursor emojis and coding/workout odometer remain unchanged. Reduced-motion settings still disable the spectrum animation.
 
 ### Character and lighting animations
 
