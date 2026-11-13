@@ -1571,3 +1571,13 @@
   .live-pulse__builder-arm, .live-pulse__builder-leg, .live-pulse__builder-spark,
   .live-pulse__equalizer span { animation: none !important; }
 }
+
+.live-pulse__song { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.live-pulse__artwork {
+  flex: 0 0 27px;
+  width: 27px;
+  height: 27px;
+  border-radius: .3rem;
+  object-fit: cover;
+}
+.live-pulse__song-copy { min-width: 0; flex: 1; }
