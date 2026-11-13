@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { Github, Linkedin, Mail } from "lucide-react";
 import { DashboardCard, dashboardHeaderIcon } from "@/components/home/DashboardCard";
 import { DashboardCursorProvider } from "@/components/home/DashboardCursor";
@@ -18,6 +20,112 @@ import {
   metrics,
   visibleSocials,
 } from "@/data/portfolio";
+
+type AnimatedMetricProps = {
+  value: number | null;
+  fallback: string;
+  format: (value: number) => string;
+  title?: string;
+};
+
+/**
+ * Counts up the real API total only when the metric card enters the viewport.
+ * Updates animate from the previous displayed total rather than resetting,
+ * and the final number stays accessible to screen readers throughout.
+ */
+function AnimatedMetric({ value, fallback, format, title }: AnimatedMetricProps) {
+  const elementRef = useRef<HTMLParagraphElement>(null);
+  const currentValueRef = useRef(0);
+  const [shownValue, setShownValue] = useState<number | null>(null);
+  const [hasEnteredView, setHasEnteredView] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setHasEnteredView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setHasEnteredView(true);
+        observer.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (value === null || !Number.isFinite(value) || value < 0) {
+      currentValueRef.current = 0;
+      setShownValue(null);
+      return;
+    }
+    if (!hasEnteredView) return;
+
+    if (prefersReducedMotion) {
+      currentValueRef.current = value;
+      setShownValue(value);
+      return;
+    }
+
+    const start = currentValueRef.current;
+    if (start === value) {
+      setShownValue(value);
+      return;
+    }
+
+    let frame = 0;
+    let startedAt: number | null = null;
+    const duration = 1250;
+
+    const tick = (timestamp: number) => {
+      startedAt ??= timestamp;
+      const progress = Math.min((timestamp - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = Math.round(start + (value - start) * eased);
+      currentValueRef.current = next;
+      setShownValue(next);
+
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick);
+      } else {
+        currentValueRef.current = value;
+        setShownValue(value);
+      }
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [value, hasEnteredView, prefersReducedMotion]);
+
+  const validValue =
+    typeof value === "number" && Number.isFinite(value) && value >= 0;
+  const accessibleText = validValue ? format(value) : fallback;
+  const visibleNumber = !validValue
+    ? fallback
+    : !hasEnteredView
+      ? format(value)
+      : format(shownValue ?? 0);
+
+  return (
+    <p
+      ref={elementRef}
+      className="tile-metric-value"
+      title={title}
+      aria-label={accessibleText}
+      style={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      <span aria-hidden="true">{visibleNumber}</span>
+    </p>
+  );
+}
 
 export function Dashboard() {
   const { data } = useDashboardData();
@@ -96,16 +204,16 @@ export function Dashboard() {
             cursorKind="dumbbell"
             className="dashboard-item--metric"
           >
-            <p
-              className="tile-metric-value"
+            <AnimatedMetric
+              value={liveWorkoutDays}
+              fallback={workoutMetric}
+              format={formatWorkoutDays}
               title={
                 data?.workouts.status === "ready"
                   ? `${data.workouts.weekCount ?? 0} workout days in the last 7 days`
                   : undefined
               }
-            >
-              {workoutMetric}
-            </p>
+            />
           </DashboardCard>
 
           <DashboardCard
@@ -115,9 +223,12 @@ export function Dashboard() {
             cursorKind="clock"
             className="dashboard-item--metric"
           >
-            <p className="tile-metric-value" title={codingTooltip}>
-              {codingMetric}
-            </p>
+            <AnimatedMetric
+              value={liveCodingSeconds}
+              fallback={codingMetric}
+              format={formatCodingDuration}
+              title={codingTooltip}
+            />
           </DashboardCard>
 
           <DashboardCard
