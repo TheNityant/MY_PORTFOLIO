@@ -1381,7 +1381,7 @@
   line-height: 1;
 }
 .metric-odometer__reel--rolling {
-  transform: translate3d(0, calc(var(--metric-end) * -1em), 0);
+  transform: translate3d(0, var(--metric-shift), 0);
 }
 @media (prefers-reduced-motion: reduce) {
   .metric-odometer__reel { transition: none; }
