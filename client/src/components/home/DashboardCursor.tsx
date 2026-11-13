@@ -28,6 +28,9 @@ export function DashboardCursorProvider({ children }: { children: ReactNode }) {
   const reducedMotion = usePrefersReducedMotion();
   const cursorRef = useRef<HTMLSpanElement>(null);
   const activeKind = useRef<DashboardCursorKind | null>(null);
+  // Keep the hovered card reference so its emoji updates without mouse movement
+  // when Listening automatically switches to Building (and vice versa).
+  const activeSurface = useRef<HTMLElement | null>(null);
   const rafId = useRef(0);
   const pointer = useRef({ x: 0, y: 0, visible: false });
   const velocity = useRef({ vx: 0, vy: 0 });
@@ -51,7 +54,9 @@ export function DashboardCursorProvider({ children }: { children: ReactNode }) {
       velocity.current.vy = velocity.current.vy * 0.75 + (dy / dt) * 0.25;
 
       const speed = Math.hypot(velocity.current.vx, velocity.current.vy);
-      const kind = activeKind.current;
+      const kind = activeSurface.current
+        ? (activeSurface.current.dataset.cursorKind as DashboardCursorKind)
+        : null;
 
       if (kind === "plane") {
         if (speed > 0.02) {
@@ -95,15 +100,18 @@ export function DashboardCursorProvider({ children }: { children: ReactNode }) {
 
       const target = (event.target as Element | null)?.closest<HTMLElement>("[data-cursor-kind]");
       if (target) {
+        activeSurface.current = target;
         activeKind.current = target.dataset.cursorKind as DashboardCursorKind;
         pointer.current.visible = true;
       } else {
+        activeSurface.current = null;
         pointer.current.visible = false;
         activeKind.current = null;
       }
     };
 
     const onLeave = () => {
+      activeSurface.current = null;
       pointer.current.visible = false;
       activeKind.current = null;
     };
