@@ -138,7 +138,6 @@ This one card intentionally retains the existing dashboard `feature` grid area. 
 
 ```ts
 export const LIVE_PULSE_SWITCH_MS = 5000;
-export const SPOTIFY_REFRESH_MS = 60000;
 ```
 
 The CSS timer automatically reads `LIVE_PULSE_SWITCH_MS` from the React component. Change **one constant** to make the Listening ↔ Building rotation faster or slower. The card pauses rotation when off-screen, in a hidden tab, or when the visitor requests reduced motion. The buttons allow manual switching and restart the five-second interval.
@@ -160,27 +159,41 @@ You can edit this independently of the actual Projects list, so spotlighting Jir
 
 For **truly live project status**, the planned future integration is a server endpoint reading a `live_status` row from the separate **Portfolio Supabase project**, with RLS/server credentials. This table is **not created or connected by this change**; the spotlight text currently comes from `portfolio.ts`. No need to join the Habit Tracker database with the Portfolio database to implement this card.
 
-### Actual Spotify data
+### Manual featured track (current Listening mode)
 
-`api/now-playing.ts` reads Spotify through server-side OAuth. The frontend calls `/api/now-playing` when the card is near the viewport, refreshing once per minute while visible.
+The Listening card now shows a **curated song, not live Spotify playback**. The `FeatureCard.tsx` component does not fetch `/api/now-playing`. Change the song in `client/src/data/portfolio.ts`:
 
-Add these **server-only secrets** in Vercel and local `.env`:
-
-```dotenv
-SPOTIFY_CLIENT_ID=
-SPOTIFY_CLIENT_SECRET=
-SPOTIFY_REFRESH_TOKEN=
+```ts
+export const dashboardFeaturedTrack = {
+  title: "Shinigami",
+  artist: "Draven Godrics",
+} as const;
 ```
 
-Create your own Spotify developer application and authorize the **same Spotify account** using `user-read-currently-playing` and `user-read-recently-played` scopes. Perform the OAuth authorization-code exchange securely to obtain a refresh token; never expose the client secret or refresh token in client JavaScript or a `VITE_` variable.
+The label "Spotify pick" means a recommended/selected song—not a claim that the track is actually playing. No OAuth setup or playback is necessary. The existing `api/now-playing.ts` remains in the repository for **optional future OAuth integration**, but is not called by the UI. Do not add a fake track URL or an autoplaying recording.
 
-Statuses:
+### Mode-specific cursor emoji
 
-- `playing`: actual current song — shows **Now playing** and a three-bar equalizer;
-- `last-played`: most recent song — labels it **Last played** (not pretending you're currently listening);
-- `idle`, `unconfigured`, `unavailable`: a neutral **Music corner** placeholder; no fake song, artist, or playback indicator.
+`Dashboard.tsx` stores `featureMode`, and `FeatureCard.tsx` reports its automatic and manual transitions through `onModeChange`. The dashboard card uses `music` in Listening mode (🎵) and `hammer` in Building mode (🛠️). The hovering cursor reads `data-cursor-kind` from `DashboardCursor.tsx`, including when the card switches while the mouse is still.
 
-Spotify is **not connected until those environment variables are provided and authorized**. A database table alone cannot infer the actual currently playing track on Spotify.
+Edit the `CURSOR_EMOJI` mapping in `DashboardCursor.tsx` to choose different emojis without changing other cards.
+
+### Stage-only decorative music equalizer and small card margins
+
+The 18 independently timed bars are **a decorative sound motif**, not a signal derived from music audio. They sit behind the woman dancing in the right-hand figure, below the existing GIF and its floor/shadow animation. The construction worker scene stays untouched.
+
+Modify the **final** section of `client/src/styles/interactionEnhancements.css` headed `Curated track and stage-only sound wave`:
+
+| Parameter | What it changes |
+| --- | --- |
+| `.live-pulse__spectrum` `opacity` | Equalizer visibility |
+| `.live-pulse__spectrum` `height` | How high the bars extend behind the dancer |
+| `live-pulse-soundbar` | Damped bar motion (uses GPU-friendly transforms) |
+| `--spectrum-duration`, `--spectrum-delay`, `--spectrum-peak` | Each bar's frequency, phase, and height; generated inside `FeatureCard.tsx` |
+| `.dashboard-area-feature .dashboard-tile` `padding` | The narrow perimeter gap between inner panel and outer card |
+| `.dashboard-area-feature .live-pulse` `padding`, `background` | Inner breathing room and low-intensity green/violet full-area tint |
+
+The **fixed grid area and card dimensions are unchanged**. The large duplicate title stays hidden and the smaller tabs remain visible. With reduced motion the waveform becomes static; it also pauses when the card is not visible. Do not restore the earlier full-panel 26-bar equalizer or the oversaturated glow: those were the changes that the user rolled back.
 
 ### Character and lighting animations
 
@@ -204,10 +217,10 @@ Tune these in `interactionEnhancements.css`:
 | `live-builder-bob` | Worker walking/leaning motion |
 | `live-hammer-hit` | Hammer impact cycle |
 | `live-builder-spark` | Impact sparks |
-| `live-equalize` | Audio-themed bars; only shown when Spotify says `playing` |
+| `live-pulse-soundbar` | Decorative bars behind the dancer, independent of Spotify playback |
 | `--live-pulse-green`, `--live-pulse-violet` / `--live-pulse-tint` | Color emphasis |
 
-The characters are decorative and **do not play music**. A Spotify link opens the actual track when available. The visual spotlight is CSS, the dancing-floor loop is a second GIF, and animated images only mount for the active five-second scene.
+The characters are decorative and **do not play music**. The manually curated song has no outbound Spotify link unless one is explicitly configured in a future change. The spotlight is CSS, the floor animation is a second GIF, and animated images only mount for the active five-second scene.
 
 ### Where to change layout safely
 
