@@ -1740,40 +1740,110 @@
 }
 
 
-/* Curated track and stage-only sound wave (Nov 2026).
-   Restrained changes on top of the user's restored GIF-based design:
-   preserve the moving dancer and worker, the card's fixed grid allocation,
-   and the established Spotlight color scheme. */
+/* Curated song: soft atmospheric fade and directional red spectrum.
+   Keep the outside black frame, GIFs, dashboard grid dimensions and
+   existing 5-second scene toggle. These overrides are isolated to the
+   Listening/Building feature tile. */
 .dashboard-area-feature .dashboard-tile {
-  padding: .21rem .25rem;
+  padding: .21rem .25rem; /* Outer dark frame remains unchanged */
 }
 .dashboard-area-feature .live-pulse {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   padding: .10rem .17rem;
-  border: 1px solid color-mix(in srgb, var(--live-pulse-tint) 19%, transparent);
+  /* The existing outer frame is black. Do not draw a hard green/purple line:
+     let both ambient colors gradually fade into the card background. */
+  border: 1px solid transparent;
   background:
-    radial-gradient(ellipse 85% 125% at 96% 5%,
-      color-mix(in srgb, var(--live-pulse-tint) 10%, transparent), transparent 87%),
-    color-mix(in srgb, var(--live-pulse-tint) 3%, var(--background));
+    radial-gradient(ellipse 78% 148% at 85% 49%,
+      color-mix(in srgb, var(--live-pulse-tint) 21%, transparent) 0%,
+      color-mix(in srgb, var(--live-pulse-tint) 12%, transparent) 38%,
+      transparent 88%),
+    linear-gradient(92deg,
+      var(--background) 0%,
+      color-mix(in srgb, var(--live-pulse-tint) 3%, var(--background)) 46%,
+      color-mix(in srgb, var(--live-pulse-tint) 6%, var(--background)) 79%,
+      var(--background) 100%);
 }
-/* Confine the equalizer to the dancing stage, BEHIND the existing GIF. */
+.dashboard-area-feature .live-pulse::before {
+  /* Replace the old high-contrast patch of color with a softer full-card
+     atmosphere. No straight-edged green or purple background panel. */
+  inset: 0;
+  border-radius: inherit;
+  opacity: .45;
+  background:
+    radial-gradient(ellipse 96% 140% at 90% 42%,
+      color-mix(in srgb, var(--live-pulse-tint) 17%, transparent) 0%,
+      transparent 83%);
+  pointer-events: none;
+}
+.dashboard-area-feature .live-pulse__body {
+  position: relative;
+  isolation: isolate;
+  /* Keep the dancer's area; the spectrum now spans the whole card instead
+     of only the right-hand column. */
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 38%);
+}
+.dashboard-area-feature .live-pulse__copy {
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  /* Song and artist sit comfortably inside the left panel, not at its edge. */
+  padding: .2rem clamp(.55rem, 1.25vw, 1.05rem);
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__eyebrow {
+  font-size: clamp(.62rem, .86vw, .74rem);
+  letter-spacing: .12em;
+  margin: 0 0 .35rem;
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__heading {
+  font-size: clamp(1.13rem, 1.65vw, 1.5rem);
+  letter-spacing: .035em;
+  line-height: 1.18;
+  font-weight: 720;
+}
+.dashboard-area-feature .live-pulse--listening .live-pulse__sub {
+  font-size: clamp(.81rem, 1.05vw, 1rem);
+  letter-spacing: .035em;
+  line-height: 1.32;
+  margin-top: .4rem;
+}
 .dashboard-area-feature .live-pulse__figure--dance {
+  position: relative;
+  z-index: 3;
   isolation: isolate;
 }
+/* The red wave begins behind the dancer, advances right-to-left, and
+   shrinks/fades underneath the song typography. No audio data is sampled. */
 .dashboard-area-feature .live-pulse__spectrum {
   position: absolute;
   z-index: 0;
-  left: 6%;
-  right: 6%;
-  bottom: 1px;
-  height: 68%;
+  inset: auto 0 -1px;
+  height: 85%;
+  grid-column: 1 / -1;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 2px;
+  padding-inline: 1%;
+  overflow: hidden;
+  opacity: .77;
   pointer-events: none;
-  opacity: .35;
-  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.08) 17%,
+    rgba(0,0,0,.45) 43%,
+    rgba(0,0,0,.88) 70%,
+    #000 88%,
+    #000 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0%,
+    rgba(0,0,0,.08) 17%,
+    rgba(0,0,0,.45) 43%,
+    rgba(0,0,0,.88) 70%,
+    #000 88%,
+    #000 100%);
 }
 .dashboard-area-feature .live-pulse__spectrum-bar {
   display: block;
@@ -1781,18 +1851,21 @@
   min-width: 1px;
   max-width: 5px;
   height: var(--spectrum-peak, 45%);
-  border-radius: 3px 3px 0 0;
+  border-radius: 2px 2px 0 0;
   background: linear-gradient(to top,
-    color-mix(in srgb, var(--live-pulse-tint) 78%, transparent),
-    color-mix(in srgb, var(--live-pulse-tint) 14%, transparent));
-  transform-origin: center bottom;
-  animation: live-pulse-soundbar var(--spectrum-duration, 900ms) ease-in-out
-    var(--spectrum-delay, 0ms) infinite alternate;
+    rgba(234, 56, 83, .92),
+    rgba(229, 63, 82, .52) 55%,
+    rgba(236, 102, 118, .07));
+  opacity: var(--spectrum-opacity, .7);
+  transform-origin: bottom center;
+  animation: live-pulse-red-travel 2800ms ease-in-out
+    var(--spectrum-delay, 0ms) infinite both;
 }
-@keyframes live-pulse-soundbar {
-  0% { transform: scaleY(.15); }
-  55% { transform: scaleY(.8); }
-  100% { transform: scaleY(.32); }
+@keyframes live-pulse-red-travel {
+  0%, 100% { transform: scaleY(.2); }
+  14% { transform: scaleY(1); }
+  32% { transform: scaleY(.52); }
+  49%, 90% { transform: scaleY(.16); }
 }
 .live-pulse--paused .live-pulse__spectrum-bar {
   animation-play-state: paused;
@@ -1800,11 +1873,31 @@
 @media (max-width: 699px) {
   .dashboard-area-feature .dashboard-tile { padding: .20rem .23rem; }
   .dashboard-area-feature .live-pulse { padding: .08rem .13rem; }
-  .dashboard-area-feature .live-pulse__spectrum { opacity: .26; height: 63%; }
+  .dashboard-area-feature .live-pulse__body {
+    grid-template-columns: minmax(0, 1fr) minmax(75px, 39%);
+  }
+  .dashboard-area-feature .live-pulse__copy {
+    padding: .14rem .4rem;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__eyebrow {
+    font-size: .59rem;
+    letter-spacing: .07em;
+    margin-bottom: .24rem;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__heading {
+    font-size: clamp(.97rem, 4vw, 1.17rem);
+    letter-spacing: .02em;
+  }
+  .dashboard-area-feature .live-pulse--listening .live-pulse__sub {
+    font-size: clamp(.72rem, 3vw, .83rem);
+    letter-spacing: .02em;
+    margin-top: .25rem;
+  }
+  .dashboard-area-feature .live-pulse__spectrum { opacity: .55; height: 70%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dashboard-area-feature .live-pulse__spectrum-bar {
     animation: none !important;
-    transform: scaleY(.34);
+    transform: scaleY(.3);
   }
 }
