@@ -1351,19 +1351,32 @@
 /* Dashboard odometer — transform-only scroll with long ease-out damping.
    Tune --metric-roll-duration and --metric-roll-easing here. */
 .metric-odometer { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.metric-odometer__content { display: inline-flex; align-items: baseline; }
+.metric-odometer__content {
+  display: inline-flex;
+  align-items: center;
+  height: 1em;
+  line-height: 1;
+  vertical-align: baseline;
+}
 .metric-odometer__digit {
   display: inline-block;
   width: 0.62em;
   height: 1em;
   line-height: 1;
   overflow: hidden;
-  vertical-align: bottom;
+  vertical-align: middle;
   font-variant-numeric: tabular-nums;
   text-align: center;
   contain: layout paint;
 }
-.metric-odometer__literal { white-space: pre; }
+.metric-odometer__literal {
+  display: inline-flex;
+  height: 1em;
+  line-height: 1;
+  align-items: center;
+  white-space: pre;
+  vertical-align: middle;
+}
 .metric-odometer__reel {
   --metric-roll-duration: 2900ms;
   --metric-roll-easing: cubic-bezier(0.13, 0.83, 0.16, 1);
@@ -1375,7 +1388,9 @@
   will-change: transform;
 }
 .metric-odometer__reel span {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 1em;
   height: 1em;
   line-height: 1;
@@ -1581,3 +1596,59 @@
   object-fit: cover;
 }
 .live-pulse__song-copy { min-width: 0; flex: 1; }
+
+
+/* Full-height Spotlight: hide only the duplicate dashboard heading.
+   The smaller Listening / Building buttons are the accessible visible labels.
+   This does NOT modify .dashboard-grid rows, columns or card boundaries. */
+.dashboard-area-feature .tile-header { display: none; }
+.dashboard-area-feature .dashboard-tile {
+  gap: 0;
+  padding: 0.45rem 0.55rem;
+  overflow: hidden;
+}
+.dashboard-area-feature .tile-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dashboard-area-feature .live-pulse {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.12rem;
+}
+.dashboard-area-feature .live-pulse__tabs { flex: 0 0 auto; min-height: 20px; }
+.dashboard-area-feature .live-pulse__body {
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 38%);
+  gap: .25rem;
+  min-height: 0;
+  height: 100%;
+}
+.dashboard-area-feature .live-pulse__body::before { inset: -12px -16px; opacity: .42; }
+.dashboard-area-feature .live-pulse__copy { align-self: center; }
+.dashboard-area-feature .live-pulse__heading {
+  font-size: clamp(.92rem, 1.45vw, 1.13rem);
+  line-height: 1.18;
+}
+.dashboard-area-feature .live-pulse__sub {
+  font-size: .7rem;
+  line-height: 1.3;
+}
+.dashboard-area-feature .live-pulse__figure {
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 82px;
+  max-height: 118px;
+}
+.dashboard-area-feature .live-pulse__character {
+  width: min(100%, 115px);
+  height: min(100%, 112px);
+}
+@media (max-width: 699px) {
+  .dashboard-area-feature .dashboard-tile { padding: .46rem .5rem; }
+  .dashboard-area-feature .live-pulse__body { grid-template-columns: minmax(0, 1fr) minmax(74px, 36%); }
+  .dashboard-area-feature .live-pulse__heading { font-size: .88rem; }
+  .dashboard-area-feature .live-pulse__figure { min-height: 67px; max-height: 100px; }
+}
