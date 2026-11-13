@@ -184,9 +184,11 @@ export function FeatureCard({
                     key={index}
                     className="live-pulse__spectrum-bar"
                     style={{
-                      "--spectrum-peak": `${Math.round((24 + ((index * 19) % 49)) * (.15 + .85 * strength))}%`,
-                      "--spectrum-delay": `${(41 - index) * 42}ms`,
-                      "--spectrum-opacity": (0.14 + .82 * strength).toFixed(2),
+                      "--spectrum-peak": `${Math.round((32 + ((index * 19) % 57)) * (.22 + .78 * strength))}%`,
+                      // The rightmost bars lead; staggered negative phases
+                      // create a continuous left-moving wave from frame one.
+                      "--spectrum-delay": `-${index * 48}ms`,
+                      "--spectrum-opacity": (0.2 + .8 * strength).toFixed(2),
                     } as CSSProperties}
                   />
                 );
