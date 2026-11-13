@@ -1,5 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { type DashboardFeature } from "@/data/portfolio";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
@@ -174,7 +174,10 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
     <div
       ref={rootRef}
       className="live-pulse"
-      style={{ "--live-pulse-tint": liveTint } as React.CSSProperties}
+      style={{
+        "--live-pulse-tint": liveTint,
+        "--live-pulse-interval": `${LIVE_PULSE_SWITCH_MS}ms`,
+      } as CSSProperties}
     >
       <div className="live-pulse__tabs" aria-label="Live dashboard display">
         <button type="button" className="live-pulse__tab" aria-pressed={listening}
@@ -194,12 +197,20 @@ export function FeatureCard({ feature }: { feature: DashboardFeature }) {
                 {musicPlaying ? "Now playing" : trackAvailable ? "Last played" : "Spotify"}
                 {musicPlaying ? <span className="live-pulse__equalizer" aria-hidden="true"><span/><span/><span/></span> : null}
               </p>
-              <p className="live-pulse__heading" title={playback.title || undefined}>
-                {trackAvailable ? playback.title : "Music corner"}
-              </p>
-              <p className="live-pulse__sub" title={playback.artist || undefined}>
-                {trackAvailable ? playback.artist : "Track sync not connected"}
-              </p>
+              <div className="live-pulse__song">
+                {trackAvailable && playback.artwork ? (
+                  <img className="live-pulse__artwork" src={playback.artwork}
+                    alt="" loading="lazy" decoding="async" />
+                ) : null}
+                <div className="live-pulse__song-copy">
+                  <p className="live-pulse__heading" title={playback.title || undefined}>
+                    {trackAvailable ? playback.title : "Music corner"}
+                  </p>
+                  <p className="live-pulse__sub" title={playback.artist || undefined}>
+                    {trackAvailable ? playback.artist : "Track sync not connected"}
+                  </p>
+                </div>
+              </div>
               {playback.url && trackAvailable ? (
                 <a className="live-pulse__link" href={playback.url} target="_blank" rel="noopener noreferrer">
                   Open in Spotify <ArrowUpRight size={12} aria-hidden="true"/>
