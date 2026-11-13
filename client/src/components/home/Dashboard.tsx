@@ -115,6 +115,7 @@ function AnimatedMetric({ value, fallback, format, title }: AnimatedMetricProps)
 
 export function Dashboard() {
   const { data } = useDashboardData();
+  const [featureMode, setFeatureMode] = useState<"listening" | "building">("listening");
 
   const liveCodingSeconds =
     data?.coding.status === "ready" || data?.coding.status === "stale"
@@ -221,10 +222,10 @@ export function Dashboard() {
             area="feature"
             title={featureCardTitle(dashboardFeature)}
             headerIcon={dashboardHeaderIcon("music")}
-            cursorKind="music"
+            cursorKind={featureMode === "listening" ? "music" : "hammer"}
             className="dashboard-item--feature"
           >
-            <FeatureCard feature={dashboardFeature} />
+            <FeatureCard feature={dashboardFeature} onModeChange={setFeatureMode} />
           </DashboardCard>
 
           <DashboardCard
