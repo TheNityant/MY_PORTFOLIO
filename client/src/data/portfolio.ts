@@ -243,6 +243,14 @@ export const dashboardFeature: DashboardFeature = {
   href: "https://github.com/TheNityant/JIRAYA_PERSONAL_ASSISTANT",
 };
 
+// Curated song displayed in the Listening card while Spotify OAuth is disabled.
+// This is a manually selected track, NOT a live/now-playing claim.
+// Change title/artist here without touching the animated card component.
+export const dashboardFeaturedTrack = {
+  title: "Shinigami",
+  artist: "Draven Godrics",
+} as const;
+
 export const scratchRevealContent: ScratchRevealContent = {
   kind: "text",
   text: "Backend systems · AI/ML · Embedded",
