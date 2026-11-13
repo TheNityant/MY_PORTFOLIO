@@ -1738,3 +1738,73 @@
   .dashboard-area-feature .live-pulse__gif { max-height: 98px; }
   .dashboard-area-feature .live-pulse__floor { height: 11px; }
 }
+
+
+/* Curated track and stage-only sound wave (Nov 2026).
+   Restrained changes on top of the user's restored GIF-based design:
+   preserve the moving dancer and worker, the card's fixed grid allocation,
+   and the established Spotlight color scheme. */
+.dashboard-area-feature .dashboard-tile {
+  padding: .21rem .25rem;
+}
+.dashboard-area-feature .live-pulse {
+  padding: .10rem .17rem;
+  border: 1px solid color-mix(in srgb, var(--live-pulse-tint) 19%, transparent);
+  background:
+    radial-gradient(ellipse 85% 125% at 96% 5%,
+      color-mix(in srgb, var(--live-pulse-tint) 10%, transparent), transparent 87%),
+    color-mix(in srgb, var(--live-pulse-tint) 3%, var(--background));
+}
+/* Confine the equalizer to the dancing stage, BEHIND the existing GIF. */
+.dashboard-area-feature .live-pulse__figure--dance {
+  isolation: isolate;
+}
+.dashboard-area-feature .live-pulse__spectrum {
+  position: absolute;
+  z-index: 0;
+  left: 6%;
+  right: 6%;
+  bottom: 1px;
+  height: 68%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2px;
+  pointer-events: none;
+  opacity: .35;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+}
+.dashboard-area-feature .live-pulse__spectrum-bar {
+  display: block;
+  flex: 1 1 2px;
+  min-width: 1px;
+  max-width: 5px;
+  height: var(--spectrum-peak, 45%);
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--live-pulse-tint) 78%, transparent),
+    color-mix(in srgb, var(--live-pulse-tint) 14%, transparent));
+  transform-origin: center bottom;
+  animation: live-pulse-soundbar var(--spectrum-duration, 900ms) ease-in-out
+    var(--spectrum-delay, 0ms) infinite alternate;
+}
+@keyframes live-pulse-soundbar {
+  0% { transform: scaleY(.15); }
+  55% { transform: scaleY(.8); }
+  100% { transform: scaleY(.32); }
+}
+.live-pulse--paused .live-pulse__spectrum-bar {
+  animation-play-state: paused;
+}
+@media (max-width: 699px) {
+  .dashboard-area-feature .dashboard-tile { padding: .20rem .23rem; }
+  .dashboard-area-feature .live-pulse { padding: .08rem .13rem; }
+  .dashboard-area-feature .live-pulse__spectrum { opacity: .26; height: 63%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-area-feature .live-pulse__spectrum-bar {
+    animation: none !important;
+    transform: scaleY(.34);
+  }
+}
