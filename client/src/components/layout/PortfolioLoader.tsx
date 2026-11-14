@@ -169,6 +169,7 @@ export function PortfolioLoader({
   const [mediaSettled, setMediaSettled] = useState(0);
   const [mediaTotal, setMediaTotal] = useState(0);
   const revealStartedRef = useRef(loaderPlayedForThisDocument);
+  const visualsPreparedRef = useRef(loaderPlayedForThisDocument);
 
   useEffect(() => {
     if (loaderPlayedForThisDocument) {
@@ -211,15 +212,20 @@ export function PortfolioLoader({
         }),
     );
 
+    const prepareBehindVeil = () => {
+      if (disposed || visualsPreparedRef.current) return;
+      visualsPreparedRef.current = true;
+      // Mount the page and let its lazy WebGL shader compile while the loader
+      // is still fully covering the screen, not 240ms before reveal.
+      onPrepareVisuals();
+    };
+
     const startReveal = () => {
       if (disposed || revealStartedRef.current) return;
       revealStartedRef.current = true;
       setProgress(100);
-
-      // Mount the real page and live ShaderGradient only after the media warmup
-      // has had the machine/network to itself. The loader remains opaque during
-      // this short preparation window, so the visible design is unchanged.
-      onPrepareVisuals();
+      // Also covers the timeout path if critical assets are unusually slow.
+      prepareBehindVeil();
 
       prepareTimer = window.setTimeout(() => {
         if (disposed) return;
@@ -240,6 +246,10 @@ export function PortfolioLoader({
     // single broken/slow asset from trapping the visitor indefinitely.
     void Promise.allSettled(trackedCriticalTasks).then(async () => {
       if (disposed) return;
+      // Frontend and ShaderGradient initialize under the opaque loader while
+      // project clips continue prebuffering. This overlaps otherwise
+      // sequential work without changing the animated visual treatment.
+      prepareBehindVeil();
       const mediaResults = await warmup.startMedia();
       if (disposed) return;
       if (mediaResults.every(Boolean)) startReveal();
