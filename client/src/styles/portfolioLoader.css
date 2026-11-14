@@ -227,28 +227,17 @@ html.portfolio-is-loading body {
   pointer-events: none;
 }
 
+/* The loader itself slides away over the fully composed site.
+   Do not animate the ENTIRE page-column at reveal: that creates an expensive
+   full-document compositor surface over the live ShaderGradient and can expose
+   a half-transparent, partly rendered page as the loader moves. */
 .site-shell--revealed .page-column {
-  animation: portfolio-content-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  opacity: 1;
+  transform: none;
 }
 
 .site-shell--revealed .site-header {
-  animation: portfolio-header-reveal 520ms ease-out 120ms;
-}
-
-@keyframes portfolio-content-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes portfolio-header-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  opacity: 1;
 }
 
 @media (max-width: 699px) {
