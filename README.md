@@ -102,6 +102,16 @@ The production site is frontend-first. Sensitive integrations stay behind server
 
 ---
 
+## Rendering stability and debugging
+
+The portfolio pre-renders its WebGL atmosphere and page **behind the loading screen**, removes a redundant full-document reveal animation, and avoids whole-section placeholder heights that can cause mobile scroll jumps. The animated desktop shader and all interactive project/dashboard visuals remain enabled.
+
+To test whether a rendering issue is GPU/shader-related, compare the normal site with `https://thenityant.runs-on.dev/?staticBackground=1` on the **same desktop browser**. This uses the existing static fallback only for diagnosis; the default site is unchanged.
+
+Read **[Rendering & Performance Guide](docs/RENDERING_PERFORMANCE.md)** for the underlying rendering pipeline, changes, performance tradeoffs, DevTools checks, and how to revert individual fixes without affecting the dashboard design.
+
+---
+
 ## Performance work
 
 A large part of this project has been about keeping a visually rich portfolio usable on real hardware.
