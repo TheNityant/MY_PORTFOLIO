@@ -1062,12 +1062,17 @@
       color-mix(in srgb, var(--foreground) 4%, var(--background));
   }
 
+  /* Render section geometry consistently on touch devices.
+     content-visibility:auto on whole multi-screen sections substituted a
+     720px placeholder; when the real section appeared the scroll height
+     could jump and look like an intermittent rendering glitch.
+     Keep media's own lazy loading and IntersectionObservers instead. */
   .projects-section,
   .writing-section,
   .experience-section,
   .site-footer {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 720px;
+    content-visibility: visible;
+    contain-intrinsic-size: none;
   }
 
   .experience-row--preview,
