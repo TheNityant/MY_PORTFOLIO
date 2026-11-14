@@ -52,11 +52,17 @@ function useRichAtmosphereAvailable() {
 export function SiteAtmosphere({ enabled = true }: { enabled?: boolean }) {
   const richAtmosphereAvailable = useRichAtmosphereAvailable();
   const reducedMotion = usePrefersReducedMotion();
+  // Diagnostic A/B switch: compare the existing static fallback with the
+  // animated shader without modifying user preferences or default design.
+  // Example: /?staticBackground=1
+  const forceStaticBackground =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("staticBackground") === "1";
 
   return (
     <div className="site-atmosphere" aria-hidden="true">
       <div className="site-atmosphere__fallback" />
-      {enabled && richAtmosphereAvailable && !reducedMotion ? (
+      {enabled && richAtmosphereAvailable && !reducedMotion && !forceStaticBackground ? (
         <SiteShaderBoundary>
           <Suspense fallback={null}>
             <div className="site-atmosphere__shader">
